@@ -4,9 +4,13 @@ from pydantic import BaseModel
 from jake_agent.graph import build_jake_graph
 from jake_agent.db import get_pending_tasks
 from jake_agent.telegram import notify_jake_response, notify_startup
+from jake_agent.telegram_bot import start_bot_thread
+from jake_agent.personas import detect_persona
+from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    start_bot_thread()
     notify_startup()
     yield
 
@@ -21,14 +25,18 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     tasks_created: list
+    persona: str
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_with_jake(req: ChatRequest):
+    persona = detect_persona(req.message)
+
     result = jake_graph.invoke({
         "messages": conversation_history,
         "user_input": req.message,
         "jake_response": "",
-        "tasks_created": []
+        "tasks_created": [],
+        "persona": persona
     })
 
     conversation_history.extend([
@@ -38,9 +46,13 @@ async def chat_with_jake(req: ChatRequest):
 
     notify_jake_response(req.message, result["jake_response"], result["tasks_created"])
 
+    count = get_total_conversation_count()
+    check_and_analyze(count)
+
     return ChatResponse(
         response=result["jake_response"],
-        tasks_created=result["tasks_created"]
+        tasks_created=result["tasks_created"],
+        persona=persona
     )
 
 @app.get("/tasks")
