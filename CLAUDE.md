@@ -204,4 +204,20 @@ cd Archive
 
 ---
 
+---
+
+## 8. 새 세션 시작 시 필수 행동 지침
+
+**새로운 Claude Code 채팅창이 열릴 때마다 반드시 아래 질문을 먼저 한다:**
+
+> "안녕하세요, Kade Yeo 이사님. 새로운 작업 파일을 GitHub Archive에 생성해서 관리할까요?
+> 작업명을 알려주시면 바로 파일을 만들어드리겠습니다."
+
+사용자가 작업명을 말하면:
+1. `E:\Claude\Desktop\Claude\[작업명]\` 폴더 생성
+2. 해당 폴더 안에 작업 파일 생성
+3. 작업 완료 후 "올려줘" 시 GitHub Push
+
+---
+
 *Last updated: 2026-06-23 | LONGRISE Archive v1.0*
