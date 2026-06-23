@@ -243,6 +243,112 @@ cd Archive
 
 ---
 
+## 10. 멀티에이전트 시스템 구축 현황
+
+> 목표: 9인 정예 멤버가 각자 독립된 채팅창+아바타를 가지고 자동 연동되어 작동하는 시스템
+> 참고 구조: 안동현 대표 (OpenWebUI + LangGraph + CrewAI + Telegram)
+> 마지막 업데이트: **2026-06-23**
+
+---
+
+### 10.1 최종 목표 구조
+
+```
+Kade Yeo 이사님
+    ↓ OpenWebUI에서 제이크에게 지시
+제이크 (오케스트레이터 / LangGraph)
+    ↓ 자동으로 관련 팀원에게 작업 분배
+공유 DB (PostgreSQL — 작업 허브)
+    ↓ 각 팀원 에이전트가 DB에서 작업 수신
+바쿠 / 피오 / 리리 / 설리 / 에바 / 사라 / 미나 / 카이
+    ↓ 작업 완료 후 결과 DB에 저장
+텔레그램 → 이사님께 자동 보고
+```
+
+---
+
+### 10.2 기술 스택
+
+| 구성요소 | 기술 | 역할 |
+|---|---|---|
+| 프론트엔드 | OpenWebUI (Docker) | 아바타+채팅 인터페이스 |
+| AI 엔진 | Claude API (claude-sonnet-4-6) | 모든 에이전트 두뇌 |
+| 오케스트레이터 | LangGraph (Python) | 제이크 — 작업 분배 자동화 |
+| 팀 에이전트 | Claude Agent SDK (Python) | 8인 팀원 실행 레이어 |
+| 공유 DB | PostgreSQL | 지시/결과 저장 허브 |
+| 알림 | Telegram Bot API | 자동 완료 보고 (이미 연결됨) |
+| 서버 | FastAPI | 에이전트 간 통신 API |
+
+---
+
+### 10.3 Phase별 구현 계획
+
+| Phase | 내용 | 소요 시간 | 상태 |
+|---|---|---|---|
+| Phase 1 | OpenWebUI 설치 + 9인 아바타/페르소나 세팅 | 1~2일 | ⏳ 미착수 |
+| Phase 2 | PostgreSQL 공유 DB 구축 + FastAPI 연결 | 3~5일 | ⏳ 미착수 |
+| Phase 3 | 제이크 LangGraph 오케스트레이터 구현 | 1주 | ⏳ 미착수 |
+| Phase 4 | 8인 팀원 에이전트 자동 실행 구현 | 1주 | ⏳ 미착수 |
+| Phase 5 | 텔레그램 자동 보고 연결 확인 | 2~3일 | ⏳ 미착수 |
+
+---
+
+### 10.4 Phase 1 세부 실행 방법 (OpenWebUI)
+
+```bash
+# Docker로 OpenWebUI 설치
+docker run -d -p 3000:8080 \
+  -e ANTHROPIC_API_KEY=이사님_API_KEY \
+  -v open-webui:/app/backend/data \
+  --name open-webui \
+  ghcr.io/open-webui/open-webui:main
+```
+
+설치 후: OpenWebUI → Settings → Models에서 9인 각각 프리셋 생성
+- 모델명: 제이크 / 에바 / 사라 / 미나 / 바쿠 / 피오 / 리리 / 설리 / 카이
+- 베이스모델: claude-sonnet-4-6
+- 아바타: 커스텀 이미지 업로드
+- 시스템 프롬프트: 이 CLAUDE.md의 섹션 5 각 멤버 페르소나 적용
+
+---
+
+### 10.5 PostgreSQL DB 스키마
+
+```sql
+CREATE TABLE tasks (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT NOW(),
+  issued_by VARCHAR(50),
+  assigned_to VARCHAR(50),
+  title TEXT,
+  instruction TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  result TEXT,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE conversation_log (
+  id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP DEFAULT NOW(),
+  agent VARCHAR(50),
+  message TEXT,
+  related_task_id INT REFERENCES tasks(id)
+);
+```
+
+---
+
+### 10.6 실행 주체 및 다음 단계
+
+| 항목 | 내용 |
+|---|---|
+| 실행 방법 A | 이사님이 직접 명령어 붙여넣기 (Phase 1 당일 완료 가능) |
+| 실행 방법 B | 실제 개발자 고용 (전체 완성 2~3주, 비용 100~200만원) |
+| 텔레그램 | 이미 연결됨 — Phase 5에서 확인 및 복구만 하면 됨 |
+| 다음 액션 | Phase 1 착수 방법 결정 후 진행 |
+
+---
+
 ## 9. 노션 연동 작업 현황
 
 > 이 섹션은 채팅방이 삭제되어도 다른 컴퓨터에서 작업을 100% 이어서 할 수 있도록 전체 현황을 기록합니다.
