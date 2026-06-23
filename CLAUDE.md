@@ -297,15 +297,36 @@ Kade Yeo 이사님
 
 | Phase | 내용 | 소요 시간 | 상태 |
 |---|---|---|---|
-| Phase 1 | OpenWebUI 설치 + 9인 아바타/페르소나 세팅 | 1~2일 | ⏳ 미착수 |
+| Phase 1 | OpenWebUI 설치 + 10인 아바타/페르소나 세팅 | 1~2일 | 🔄 진행 중 |
 | Phase 2 | PostgreSQL 공유 DB 구축 + FastAPI 연결 | 3~5일 | ⏳ 미착수 |
 | Phase 3 | 제이크 LangGraph 오케스트레이터 구현 | 1주 | ⏳ 미착수 |
-| Phase 4 | 8인 팀원 에이전트 자동 실행 구현 | 1주 | ⏳ 미착수 |
+| Phase 4 | 10인 팀원 에이전트 자동 실행 구현 | 1주 | ⏳ 미착수 |
 | Phase 5 | 텔레그램 자동 보고 연결 확인 | 2~3일 | ⏳ 미착수 |
 
 ---
 
-### 10.4 Phase 1 세부 실행 방법 (OpenWebUI)
+### 10.4 Phase 1 현재 상태 및 다음 단계
+
+**완료된 것:**
+- Docker Desktop 설치 완료 (v4.79.0, Engine running)
+- OpenWebUI Docker 컨테이너 실행 완료
+  - 컨테이너명: `open-webui`
+  - 접속 주소: http://localhost:3000
+  - 자동 재시작 설정됨 (--restart always)
+- OpenWebUI 접속 확인 완료
+
+**다음 할 것 (새 채팅방에서 이어서):**
+1. OpenWebUI 관리자 계정 생성 (이름: Kade Yeo / 이메일: yeogun9222@gmail.com)
+2. Claude API 키 연결 (Settings → Connections → OpenAI API → Anthropic API)
+3. 10인 팀원 각각 모델 프리셋 + 아바타 생성
+4. 이사님 접속 테스트
+
+**새 채팅방 시작 문장:**
+> "rex, E:\Claude\CLAUDE.md 읽고 현황 파악해줘. OpenWebUI Phase 1 이어서 진행하자."
+
+---
+
+### 10.5 Phase 1 세부 실행 방법 (OpenWebUI)
 
 ```bash
 # Docker로 OpenWebUI 설치
