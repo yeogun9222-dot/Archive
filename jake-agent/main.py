@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from jake_agent.graph import build_jake_graph
@@ -17,6 +18,14 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Jake Orchestrator API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 jake_graph = build_jake_graph()
 
 conversation_history = []

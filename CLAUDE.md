@@ -307,8 +307,8 @@ Kade Yeo 이사님
 | Phase 3 | 제이크 LangGraph 오케스트레이터 구현 | 1주 | ✅ 완료 (2026-06-24) |
 | Phase 4 | 10인 팀원 에이전트 자동 실행 구현 | 1주 | ⏳ 미착수 |
 | Phase 5 | 텔레그램 자동 보고 연결 | 2~3일 | ✅ 완료 (2026-06-24) |
-| Phase 6 | Jake에 Notion MCP 연결 (텔레그램에서 노션 직접 수정) | 1~2일 | ⏳ 미착수 |
-| Phase 7 | 자비스 모드 구현 (음성인식+TTS+자비스 UI 화면) | 2~3일 | ⏳ **다음 세션 1순위** |
+| Phase 6 | Jake에 Notion MCP 연결 (텔레그램에서 노션 직접 수정) | 1~2일 | ✅ 완료 (2026-06-24) |
+| Phase 7 | 자비스 모드 구현 (음성인식+TTS+자비스 UI 화면) | 2~3일 | ✅ 완료 (2026-06-24) |
 
 ---
 
@@ -533,4 +533,198 @@ Phase 구조: Phase1($0.01~$0.03, 2024.09~2026.04) → Phase2($0.03~$0.15, 2026.
 
 ---
 
-*Last updated: 2026-06-23 | LONGRISE Archive v1.0*
+---
+
+## 11. 새 컴퓨터 완전 재구축 가이드 (재난 복구)
+
+> 노트북/PC가 고장·분실 시 새 컴퓨터에서 100% 동일한 환경을 재구축하는 절차입니다.
+> 마지막 업데이트: **2026-06-24**
+
+---
+
+### 11.1 필요한 계정 및 API 키 목록
+
+| 항목 | 용도 | 보관 위치 |
+|---|---|---|
+| Anthropic API Key | Jake AI 두뇌 | `jake-agent/.env` (GitHub 미포함, 별도 보관 필요) |
+| Telegram Bot Token | 텔레그램 알림 | `jake-agent/.env` |
+| Telegram Chat ID | 711186057 | 이 파일에 기록됨 |
+| Notion API Key (Golden Algorithm) | 플랫폼 설정집 접근 | `jake-agent/.env` |
+| Notion API Key (Architects) | CNYT 설정집 접근 | `jake-agent/.env` |
+| GitHub 계정 | 코드 저장소 | yeogun9222@gmail.com |
+
+> **.env 파일은 GitHub에 올라가지 않습니다.** 별도로 안전한 곳(카카오톡 나에게 보내기, 메모장 클라우드 등)에 보관하세요.
+
+---
+
+### 11.2 .env 파일 내용 (새 컴퓨터에서 직접 생성)
+
+**`E:\Claude\jake-agent\.env`** 파일을 아래 형식으로 생성:
+
+```
+ANTHROPIC_API_KEY=sk-ant-api03-...
+DB_HOST=jake-postgres
+DB_PORT=5432
+DB_NAME=jakedb
+DB_USER=jake
+DB_PASSWORD=jake1234
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=711186057
+NOTION_API_KEY=ntn_...(Golden Algorithm 인테그레이션 키)
+NOTION_ARCHITECTS_KEY=ntn_...(Architects 인테그레이션 키)
+```
+
+**`E:\Claude\Desktop\Claude\jarvis-mode\.env`** 파일 (CLOVA 연동 시):
+```
+CLOVA_CLIENT_ID=...
+CLOVA_CLIENT_SECRET=...
+```
+
+---
+
+### 11.3 새 컴퓨터 재구축 순서
+
+#### Step 1 — 기본 소프트웨어 설치
+```
+1. Docker Desktop 설치: https://www.docker.com/products/docker-desktop/
+2. Node.js 설치: https://nodejs.org/ (v20 이상)
+3. Git 설치: https://git-scm.com/
+```
+
+#### Step 2 — GitHub에서 코드 받기
+```powershell
+git clone https://github.com/yeogun9222-dot/Archive.git E:\Claude
+cd E:\Claude
+```
+
+#### Step 3 — .env 파일 생성
+위 11.2 내용대로 두 개의 .env 파일을 직접 생성합니다.
+
+#### Step 4 — Docker 네트워크 및 PostgreSQL 실행
+```powershell
+docker network create jake-network
+
+docker run -d `
+  --name jake-postgres `
+  --network jake-network `
+  -p 5432:5432 `
+  --restart=always `
+  -e POSTGRES_DB=jakedb `
+  -e POSTGRES_USER=jake `
+  -e POSTGRES_PASSWORD=jake1234 `
+  postgres:15
+```
+
+#### Step 5 — DB 테이블 생성
+```powershell
+# 30초 기다린 후 실행
+docker exec -i jake-postgres psql -U jake -d jakedb -c "
+CREATE TABLE IF NOT EXISTS tasks (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT NOW(),
+  issued_by VARCHAR(50),
+  assigned_to VARCHAR(50),
+  title TEXT,
+  instruction TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  result TEXT,
+  updated_at TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS conversation_log (
+  id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP DEFAULT NOW(),
+  agent VARCHAR(50),
+  message TEXT,
+  related_task_id INT REFERENCES tasks(id)
+);
+CREATE TABLE IF NOT EXISTS token_usage (
+  id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP DEFAULT NOW(),
+  agent VARCHAR(50),
+  input_tokens INT,
+  output_tokens INT
+);"
+```
+
+#### Step 6 — Jake Agent 빌드 및 실행
+```powershell
+cd E:\Claude\jake-agent
+docker build -t jake-agent .
+
+docker run -d `
+  --name jake-agent `
+  --network jake-network `
+  -p 8000:8000 `
+  --restart=always `
+  --env-file .env `
+  jake-agent
+```
+
+#### Step 7 — OpenWebUI 실행
+```powershell
+docker run -d `
+  --name open-webui `
+  -p 3000:8080 `
+  --restart=always `
+  -e ANTHROPIC_API_KEY=여기에_키_입력 `
+  -v open-webui:/app/backend/data `
+  ghcr.io/open-webui/open-webui:main
+```
+
+#### Step 8 — JARVIS 서버 실행
+```powershell
+node E:\Claude\Desktop\Claude\jarvis-mode\server.js
+```
+
+#### Step 9 — PC 시작 시 자동 실행 설정
+```powershell
+# 컨테이너 자동 재시작 (이미 --restart=always 설정됨)
+# Docker Desktop 자동 시작 설정: Settings → General → Start Docker Desktop when you log in 체크
+
+# JARVIS 서버 자동 시작 등록
+$shell = New-Object -ComObject WScript.Shell
+$shortcut = $shell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\JARVIS-Server.lnk")
+$shortcut.TargetPath = "node"
+$shortcut.Arguments = "E:\Claude\Desktop\Claude\jarvis-mode\server.js"
+$shortcut.WindowStyle = 7
+$shortcut.Save()
+```
+
+---
+
+### 11.4 Notion 인테그레이션 재연결
+
+새 컴퓨터에서 API 키는 기존 것을 그대로 사용하면 됩니다.
+단, 노션 페이지에 인테그레이션 연결은 이미 되어 있으므로 재연결 불필요.
+
+- The Golden Algorithm 인테그레이션: "The Golden Algorithm" (notion.so/my-integrations)
+- The Architects 인테그레이션: 별도 생성됨
+
+---
+
+### 11.5 재구축 완료 확인 체크리스트
+
+```
+□ curl http://localhost:8000/health → {"status":"ok","agent":"jake"} 확인
+□ http://localhost:3000 → OpenWebUI 접속 확인
+□ http://localhost:7777 → JARVIS 화면 접속 확인
+□ 텔레그램으로 "시스템 시작" 알림 수신 확인
+□ JARVIS에서 "헤이 제이크 안녕" 음성 테스트
+□ "제이크야 노션에서 The Architects 찾아줘" 노션 연동 테스트
+```
+
+---
+
+### 11.6 현재 시스템 구성 요약 (2026-06-24 기준)
+
+| 구성 요소 | 파일 경로 | 비고 |
+|---|---|---|
+| Jake API 서버 | `E:\Claude\jake-agent\` | Docker 컨테이너 |
+| JARVIS 음성 UI | `E:\Claude\Desktop\Claude\jarvis-mode\` | Node.js 서버 |
+| OpenWebUI | Docker 볼륨 | 채팅 인터페이스 |
+| PostgreSQL | Docker 컨테이너 | jakedb |
+| CLAUDE.md | `E:\Claude\CLAUDE.md` | 이 파일 |
+
+---
+
+*Last updated: 2026-06-24 | LONGRISE Archive v1.0*
