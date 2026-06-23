@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from .db import create_task, log_conversation
 from .personas import detect_persona, get_system_prompt, PERSONAS
+from .monitor import log_token_usage
 
 load_dotenv()
 
@@ -41,6 +42,14 @@ def agent_node(state: JakeState) -> JakeState:
 
     response = llm.invoke(messages)
     reply = response.content
+
+    # 토큰 사용량 기록
+    if hasattr(response, 'usage_metadata') and response.usage_metadata:
+        log_token_usage(
+            persona,
+            response.usage_metadata.get('input_tokens', 0),
+            response.usage_metadata.get('output_tokens', 0)
+        )
 
     log_conversation(persona, f"이사님: {state['user_input']}", None)
     log_conversation(persona, f"{persona}: {reply}", None)
