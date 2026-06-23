@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGRISE AI - Official User Guide & Vision (Integrated v3)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #0a0a0a;
+            overflow-x: hidden;
+        }
+
+        .presentation {
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            page-break-after: always;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(197, 168, 128, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(197, 168, 128, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: rgba(197, 168, 128, 0.5);
+            font-weight: 700;
+        }
+
+        .slide-title {
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(to right, #c5a880, #fcf6ba);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.2;
+            z-index: 1;
+        }
+
+        .slide-subtitle {
+            font-size: 24px;
+            color: #e5e5e5;
+            text-align: center;
+            margin-bottom: 50px;
+            z-index: 1;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .logo-slide {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+        }
+
+        .logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 100px;
+            font-weight: 900;
+            background: linear-gradient(to right, #c5a880, #fcf6ba, #c5a880);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+        }
+
+        .logo-tagline {
+            font-size: 20px;
+            color: #c5a880;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 60px;
+        }
+
+        .logo-info {
+            font-size: 16px;
+            color: #e5e5e5;
+            line-height: 2;
+            text-align: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(197, 168, 128, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #c5a880;
+            margin-bottom: 15px;
+        }
+
+        .card-text {
+            font-size: 16px;
+            color: #e5e5e5;
+            line-height: 1.8;
+        }
+
+        .stat-box {
+            background: rgba(197, 168, 128, 0.1);
+            border: 2px solid #c5a880;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 72px;
+            font-weight: 900;
+            color: #c5a880;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 18px;
+            color: #e5e5e5;
+            font-weight: 700;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            font-size: 20px;
+            color: #e5e5e5;
+            line-height: 2;
+            padding-left: 40px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .bullet-list li::before {
+            content: '▶';
+            color: #c5a880;
+            font-size: 16px;
+            position: absolute;
+            left: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        th {
+            background: rgba(197, 168, 128, 0.2);
+            color: #c5a880;
+            font-size: 18px;
+            font-weight: 900;
+            padding: 15px;
+            text-align: left;
+            border: 1px solid rgba(197, 168, 128, 0.3);
+        }
+
+        td {
+            color: #e5e5e5;
+            font-size: 16px;
+            padding: 15px;
+            border: 1px solid rgba(197, 168, 128, 0.2);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(197, 168, 128, 0.2) 0%, rgba(220, 38, 38, 0.15) 100%);
+            border-left: 4px solid #c5a880;
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .highlight-text {
+            font-size: 24px;
+            color: #fff;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        .flow-chart {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .flow-box {
+            background: rgba(197, 168, 128, 0.1);
+            border: 2px solid #c5a880;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .flow-arrow {
+            color: #c5a880;
+            font-size: 40px;
+            margin: 0 20px;
+        }
+
+        @media print {
+            .slide { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation">
+        
+        <div class="slide logo-slide">
+            <div class="logo-text">LONGRISE AI</div>
+            <div class="logo-tagline">Global User Guide & Platform Vision</div>
+            <div class="logo-info">
+                Longrise AI Platform Service Overview
+            </div>
+            <div class="slide-number">01</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">1. The Era of Asset Depletion & House Advantage</div>
+            <div class="slide-subtitle">The hidden contradiction of purchasing power destruction in traditional finance</div>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">💸 The Trap of Real Zero Interest Rates</div>
+                        <div class="card-text">
+                            In an era of inflation driven by rapid currency creation, traditional bank deposit rates of 1–3% act as an invisible prison, continuously diminishing the purchasing power of your capital in real time.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📉 Inherent Limitations of Manual Trading</div>
+                        <div class="card-text">
+                            Manual asset trading (stocks, crypto) driven by human greed and fear leaves capital completely exposed to volatility. Emotion-driven decisions inevitably lead to principal losses against the mathematical edge of the house.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🎰 Monopoly over Closed House Margins</div>
+                        <div class="card-text">
+                            The mathematical advantage margin (2–5%) worth hundreds of billions annually, monopolised by global casino houses, has historically been an entry barrier accessible only to massive institutional capital or global junket operators.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">⏰ Impossibility of Second-by-Second Control</div>
+                        <div class="card-text">
+                            It is physically impossible for an individual to monitor the continuous volatility of global 24/7 gaming hub markets to manage risks, making second-by-second, data-driven decisions unattainable.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">02</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">2. Birth of the Hybrid Automated Engine</div>
+            <div class="slide-subtitle">Integrating online strategic trading with offline gaming venue infrastructure</div>
+            <div class="slide-content">
+                <div class="highlight-box">
+                    <div class="highlight-text">
+                        Longrise is not a mere asset custody or investment solicitation platform. It is a technical platform that bridges online virtual asset futures quantitative trading with offline land-based casino wagering infrastructure to deliver steady, daily dividend distributions completely free from human emotion.
+                    </div>
+                </div>
+                <div class="flow-chart">
+                    <div class="flow-box">
+                        <div style="font-size: 48px; margin-bottom: 15px;">💻</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #c5a880;">Online Futures Quant</div>
+                        <div style="font-size: 14px; color: #e5e5e5; margin-top: 10px;">Executes high-frequency statistical<br>arbitrage within crypto futures markets</div>
+                    </div>
+                    <div class="flow-arrow">⚡</div>
+                    <div class="flow-box">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🎰</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #c5a880;">B2B Liquidity Vaults</div>
+                        <div style="font-size: 14px; color: #e5e5e5; margin-top: 10px;">Secures house advantage by maintaining<br>liquidity in global casino vaults</div>
+                    </div>
+                    <div class="flow-arrow">💰</div>
+                    <div class="flow-box">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🏆</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #c5a880;">Daily Wallet Settlement</div>
+                        <div style="font-size: 14px; color: #e5e5e5; margin-top: 10px;">Immediate USDT wallet distribution<br>backed by dual-layer risk controls</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">03</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">3. Daily AI Wagering Yields & Product Specifications</div>
+            <div class="slide-subtitle">Maximising engine scarcity through a staggered, phase-based launch strategy</div>
+            <div class="slide-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Engine Tier</th>
+                            <th>Activation Price</th>
+                            <th>Commitment Period</th>
+                            <th>USDT Yield Rate</th>
+                            <th>CNYT Matching Bonus</th>
+                            <th>Maturity Refund Condition (12M)</th>
+                            <th>Launch Timeline (Phase)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Flexible</td>
+                            <td>$100</td>
+                            <td>No Commitment</td>
+                            <td>Monthly 4%~</td>
+                            <td style="color: #a8a8a8;">None</td>
+                            <td>Immediate 100% Principal Return</td>
+                            <td>Phase 1 (M1-M3 Immediate)</td>
+                        </tr>
+                        <tr>
+                            <td>Basic</td>
+                            <td>$200</td>
+                            <td>12 Months</td>
+                            <td>Monthly 7%~</td>
+                            <td style="color: #c5a880; font-weight: 700;">2% of USDT Yield</td>
+                            <td style="color: #10b981; font-weight: bold;">Full Principal Return (100%)</td>
+                            <td>Phase 1 (M1-M3 Immediate)</td>
+                        </tr>
+                        <tr>
+                            <td>Standard</td>
+                            <td>$500</td>
+                            <td>12 Months</td>
+                            <td>Monthly 9%~</td>
+                            <td style="color: #c5a880; font-weight: 700;">4% of USDT Yield</td>
+                            <td style="color: #10b981; font-weight: bold;">Full Principal Return (100%)</td>
+                            <td>Phase 1 (M1-M3 Immediate)</td>
+                        </tr>
+                        <tr style="background: rgba(197, 168, 128, 0.25); border: 2px solid #c5a880;">
+                            <td><strong>Premium ⭐ [Core Engine]</strong></td>
+                            <td><strong>$1,000</strong></td>
+                            <td><strong>12 Months</strong></td>
+                            <td><strong>Monthly 11%~</strong></td>
+                            <td style="color: #c5a880; font-weight: 900;">6% of USDT Yield</td>
+                            <td style="color: #10b981; font-weight: bold;"><strong>Full Principal Return (100%)</strong></td>
+                            <td><strong>Phase 2 (M4 Staggered)</strong></td>
+                        </tr>
+                        <tr>
+                            <td>VIP ⭐⭐</td>
+                            <td>$5,000</td>
+                            <td>12 Months</td>
+                            <td>Monthly 18%~</td>
+                            <td style="color: #c5a880; font-weight: 700;">10% of USDT Yield</td>
+                            <td style="color: #10b981; font-weight: bold;">Full Principal Return (100%)</td>
+                            <td>Phase 3 (M5 Final Release)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="slide-number">04</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">4. CNYT Token Mechanisms & Arbitrage Ecosystem</div>
+            <div class="slide-subtitle">Asset integration with the real-world casino portfolio of Horizon Capital Foundation</div>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div>
+                        <div class="stat-box" style="margin-bottom: 30px;">
+                            <div class="stat-value">$100M+</div>
+                            <div class="stat-label">Total Verified Real-World Casino Equity Portfolio</div>
+                        </div>
+                        <ul class="bullet-list" style="font-size: 15px;">
+                            <li>Equity infrastructure integration with Golden Palace Tbilisi, Georgia</li>
+                            <li>VIP gaming junket lounges in Da Nang, Vietnam and Manila, Philippines</li>
+                            <li>VIP operational table rights at Ocean Star Resort, Sihanoukville, Cambodia</li>
+                            <li>On-chain utility ecosystem tied to physical leisure infrastructure</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="card">
+                            <div class="card-title">💎 CNYT Value Preservation & Stability Correction</div>
+                            <div class="card-text" style="font-size: 14px;">
+                                • All distributed CNYT is automatically adjusted based on fixed US Dollar (USD) values, thoroughly mitigating financial risks for the platform.<br>
+                                • Welcome bonuses allocated upon activation are subject to a strict lock-up protocol until the Token Generation Event (TGE) in month 14 to prevent market dumping.<br>
+                                • A continuous token buyback and burn model is operational via integration with resort infrastructure.
+                            </div>
+                        </div>
+                        <div class="card" style="margin-top: 20px;">
+                            <div class="card-title">🤝 Leader-Exclusive P2P Arbitrage Model (6% Fixed Margin)</div>
+                            <div class="card-text" style="font-size: 14px;">
+                                Leader groups ranked 'Red' or above acquire standard user sell orders (at 97% of face value) and utilise them for new member package registrations at 103% value. This prevents external capital outflow whilst providing an attractive margin incentive for advanced ranks.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">05</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">5. Risk Management Policies & Exit Specimen</div>
+            <div class="slide-subtitle">Transparent accounting and settlement systems for rational user evaluation</div>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card" style="border-color: #ef4444;">
+                        <div class="card-title" style="color: #ef4444;">🚨 Early Termination Fee Architecture</div>
+                        <div class="card-text" style="font-size: 15px;">
+                            Voluntary early termination before completing the committed vault days incurs liquidity provisioning costs (fees) to safeguard platform solvency.<br>
+                            <strong>[Refund Amount = Principal - Distributed Yields - Liquidity Provision Fee]</strong><br><br>
+                            • <strong>Termination within 3 Months:</strong> 30% Fee Rate | 70% Refund Rate<br>
+                            • <strong>Termination within 6 Months:</strong> 20% Fee Rate | 80% Refund Rate<br>
+                            • <strong>Termination within 9 Months:</strong> 15% Fee Rate | 85% Refund Rate<br>
+                            • <strong>Termination within 12 Months:</strong> 10% Fee Rate | 90% Refund Rate
+                        </div>
+                    </div>
+                    <div class="card" style="border-color: #10b981;">
+                        <div class="card-title" style="color: #10b981;">🛡️ 15% Legal Safety Floor & Maturity Rules</div>
+                        <div class="card-text" style="font-size: 15px;">
+                            • <strong>15% Minimum Floor Guarantee:</strong> If previously processed daily dividend deductions push the net settlement into negative figures, a mandatory <strong>minimum refund of 15% of the principal</strong> is guaranteed to eliminate legal risks.<br><br>
+                            • <strong>Upon 12-Month Maturity:</strong> Early termination penalty fees drop to 0%. A standard 10% platform administration fee is deducted (returning 90%), or full maturity principal refund operations are executed depending on specific account settings.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">06</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">6. AI Trading Performance & Network Simulation</div>
+            <div class="slide-subtitle">High-frequency engine throughput and B2B live casino milestone results</div>
+            <div class="slide-content">
+                <div class="grid-3">
+                    <div class="stat-box">
+                        <div class="stat-value">55,000+</div>
+                        <div class="stat-label">HFT Quant TPS Capacity</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">64.2%</div>
+                        <div class="stat-label">AI Mathematical Win Rate</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">$104.0M</div>
+                        <div class="stat-label">Monthly Operational Wagering Pool</div>
+                    </div>
+                </div>
+                <div class="highlight-box" style="margin-top: 40px;">
+                    <div class="highlight-text" style="font-size: 18px; text-align: center;">
+                        "Operating with a sub-millisecond execution latency of 0.8ms, the system securely processes over 840,000 daily automated multi-node wagers across our global partner junket networks, bypassing typical network bottlenecks flawlessly."
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">07</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">7. Executive Board & Core Leadership</div>
+            <div class="slide-subtitle">FinTech economy specialists and on-chain infrastructure builders</div>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">👔 Executive Board</div>
+                        <div class="card-text">
+                            <strong>Giorgi Beridze</strong> - CEO<br>
+                            • Oversaw the launch of 5 landmark casino infrastructure projects across the Caucasus & Balkans.<br>
+                            • Bachelor of Economics, Tbilisi State University.<br><br>
+                            
+                            <strong>Alexei Sokolov</strong> - CSO<br>
+                            • Orchestrated 3 consecutive exits within the Baltic FinTech infrastructure sector (valuing $45M).<br>
+                            • Bachelor of Statistics, Saint Petersburg State University.<br><br>
+                            
+                            <strong>Petr Novák</strong> - CMO<br>
+                            • Directed public capital attraction and user acquisition campaigns totalling $120M.<br>
+                            • Master of Media Studies, Charles University, Prague.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🧑‍💻 Technical Core Team</div>
+                        <div class="card-text">
+                            <strong>Dr Sergei Petrov</strong> - CTO<br>
+                            • 12 years of experience as a systems architect for HFT numerical analysis and data settlement engines.<br>
+                            • PhD in Applied Mathematics, Lomonosov Moscow State University.<br><br>
+                            
+                            <strong>Ivan Morozov</strong> - Lead AI Engineer<br>
+                            • Senior Researcher at Moscow AI Research Lab / National Mathematics Olympiad Winner.<br><br>
+                            
+                            <strong>Andrei Lebedev</strong> - Blockchain Architect<br>
+                            • Computer Engineering, Tallinn University / Designer of secure on-chain transfer mechanisms.
+                        </div>
+                    </div>
+                </div>
+                <div class="highlight-box" style="margin-top: 40px;">
+                    <div class="highlight-text" style="font-size: 16px;">
+                        <strong>Advisory Board:</strong> Giorgio Bellini (30 years advising casino junket economies) | Dr Elena Kovácsová (Authority on real-world asset on-chain tokenisation) | Markus Weber (Former Compliance Examiner, Liechtenstein FMA)
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">08</div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-title">8. Mid-to-Long-Term Roadmap & Financial Projections</div>
+            <div class="slide-subtitle">Casino infrastructure asset diversification and growth simulation analysis</div>
+            <div class="slide-content">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">📅 Core Ecosystem Roadmap</div>
+                        <div class="card-text" style="font-size: 14px; line-height: 1.6;">
+                            • <strong>2026 Q1-Q4:</strong> Activation of Caucasus land-based casino infrastructure integration; deployment of the CNYT P2P 6% leader arbitrage dashboard.<br>
+                            • <strong>2027:</strong> Acquisition of equity in Philippine resort hotels and official launch of a large-scale, fully-licensed online casino platform.<br>
+                            • <strong>2028:</strong> Expansion of joint-development equity in integrated eco-resorts, targeting an aggregate managed portfolio value of $500M.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📊 Annual Financial Performance Forecast</div>
+                        <table style="margin-top: 0px; font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>2025</th>
+                                    <th>2026</th>
+                                    <th>2027</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Active Accounts</td>
+                                    <td>130,000</td>
+                                    <td>250,000</td>
+                                    <td>500,000</td>
+                                </tr>
+                                <tr style="background: rgba(197, 168, 128, 0.1);">
+                                    <td><strong>Wagering Pool (5x Adjusted)</strong></td>
+                                    <td><strong>$104.0M</strong></td>
+                                    <td><strong>$201.0M</strong></td>
+                                    <td><strong>$427.5M</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Retained Margin</td>
+                                    <td>$21M</td>
+                                    <td>$44M</td>
+                                    <td>$94M</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="highlight-box" style="margin-top: 30px;">
+                    <div class="highlight-text" style="font-size: 16px; text-align: center;">
+                        3-Year Compound Annual Growth Rate (CAGR): Active Users +95% | Reserve Accumulation +105% | Verified Financial Integrity
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">09</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

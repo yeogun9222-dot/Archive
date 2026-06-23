@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGRISE 수익 구조 시뮬레이터</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- html2canvas for Infographic Export -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .capture-target { background-color: #f8fafc; } /* Ensure background is captured */
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // --- Icons (Inline SVGs to avoid dependency issues) ---
+        const IconShield = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        );
+        const IconDollarSign = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        );
+        const IconAward = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        );
+        const IconBarChart3 = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        );
+        const IconLock = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        );
+        const IconUnlock = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+        );
+        const IconDownload = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        );
+
+        // --- Main Component ---
+        const LongriseSimulator = () => {
+            const [investment, setInvestment] = useState(1000000);
+            const [selectedRank, setSelectedRank] = useState(1);
+            const [selectedPackage, setSelectedPackage] = useState(12);
+            const [isExporting, setIsExporting] = useState(false);
+
+            // 패키지 정보
+            const packages = {
+                3: { period: 3, roi: 8, label: '3개월 (월 8%)' },
+                7: { period: 7, roi: 10, label: '7개월 (월 10%)' },
+                12: { period: 12, roi: 12, label: '12개월 (월 12%)' }
+            };
+
+            // 직급 정보
+            const ranks = {
+                1: { id: 1, name: 'Rank 1', condition: '직추 3명', depth: 1, volume: '-' },
+                2: { id: 2, name: 'Rank 2', condition: '직추 3명 + $1k', depth: 7, volume: '1,000 USDT' },
+                3: { id: 3, name: 'Rank 3', condition: '직추 7명 + $10k', depth: 15, volume: '10,000 USDT' },
+                4: { id: 4, name: 'Rank 4', condition: '직추 10명 + $100k', depth: 20, volume: '100,000 USDT' },
+                5: { id: 5, name: 'Rank 5', condition: '직추 15명 + $500k', depth: 999, volume: '500,000 USDT' }
+            };
+
+            const calculationData = useMemo(() => {
+                const monthlyRoi = packages[selectedPackage].roi;
+                const dailyRoiRate = (monthlyRoi * 12) / 365 / 100;
+                const dailyProfit = investment * dailyRoiRate;
+                
+                const levels = [];
+                let currentAmount = dailyProfit;
+                
+                // Level 0 (본인)
+                levels.push({
+                    level: 0,
+                    label: '본인(Daily)',
+                    amount: currentAmount,
+                    percentage: '100%',
+                    isUnlocked: true
+                });
+
+                // Level 1~15 (매칭)
+                let matchingBase = currentAmount;
+                for (let i = 1; i <= 15; i++) {
+                    const amount = matchingBase * 0.1;
+                    const isUnlocked = i <= ranks[selectedRank].depth;
+                    
+                    levels.push({
+                        level: i,
+                        label: `${i}대 (Level ${i})`,
+                        amount: amount,
+                        percentage: '10%',
+                        isUnlocked: isUnlocked
+                    });
+                    matchingBase = amount;
+                }
+                return { dailyProfit, levels };
+            }, [investment, selectedRank, selectedPackage]);
+
+            const formatCurrency = (val) => {
+                return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(val);
+            };
+
+            // 인포그래픽 저장 기능
+            const handleExport = () => {
+                setIsExporting(true);
+                const inputArea = document.getElementById('control-panel'); // Hide controls for cleaner image? Or keep them? Let's keep them but make sure layout is good.
+                const captureArea = document.getElementById('dashboard-content');
+                
+                setTimeout(() => {
+                    html2canvas(captureArea, {
+                        scale: 2, // High resolution
+                        backgroundColor: '#f8fafc',
+                        useCORS: true
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `LONGRISE_Simulation_Rank${selectedRank}_${new Date().toISOString().slice(0,10)}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        setIsExporting(false);
+                    }).catch(err => {
+                        console.error('Export failed:', err);
+                        alert('이미지 저장 중 오류가 발생했습니다.');
+                        setIsExporting(false);
+                    });
+                }, 100);
+            };
+
+            return (
+                <div className="w-full min-h-screen bg-slate-50 font-sans pb-10">
+                    {/* Sticky Header with Export Button */}
+                    <div className="bg-white border-b border-slate-200 sticky top-0 z-50 px-4 py-3 shadow-sm flex justify-between items-center max-w-6xl mx-auto rounded-b-xl">
+                        <div className="flex items-center space-x-2">
+                             <div className="bg-indigo-600 p-1.5 rounded-lg text-white">
+                                <IconShield size={20} />
+                             </div>
+                             <span className="font-bold text-slate-800">LONGRISE Simulator</span>
+                        </div>
+                        <button 
+                            onClick={handleExport}
+                            disabled={isExporting}
+                            className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {isExporting ? (
+                                <span>저장 중...</span>
+                            ) : (
+                                <>
+                                    <IconDownload size={16} />
+                                    <span>이미지로 저장 (Infographic)</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Main Capture Area */}
+                    <div id="dashboard-content" className="w-full max-w-6xl mx-auto p-4 capture-target">
+                        
+                        {/* Title Section */}
+                        <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-l-4 border-indigo-600">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-slate-800">LONGRISE 수익 구조 분석</h1>
+                                    <p className="text-slate-500 text-sm mt-1">엑셀 데이터(10% 낙수 구조) 및 직급별 Depth 시뮬레이션</p>
+                                </div>
+                                <div className="flex items-center space-x-2 bg-indigo-50 px-3 py-1 rounded-full">
+                                    <IconShield size={16} className="text-indigo-600" />
+                                    <span className="text-xs font-medium text-indigo-700">Premium Plan Simulation</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            {/* Left Column: Controls (Included in capture to show settings) */}
+                            <div id="control-panel" className="lg:col-span-4 space-y-6">
+                                
+                                {/* 1. 투자금 설정 */}
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center">
+                                        <IconDollarSign size={16} className="mr-2" /> 투자금 및 패키지 설정
+                                    </h3>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-xs text-slate-500 mb-1 block">투자 금액 (KRW)</label>
+                                            <input 
+                                                type="number" 
+                                                value={investment}
+                                                onChange={(e) => setInvestment(Number(e.target.value))}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-right font-mono font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs text-slate-500 mb-1 block">이용권 패키지 선택</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {[3, 7, 12].map((m) => (
+                                                    <button
+                                                        key={m}
+                                                        onClick={() => setSelectedPackage(m)}
+                                                        className={`text-xs py-2 rounded-lg border transition-all ${
+                                                            selectedPackage === m 
+                                                            ? 'bg-indigo-600 text-white border-indigo-600' 
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                                        }`}
+                                                    >
+                                                        {m}개월<br/>({packages[m].roi}%)
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. 직급(Rank) 선택 */}
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center">
+                                        <IconAward size={16} className="mr-2" /> 직급(Rank) 시뮬레이션
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {Object.values(ranks).map((rank) => (
+                                            <div 
+                                                key={rank.id}
+                                                onClick={() => setSelectedRank(rank.id)}
+                                                className={`cursor-pointer p-3 rounded-lg border-2 transition-all relative overflow-hidden ${
+                                                    selectedRank === rank.id 
+                                                    ? 'border-indigo-500 bg-indigo-50' 
+                                                    : 'border-transparent bg-slate-100 hover:bg-slate-200'
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className={`font-bold ${selectedRank === rank.id ? 'text-indigo-700' : 'text-slate-600'}`}>
+                                                        {rank.name}
+                                                    </span>
+                                                    {selectedRank === rank.id && <div className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full">Selected</div>}
+                                                </div>
+                                                <div className="text-xs text-slate-500 grid grid-cols-2 gap-2 mt-2">
+                                                    <div>
+                                                        <span className="block text-[10px] text-slate-400">달성 조건</span>
+                                                        {rank.condition}
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-[10px] text-slate-400">매칭 혜택</span>
+                                                        <span className={rank.depth >= 15 ? 'text-green-600 font-semibold' : ''}>
+                                                            {rank.depth >= 999 ? '무제한 (Infinity)' : `${rank.depth}대까지 지급`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Visualization */}
+                            <div className="lg:col-span-8 space-y-6">
+                                
+                                {/* Summary Card */}
+                                <div className="bg-gradient-to-r from-indigo-900 to-indigo-800 rounded-xl p-6 text-white shadow-lg">
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <p className="text-indigo-200 text-xs mb-1">나의 예상 데일리 수익</p>
+                                            <p className="text-2xl font-bold font-mono">{formatCurrency(calculationData.dailyProfit)}</p>
+                                            <p className="text-indigo-300 text-xs mt-1">월 수익률 {packages[selectedPackage].roi}% 기준</p>
+                                        </div>
+                                        <div className="border-l border-indigo-700 pl-4">
+                                            <p className="text-indigo-200 text-xs mb-1">직추(1대) 매칭 수당</p>
+                                            <p className="text-xl font-semibold font-mono text-green-300">
+                                                {formatCurrency(calculationData.levels[1].amount)}
+                                            </p>
+                                            <p className="text-indigo-300 text-xs mt-1">내 수익의 10%</p>
+                                        </div>
+                                        <div className="border-l border-indigo-700 pl-4">
+                                            <p className="text-indigo-200 text-xs mb-1">현재 매칭 가능 깊이</p>
+                                            <p className="text-xl font-semibold">
+                                                {ranks[selectedRank].depth >= 999 ? '∞ 무제한' : `${ranks[selectedRank].depth} Level`}
+                                            </p>
+                                            <p className="text-indigo-300 text-xs mt-1">{ranks[selectedRank].name} 적용 중</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Waterfall Chart Structure */}
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[500px]">
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-6 flex items-center justify-between">
+                                        <span className="flex items-center"><IconBarChart3 size={16} className="mr-2" /> 수익 낙수 구조 (Waterfall)</span>
+                                        <span className="text-xs font-normal text-slate-400">엑셀 데이터 기반: 하위 단계 10% 감소</span>
+                                    </h3>
+
+                                    <div className="relative pl-4 border-l-2 border-dashed border-slate-200 space-y-0">
+                                        {calculationData.levels.map((lvl, idx) => (
+                                            <div key={idx} className="relative pl-8 py-2 group">
+                                                {/* Connector Line */}
+                                                <div className={`absolute left-0 top-1/2 w-8 h-0.5 -translate-y-1/2 ${lvl.isUnlocked ? 'bg-indigo-300' : 'bg-slate-200'}`}></div>
+                                                <div className={`absolute left-[-5px] top-1/2 w-3 h-3 rounded-full border-2 -translate-y-1/2 bg-white ${lvl.isUnlocked ? 'border-indigo-500' : 'border-slate-300'}`}></div>
+
+                                                {/* Card */}
+                                                <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                                    lvl.level === 0 
+                                                    ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' 
+                                                    : lvl.isUnlocked 
+                                                        ? 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-md' 
+                                                        : 'bg-slate-50 border-slate-100 opacity-60'
+                                                }`}>
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                                            lvl.level === 0 ? 'bg-indigo-600 text-white' : 
+                                                            lvl.isUnlocked ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-400'
+                                                        }`}>
+                                                            {lvl.level === 0 ? 'ME' : lvl.level}
+                                                        </div>
+                                                        <div>
+                                                            <p className={`text-xs font-bold ${lvl.isUnlocked ? 'text-slate-700' : 'text-slate-400'}`}>
+                                                                {lvl.label}
+                                                            </p>
+                                                            <p className="text-[10px] text-slate-400">
+                                                                {lvl.level === 0 ? '기본 수익' : `상위 단계의 10%`}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-right">
+                                                        {lvl.isUnlocked ? (
+                                                            <>
+                                                                <p className="text-sm font-bold text-slate-800 font-mono">{formatCurrency(lvl.amount)}</p>
+                                                                {lvl.level > 0 && <p className="text-[10px] text-green-600 flex items-center justify-end"><IconUnlock size={10} className="mr-1"/> 수령 가능</p>}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <p className="text-sm font-bold text-slate-400 font-mono line-through">{formatCurrency(lvl.amount)}</p>
+                                                                <p className="text-[10px] text-red-400 flex items-center justify-end"><IconLock size={10} className="mr-1"/> 직급 미달</p>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        {/* Show more indicator */}
+                                        {ranks[selectedRank].depth > 15 && (
+                                            <div className="relative pl-8 py-2">
+                                                <div className="absolute left-0 top-1/2 w-8 h-0.5 -translate-y-1/2 bg-indigo-300"></div>
+                                                <div className="p-3 text-center text-xs text-indigo-500 font-medium bg-indigo-50 rounded-lg border border-indigo-100">
+                                                    ... Rank 혜택에 따라 최대 {ranks[selectedRank].depth === 999 ? '무제한' : `${ranks[selectedRank].depth}대`}까지 지속
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-center text-slate-400 text-xs mt-6">
+                        LONGRISE Internal Simulation Tool - Confidential
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LongriseSimulator />);
+    </script>
+</body>
+</html>

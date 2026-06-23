@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LONGRISE AI — DB 세팅 미리보기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; font-family: 'Segoe UI', sans-serif; color: #e2e8f0; padding: 30px; }
+  h1 { font-size: 28px; color: #fbbf24; margin-bottom: 6px; }
+  h2 { font-size: 16px; background: #1e293b; color: #fbbf24; padding: 10px 16px; margin: 24px 0 12px; border-left: 4px solid #fbbf24; border-radius: 4px; }
+  h3 { font-size: 13px; color: #94a3b8; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+  p, li { font-size: 12px; color: #cbd5e1; line-height: 1.7; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+  th { background: #1e293b; border: 1px solid #334155; padding: 8px 10px; color: #fbbf24; text-align: left; }
+  td { border: 1px solid #1e293b; padding: 7px 10px; vertical-align: top; }
+  tr:hover td { background: #1a2942; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
+  .blue  { background: #1d4ed8; color: white; }
+  .green { background: #15803d; color: white; }
+  .gold  { background: #92400e; color: #fbbf24; border: 1px solid #fbbf24; }
+  .red   { background: #991b1b; color: #fca5a5; }
+  .gray  { background: #334155; color: #94a3b8; }
+  .card  { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: bold; color: #fbbf24; margin-bottom: 8px; }
+  .stat { display: inline-block; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 16px; margin: 4px; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: bold; color: #fbbf24; display: block; }
+  .stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; }
+  code { background: #0f172a; color: #34d399; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-family: monospace; }
+  .tree-line { font-family: monospace; font-size: 11px; color: #4ade80; line-height: 1.8; padding: 12px; background: #0f172a; border-radius: 6px; margin: 8px 0; }
+  .warning { background: #451a03; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px; color: #fcd34d; font-size: 11px; }
+  .toolbar { position: sticky; top: 0; background: #0f172a; border-bottom: 1px solid #1e293b; padding: 12px 0; margin-bottom: 24px; z-index: 100; display: flex; gap: 12px; align-items: center; }
+  .btn { background: #1e40af; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+  .btn:hover { background: #2563eb; }
+  .section { max-width: 1200px; margin: 0 auto; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media(max-width:768px) { .grid2,.grid3 { grid-template-columns: 1fr; } }
+  .progress-bar { background: #1e293b; border-radius: 4px; height: 8px; margin: 4px 0; }
+  .progress-fill { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #fbbf24, #f97316); }
+  .rank-blue   { color: #60a5fa; font-weight: bold; }
+  .rank-white  { color: #e2e8f0; font-weight: bold; }
+  .file-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1e293b; }
+  .file-icon { font-size: 20px; width: 32px; text-align: center; }
+  .file-name { font-size: 13px; font-weight: bold; color: #38bdf8; }
+  .file-desc { font-size: 11px; color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="section">
+
+  <div class="toolbar">
+    <h1>🐉 LONGRISE AI — DB 세팅 미리보기</h1>
+    <button class="btn" onclick="window.print()">📄 PDF 출력</button>
+  </div>
+
+  <!-- 파일 구성 -->
+  <h2>📁 생성된 파일 목록</h2>
+  <div class="card">
+    <div class="file-row">
+      <div class="file-icon">📘</div>
+      <div>
+        <div class="file-name">README.md</div>
+        <div class="file-desc">개발자 실행 가이드 + 보류 질문 3가지 포함 — 개발자이사님께 전달</div>
+      </div>
+    </div>
+    <div class="file-row">
+      <div class="file-icon">🗄️</div>
+      <div>
+        <div class="file-name">01_schema.sql</div>
+        <div class="file-desc">CREATE TABLE 6개 — users / packages / daily_returns / transactions / referral_tree / usdt_transfers</div>
+      </div>
+    </div>
+    <div class="file-row">
+      <div class="file-icon">👤</div>
+      <div>
+        <div class="file-name">02_static_data.sql</div>
+        <div class="file-desc">10개 주계정 + 22개 패키지 이력 + 30건 USDT 이체 내역 INSERT</div>
+      </div>
+    </div>
+    <div class="file-row">
+      <div class="file-icon">🌳</div>
+      <div>
+        <div class="file-name">03_referral_tree.sql</div>
+        <div class="file-desc">Kim 조직도 46개 + 독립 시연계정 7개 = 플랫폼 108개 계정 INSERT (V8.9 Rev.2 — Wei 직접 L1 / Wei 서브트리 28명 / Lee·Park Kim L1 Blue Dragon)</div>
+      </div>
+    </div>
+    <div class="file-row">
+      <div class="file-icon">⚙️</div>
+      <div>
+        <div class="file-name">04_seed_generator.js</div>
+        <div class="file-desc">Node.js 실행 → 일일수익 3,650행 + 트랜잭션 자동 생성 (Page 11 알고리즘)</div>
+      </div>
+    </div>
+    <div class="file-row">
+      <div class="file-icon">📱</div>
+      <div>
+        <div class="file-name">05_mockData_update.ts</div>
+        <div class="file-desc">프론트엔드 shared/mockData.ts 교체파일 — 백엔드 연동 전 즉시 시연 가능</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 통계 -->
+  <h2>📊 데이터 규모 요약</h2>
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+    <div class="stat"><span class="stat-num">10</span><span class="stat-label">주계정</span></div>
+    <div class="stat"><span class="stat-num">22</span><span class="stat-label">패키지 이력</span></div>
+    <div class="stat"><span class="stat-num">~108</span><span class="stat-label">조직도 계정</span></div>
+    <div class="stat"><span class="stat-num">3,650</span><span class="stat-label">일일수익 행</span></div>
+    <div class="stat"><span class="stat-num">~5,000</span><span class="stat-label">트랜잭션 행</span></div>
+    <div class="stat"><span class="stat-num">30</span><span class="stat-label">USDT 이체 내역</span></div>
+  </div>
+
+  <!-- 10개 계정 -->
+  <h2>👤 10개 시연 계정 스펙</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>닉네임</th>
+        <th>Gmail (임시)</th>
+        <th>가입일</th>
+        <th>업그레이드일</th>
+        <th>USDT 잔고</th>
+        <th>CNYT 잔고</th>
+        <th>팀 인원</th>
+        <th>팀 매출</th>
+        <th>현재 직급</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>⭐ Kim_Dragon88</td><td><code>kim88@gmail.com</code></td><td>2025-03-23</td><td>Premium $1,000<br/><small style="color:#ef4444;">재구매2026-03-09<br/>인출$1,530(2회)</small></td><td>$3,139</td><td>104,927</td><td>45명</td><td>$28,500</td><td><span class="badge blue">Blue Dragon</span></td></tr>
+      <tr><td>2</td><td>Lee_Profit99<br/><small style="color:#94a3b8;">Kim 직접 L1</small></td><td><code>lee99@gmail.com</code></td><td>2025-03-25</td><td>Premium $1,000<br/><small style="color:#64748b;">재구매2026-03-15</small></td><td>$2,680</td><td>104,732</td><td>3명</td><td>$1,500</td><td><span class="badge blue">Blue Dragon</span></td></tr>
+      <tr><td>3</td><td>Park_Alpha77<br/><small style="color:#94a3b8;">Kim 직접 L1</small></td><td><code>park77@gmail.com</code></td><td>2025-03-26</td><td>Premium $1,000<br/><small style="color:#64748b;">재구매2026-04-02</small></td><td>$2,540</td><td>104,653</td><td>3명</td><td>$1,500</td><td><span class="badge blue">Blue Dragon</span></td></tr>
+      <tr><td>4</td><td>Choi_Rise12</td><td><code>choi12@gmail.com</code></td><td>2025-02-18</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-02-08</small></td><td>$1,564</td><td>129,431</td><td>17명</td><td>$4,200</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>5</td><td>Han_Node34</td><td><code>han34@gmail.com</code></td><td>2025-02-22</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-03-03</small></td><td>$1,549</td><td>129,167</td><td>12명</td><td>$3,000</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>6</td><td>Jung_Bull56</td><td><code>jung56@gmail.com</code></td><td>2025-02-26</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-03-12</small></td><td>$1,481</td><td>129,068</td><td>8명</td><td>$2,000</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>7</td><td>Yoon_Gold78</td><td><code>yoon78@gmail.com</code></td><td>2025-03-02</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-02-20</small></td><td>$1,462</td><td>129,299</td><td>6명</td><td>$1,500</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>8</td><td>Song_Wave90</td><td><code>song90@gmail.com</code></td><td>2025-03-07</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-02-26</small></td><td>$1,445</td><td>129,233</td><td>5명</td><td>$1,250</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>9</td><td>Lim_Eagle23</td><td><code>lim23@gmail.com</code></td><td>2025-03-12</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-03-20</small></td><td>$1,426</td><td>128,969</td><td>4명</td><td>$900</td><td><span class="badge gray">White Dragon</span></td></tr>
+      <tr><td>10</td><td>Ko_Titan45</td><td><code>ko45@gmail.com</code></td><td>2025-03-17</td><td>Standard→Premium<br/><small style="color:#64748b;">재구매2026-04-01</small></td><td>$1,407</td><td>128,847</td><td>3명</td><td>$600</td><td><span class="badge gray">White Dragon</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px; color:#64748b; margin-bottom:24px;">
+    ※ 거래 비밀번호: <code>Longrise1!</code> (전 계정 통일) &nbsp;|&nbsp;
+    로그인: 이메일 아이디 + 인증코드 → 비밀번호 설정 (로그인 아이디+비밀번호 필수) &nbsp;|&nbsp;
+    Kim LOCKED $0 (만기 2026-03-23, 재투자 없음) / 인출 $1,530(2회) &nbsp;|&nbsp;
+    플랫폼 오픈: 2025-03-23 / 기준일: 2026-06-05
+  </p>
+
+  <!-- V8.9 핵심 서사 -->
+  <div class="warning" style="margin-bottom:20px;">
+    <strong>🔑 V8.9 Rev.2 핵심 서사 포인트</strong><br><br>
+    Kim은 2025-03-23 가입 당일 <strong>Wei/Choi/Nguyen/Liu 4명 동시 가입</strong> → 팀매출 $6,400 + 직접추천 4명 → <strong>가입 당일 Blue Dragon 즉시 달성</strong><br>
+    <strong>Lee(03-25) / Park(03-26)</strong> 며칠 후 가입 → Kim 직접 L1 Blue Dragon 2명 확보<br>
+    <strong>CN_Wei</strong>는 6개월 만에 Purple Dragon 달성 (하부 5명 중 Blue Dragon 3인: Wang_Golden / Li_Bull / Zhao_Star)<br>
+    Blue Dragon 카운트 정책: <strong>정확히 Blue Dragon만</strong> 카운트 (Purple 이상 제외) → Kim 하부 Blue: Lee + Park = 2명<br>
+    Kim Purple Dragon까지 <strong>1명 부족</strong> → KR_Choi_Star L2 1명 추가 시 Blue Dragon → Kim 즉시 Purple Dragon!<br><br>
+    직급 분포: <span style="color:#a78bfa; font-weight:bold;">Purple 1개(Wei)</span> /
+    <span style="color:#60a5fa; font-weight:bold;">Blue Dragon 3개(Kim/Lee/Park)</span> /
+    <span style="font-weight:bold;">White Dragon 多</span>
+  </div>
+
+  <!-- Kim 조직도 -->
+  <h2>🌳 Kim_Dragon88 조직도 (Kim 조직 46개 계정)</h2>
+  <div class="grid2">
+    <div>
+      <div class="tree-line">
+Kim_Dragon88 <span style="color:#60a5fa;">★ Blue Dragon</span>  Premium $1,000 | 팀매출 $28,500 | 가입 2025-03-23
+│
+├── [당일] CN_Wei_Dragon <span style="color:#a78bfa;">★★ Purple Dragon</span>  🇨🇳 약 28명
+│   ├── <span style="color:#60a5fa;">CN_Wang_Golden ★Blue</span> (VIP $5,000 / 팀~9명 / 팀매출~$18,000)
+│   ├── <span style="color:#60a5fa;">CN_Li_Bull ★Blue</span> (VIP $5,000 / 팀~8명 / 팀매출~$15,000)
+│   ├── <span style="color:#60a5fa;">CN_Zhao_Star ★Blue</span> (Premium×2 / 팀~6명 / 팀매출~$12,000)
+│   ├── CN_Feng_Rise ○White (Premium $1,000 / 팀~3명) ★신규
+│   └── CN_Tang_Gold ○White (Premium $1,000 / 팀~2명) ★신규
+│
+├── [당일] KR_Choi_Star <span style="color:#e2e8f0;">○ White Dragon</span>  🇰🇷 (Premium×3 / L2 2명)
+│   └── ⭐ L2 1명 추가 시 → Choi Blue Dragon → Kim 즉시 Purple Dragon!
+│
+├── [당일] VN_Nguyen_Pro <span style="color:#e2e8f0;">○ White Dragon</span>  🇻🇳 (Basic $200 / L2 2명)
+├── [당일] CN_Liu_Rise   <span style="color:#e2e8f0;">○ White Dragon</span>  🇨🇳 (Basic $200 / L2 1명)
+├── [03-25] Lee_Profit99 <span style="color:#60a5fa;">★ Blue Dragon</span>  🇰🇷 (Premium $1,000 / L2 3명)
+└── [03-26] Park_Alpha77 <span style="color:#60a5fa;">★ Blue Dragon</span>  🇰🇷 (Premium $1,000 / L2 3명)
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Purple Dragon 달성 조건 체크</div>
+        <table>
+          <tr><th>조건</th><th>필요</th><th>현재</th><th>상태</th></tr>
+          <tr><td>패키지</td><td>Premium $1,000+</td><td>$1,000</td><td><span class="badge green">✅ 충족</span></td></tr>
+          <tr><td>직접추천</td><td>5명 이상</td><td>6명</td><td><span class="badge green">✅ 충족</span></td></tr>
+          <tr><td>팀 매출</td><td>$10,000+</td><td>$28,500</td><td><span class="badge green">✅ 충족</span></td></tr>
+          <tr><td>하부 Blue Dragon</td><td><strong>3명</strong></td><td><strong>2명</strong> (Lee+Park)</td><td><span class="badge red">❌ 1명 부족</span></td></tr>
+        </table>
+        <p style="margin-top:10px; font-size:11px; color:#fbbf24;">
+          ※ Blue Dragon 카운트: 정확히 Blue Dragon만 (Purple 제외)<br>
+          → KR_Choi_Star L2 1명 추가 = Blue Dragon<br>
+          &nbsp;&nbsp;→ Kim 즉시 Purple Dragon 달성!
+        </p>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <div class="card-title">조직 통계 (Kim 조직도 46개)</div>
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:11px;">
+            <span>Wei 서브트리 (고액 투자자)</span><span style="color:#fbbf24;">약 28명 / 4레벨</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+          <div style="display:flex; justify-content:space-between; margin:8px 0 4px; font-size:11px;">
+            <span>Lee / Park 라인 (Kim L1 Blue)</span><span style="color:#fbbf24;">각 3명 / 2레벨</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:15%"></div></div>
+          <div style="display:flex; justify-content:space-between; margin:8px 0 4px; font-size:11px;">
+            <span>Choi 라인 (핵심변수)</span><span style="color:#fbbf24;">2명 / 2레벨</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:8%"></div></div>
+          <div style="display:flex; justify-content:space-between; margin:8px 0 4px; font-size:11px;">
+            <span>Nguyen / Liu 라인</span><span style="color:#fbbf24;">각 1~2명 / 2레벨</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:5%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- 거래 이력 전체 구조 (04_seed_generator.js 생성 데이터) -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2>📋 Kim_Dragon88 거래 이력 전체 (가입~현재 / DB에 들어갈 실제 데이터)</h2>
+
+  <div class="warning" style="margin-bottom:16px;">
+    이 데이터는 <code>04_seed_generator.js</code>를 실행하면 <strong>daily_returns</strong> 테이블과 <strong>transactions</strong> 테이블에 자동 생성됩니다.<br>
+    플랫폼의 지갑 화면(Wallet Page)에서 "Recent Activity"와 수익 현황으로 표시됩니다.
+  </div>
+
+  <!-- 1. 가입 시점 이벤트 -->
+  <h3>① 가입~현재 주요 이벤트 타임라인</h3>
+  <table>
+    <thead>
+      <tr><th>날짜</th><th>이벤트 유형</th><th>금액</th><th>화폐</th><th>설명</th></tr>
+    </thead>
+    <tbody>
+      <tr style="background:#0d2818;"><td>2025-03-23</td><td><code>deposit</code></td><td>+$1,000</td><td>USDT</td><td>Premium 패키지 최초 가입</td></tr>
+      <tr><td>2025-03-23</td><td><code>cnyt_bonus</code></td><td>+500</td><td>CNYT</td><td>가입 CNYT 보너스 ($1,000×1%÷$0.02) — TGE까지 락업</td></tr>
+      <tr style="background:#1c1a00;"><td>2025-03-23</td><td><code>direct_referral</code></td><td>+$640</td><td>USDT</td><td>Wei $500 + Choi $100 + Nguyen $20 + Liu $20 (4명 당일 동시 가입)</td></tr>
+      <tr style="background:#1c1a00;"><td>2025-03-25</td><td><code>direct_referral</code></td><td>+$100</td><td>USDT</td><td>Lee_Profit99 가입 — 직접추천 수당 ($1,000×10%)</td></tr>
+      <tr style="background:#1c1a00;"><td>2025-03-26</td><td><code>direct_referral</code></td><td>+$100</td><td>USDT</td><td>Park_Alpha77 가입 — 직접추천 수당 ($1,000×10%)</td></tr>
+      <tr style="background:#0d2818;"><td>2025-03-24~</td><td><code>daily_roi</code></td><td>+$4.31/일</td><td>USDT</td><td>Premium 일일 배당 (수익일 기준)</td></tr>
+      <tr><td>2025-03-24~</td><td><code>daily_roi</code></td><td>+12.93/일</td><td>CNYT</td><td>USDT 수익의 6% CNYT 환산 (÷$0.02) / 7일 이내 P2P 가능</td></tr>
+      <tr style="background:#0a1628;"><td>매월 말</td><td><code>rollup</code></td><td>+$90~$153/월</td><td>USDT</td><td>L1 Wei+Lee+Park+Choi+Nguyen+Liu 롤업 (Blue Dragon 3레벨)</td></tr>
+      <tr style="background:#1a1a00;"><td>2025-06-23</td><td><code>direct_referral</code></td><td>+$100</td><td>USDT</td><td>Choi 2번째 Premium 구매 — 구매 건당 수당 $100</td></tr>
+      <tr style="background:#1a1a00;"><td>2025-09-23</td><td><code>direct_referral</code></td><td>+$100</td><td>USDT</td><td>Choi 3번째 Premium 구매 — 구매 건당 수당 $100</td></tr>
+      <tr style="background:#1c1a00;"><td>2025-10-08</td><td><code>withdrawal</code></td><td>-$1,150</td><td>USDT</td><td>1차 인출 (잔고 $2,650 확인 후 출금)</td></tr>
+      <tr style="background:#1c1a00;"><td>2026-03-12</td><td><code>withdrawal</code></td><td>-$380</td><td>USDT</td><td>2차 인출 (잔고 $2,817 확인 후 출금)</td></tr>
+      <tr style="background:#0d2818;"><td>2026-03-23</td><td><code>maturity</code></td><td>+$1,000</td><td>USDT</td><td>Premium 12개월 만기 — 원금 100% 환급 (수수료 0%) / 재투자 없음</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 2. 일일 수익 샘플 (1주일) -->
+  <h3>② 일일 수익 데이터 샘플 — Premium 기간 1주일 예시</h3>
+  <table>
+    <thead>
+      <tr><th>날짜</th><th>일자유형</th><th>표시수익률</th><th>USDT 지급</th><th>CNYT 지급</th><th>비고</th></tr>
+    </thead>
+    <tbody>
+      <tr style="background:#0d2818;"><td>2025-06-01</td><td><span class="badge green">수익일</span></td><td>+0.87%</td><td>+$4.31</td><td>+12.93</td><td>일반 수익일</td></tr>
+      <tr><td>2025-06-02</td><td><span class="badge green">수익일</span></td><td>+1.12%</td><td>+$4.31</td><td>+12.93</td><td></td></tr>
+      <tr style="background:#1c1a00;"><td>2025-06-03</td><td><span class="badge" style="background:#78350f;color:white;">방어일</span></td><td>0%</td><td>$0</td><td>0</td><td>AI 방어 로직 적용 — 지급 없음</td></tr>
+      <tr style="background:#0d2818;"><td>2025-06-04</td><td><span class="badge green">수익일</span></td><td>+0.63%</td><td>+$4.31</td><td>+12.93</td><td></td></tr>
+      <tr><td>2025-06-05</td><td><span class="badge green">수익일</span></td><td>+1.38%</td><td>+$4.31</td><td>+12.93</td><td></td></tr>
+      <tr style="background:#0a1628;"><td>2025-06-06</td><td><span class="badge blue">역전일</span></td><td>+3.24%</td><td>+$6.03</td><td>+18.09</td><td>잭팟일 — 기본 ×1.4배 지급</td></tr>
+      <tr style="background:#0d2818;"><td>2025-06-07</td><td><span class="badge green">수익일</span></td><td>+0.94%</td><td>+$4.31</td><td>+12.93</td><td></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px;color:#64748b;margin:6px 0 20px;">※ 월간 합산은 항상 14%~22% 범위로 자동 보정됩니다. 방어일은 지급 없음($0)이지만 손실도 없습니다.</p>
+
+  <!-- 3. 총 데이터 건수 -->
+  <h3>③ 전체 생성 데이터 규모 (04_seed_generator.js 실행 결과)</h3>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">transactions 테이블 구성</div>
+      <table style="font-size:10px;">
+        <tr><th>유형</th><th>건수(Kim 기준)</th><th>금액</th></tr>
+        <tr><td>deposit (입금)</td><td>2건</td><td>$500 + $500</td></tr>
+        <tr style="background:#0d2818;"><td>cnyt_bonus (초기 CNYT)</td><td>2건</td><td>250 + 250 CNYT</td></tr>
+        <tr><td>direct_referral (직추천)</td><td>5건</td><td>$160 합계</td></tr>
+        <tr style="background:#0d2818;"><td>daily_roi (일일배당)</td><td>~315건</td><td>수익일만 (방어일 제외)</td></tr>
+        <tr><td>rollup (롤업수당)</td><td>~16건</td><td>월별 발생</td></tr>
+        <tr style="background:#1c1a00;"><td><strong>Kim 소계</strong></td><td><strong>~340건</strong></td><td></td></tr>
+        <tr><td><strong>10개 계정 합계</strong></td><td><strong>~3,200건</strong></td><td></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">daily_returns 테이블 구성</div>
+      <table style="font-size:10px;">
+        <tr><th>계정</th><th>기간</th><th>행수</th></tr>
+        <tr><td>Kim_Dragon88</td><td>2025-03-23 ~ 2026-06-05</td><td>~440행</td></tr>
+        <tr style="background:#0d2818;"><td>Lee~Ko (9개)</td><td>각 가입일 ~ 현재</td><td>각 ~440~470행</td></tr>
+        <tr style="background:#1c1a00;"><td><strong>10개 합계</strong></td><td></td><td><strong>~3,650행</strong></td></tr>
+      </table>
+      <p style="font-size:10px;color:#64748b;margin-top:8px;">
+        방어일(15%): 해당일 usdt_earned = $0<br>
+        역전일(5%): 기본 지급액 ×1.4배<br>
+        수익일(80%): 패키지 월 약정액 기반
+      </p>
+    </div>
+  </div>
+
+  <!-- 4. 잔고 누적 구조 -->
+  <h3>④ Kim_Dragon88 잔고 누적 구조 (V8.9 Rev.2 확정 / 인출 2회 반영)</h3>
+  <table>
+    <thead><tr><th>수입 항목</th><th>금액 (USDT)</th><th>CNYT</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr style="background:#1c1a00;"><td>직접추천 수당 합계</td><td>$1,040</td><td>—</td><td>Wei$500+Choi$300+Nguyen$20+Liu$20+Lee$100+Park$100 (매회 지급)</td></tr>
+      <tr style="background:#0d2818;"><td>본인 일일 배당 (12개월)</td><td>$1,320</td><td>3,960개</td><td>Premium $110/월 × 12개월 / CNYT 330개/월</td></tr>
+      <tr><td>L1 롤업 수당 합계</td><td>~$1,944</td><td>—</td><td>Wei/Lee/Park/Choi/Nguyen/Liu 롤업 전 기간</td></tr>
+      <tr style="background:#0d2818;"><td>L2 롤업</td><td>~$21</td><td>—</td><td>Wei 하부 기여분</td></tr>
+      <tr><td>초기 CNYT 보너스</td><td>—</td><td>500개</td><td>$1,000×1%÷$0.02 (TGE까지 락업)</td></tr>
+      <tr style="background:#1c1500;font-weight:bold;"><td>총 수익 합계</td><td><strong>~$4,325</strong></td><td><strong>4,460개</strong></td><td>인출 $1,530 차감 / 원금 $1,000 반환 포함 → 현재 $3,827</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px;color:#64748b;margin:6px 0 24px;">
+    ※ LOCKED USDT: $1,000 (2nd패키지 진행중 / 재구매 2026-03-09) | 인출 $1,530 (1차$1,150+2차$380) | 현재 USDT: $3,139 | CNYT 104,927개
+  </p>
+
+  <!-- 수익 알고리즘 -->
+  <h2>📈 일일 수익 알고리즘 (Page 11 기준)</h2>
+  <div class="grid3">
+    <div class="card">
+      <div class="card-title">🟢 수익일 (80%)</div>
+      <p>표시 수익률: <code>0.40% ~ 1.50%</code><br>
+      실제 지급: 월 약정률 기반 균등 배분<br>
+      Standard 기준: <code>$1.76/일</code><br>
+      Premium 기준: <code>$4.31/일</code></p>
+    </div>
+    <div class="card">
+      <div class="card-title">🛡️ 방어일 (15%)</div>
+      <p>표시 수익률: <code>0%</code><br>
+      실제 지급: <code>$0</code><br>
+      "AI가 손실을 방어한 날"로<br>프론트에 표시됨</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🚀 역전일 (5%)</div>
+      <p>표시 수익률: <code>2.00% ~ 4.00%</code><br>
+      실제 지급: 기본 대비 <code>×1.4배</code><br>
+      "AI 특별 성과일"로<br>프론트에 표시됨</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0;">
+    <div class="card-title">📊 월별 누적 보정</div>
+    <p>월 합산이 <code>투자금×14%</code> 미만이면 자동 상향 보정 / <code>투자금×22%</code> 초과 시 하향 보정<br>
+    → 항상 <strong>14%~22% 범위</strong>로 수렴 (평균 18% 목표)</p>
+  </div>
+
+  <!-- CNYT 계산 -->
+  <h2>🪙 CNYT 잔고 계산 근거</h2>
+  <table>
+    <thead>
+      <tr><th>기간</th><th>패키지</th><th>투자금</th><th>월 USDT</th><th>CNYT율</th><th>월 CNYT</th><th>기간</th><th>소계</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>기간1</td><td>Standard</td><td>$500</td><td>$45</td><td>4%</td><td>90개/월</td><td>약 3.2개월</td><td>~288개</td>
+      </tr>
+      <tr>
+        <td>기간2</td><td>Premium</td><td>$1,000</td><td>$110</td><td>6%</td><td>330개/월</td><td>약 12.4개월</td><td>~4,092개</td>
+      </tr>
+      <tr style="background:#1a2942;">
+        <td colspan="7"><strong>초기 보너스 (Standard $500×1%÷$0.02 + Premium 추가분)</strong></td><td>~500개</td>
+      </tr>
+      <tr style="background:#1a2942;">
+        <td colspan="7"><strong>Kim_Dragon88 총 CNYT 합계</strong></td><td><strong>4,460개</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px; color:#64748b; margin-bottom:24px;">※ CNYT 단가 $0.02 고정 적용 | 초기 보너스 CNYT는 TGE(14개월) 전까지 잠금</p>
+
+  <!-- 개발자 실행 순서 -->
+  <h2>🚀 개발자 실행 순서</h2>
+  <div class="card">
+    <pre style="font-family:monospace; font-size:12px; color:#34d399; line-height:2;">
+# 1단계: 테이블 생성
+mysql -u root -p longrise &lt; 01_schema.sql
+
+# 2단계: 주계정 + 패키지 INSERT
+mysql -u root -p longrise &lt; 02_static_data.sql
+
+# 3단계: 조직도 INSERT (플랫폼 108개 계정)
+mysql -u root -p longrise &lt; 03_referral_tree.sql
+
+# 4단계: 일일수익 + 트랜잭션 자동 생성 (~7,730건)
+node 04_seed_generator.js | mysql -u root -p longrise
+
+# 5단계: 프론트엔드 즉시 반영 (DB 연동 전 임시 사용)
+# src/shared/mockData.ts      ← 05_mockData_update.ts 내용으로 교체
+# src/shared/mockTransactions.ts ← 06_mockTransactions.ts 복사 (신규)
+    </pre>
+  </div>
+
+  <!-- 개발자 확인 사항 -->
+  <h2>⚠️ 개발자이사님께 확인 필요한 3가지</h2>
+  <div class="warning">
+    <strong>Q1. 백엔드 DB 연결 시점</strong><br>
+    현재 <code>src/db/index.ts</code>가 Mock Mode (메모리 배열)입니다. 실제 MySQL 전환 시점 확인 필요.<br><br>
+    <strong>Q2. 로그인 시 계정별 데이터 라우팅</strong><br>
+    현재 <code>App.tsx:558</code>에 <code>SHARED_MOCK_USERS[1]</code> 하드코딩되어 있습니다. 이메일 로그인 후 자동 계정 분기 로직 개발 일정 확인 필요.<br><br>
+    <strong>Q3. 일일 수익률 히스토리 화면</strong><br>
+    DB에 365일치 데이터가 준비되지만, 현재 프론트에 전체 이력 조회 페이지가 없습니다. <code>CryptoAIPage</code>에 추가 예정인지 확인 필요.
+  </div>
+
+  <div style="margin-top: 40px; padding: 20px; background:#1e293b; border-radius:8px; text-align:center;">
+    <p style="color:#64748b; font-size:11px;">
+      LONGRISE AI — DB 세팅 V8.9 Rev.2 | 2026-06-06 최종 업데이트<br>
+      임시 Gmail은 실제 Gmail 10개 수령 후 <code>02_static_data.sql</code>의 email 컬럼만 교체하세요.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>
+
+

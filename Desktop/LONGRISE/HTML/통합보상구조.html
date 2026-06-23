@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGRISE AI Reward Structure</title>
+    <!-- Tailwind CSS for Layout & Typography -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 설정 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F3F4F6;
+            color: #1F2937;
+            overflow-x: hidden;
+        }
+
+        /* 색상 변수 */
+        :root {
+            --color-daily: #10B981;   /* Green */
+            --color-direct: #3B82F6;  /* Blue */
+            --color-match: #8B5CF6;   /* Purple */
+        }
+
+        /* 텍스트 강조 클래스 */
+        .text-daily { color: var(--color-daily); }
+        .text-direct { color: var(--color-direct); }
+        .text-match { color: var(--color-match); }
+        .bg-daily { background-color: var(--color-daily); }
+        .bg-direct { background-color: var(--color-direct); }
+        .bg-match { background-color: var(--color-match); }
+
+        /* 아이콘 스타일 (실루엣) */
+        .user-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        .user-head {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: currentColor;
+            margin-bottom: 2px;
+        }
+        .user-body {
+            width: 36px;
+            height: 24px;
+            border-radius: 12px 12px 0 0;
+            background-color: currentColor;
+        }
+        .user-icon.large .user-head { width: 40px; height: 40px; margin-bottom: 4px; }
+        .user-icon.large .user-body { width: 60px; height: 40px; }
+        
+        /* 섹션 공통 */
+        section {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 1rem;
+            position: relative;
+            border-bottom: 1px solid #E5E7EB;
+            background: white;
+        }
+
+        /* 애니메이션 */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* SVG 화살표 애니메이션 */
+        .arrow-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1.5s ease-out;
+        }
+        .arrow-path.drawn {
+            stroke-dashoffset: 0;
+        }
+
+        /* 반응형 조정 */
+        @media (max-width: 768px) {
+            .user-icon.large .user-head { width: 30px; height: 30px; }
+            .user-icon.large .user-body { width: 45px; height: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="w-full bg-slate-900 text-white py-6 text-center shadow-lg sticky top-0 z-50">
+        <h1 class="text-2xl md:text-3xl font-black tracking-widest">LONGRISE AI</h1>
+        <p class="text-sm md:text-base font-light opacity-80 mt-1">통합 보상 메커니즘 인포그래픽</p>
+    </header>
+
+    <!-- SECTION 1: 통합 보상 구조 오버뷰 -->
+    <section id="section1">
+        <div class="container mx-auto max-w-4xl text-center mb-10 fade-in-up">
+            <h2 class="text-3xl font-bold mb-4">통합 보상 구조 Overview</h2>
+            <div class="flex justify-center gap-4 text-sm font-medium mb-8">
+                <span class="px-3 py-1 rounded-full bg-green-100 text-green-600 border border-green-200">● 데일리 보상 (자동매매)</span>
+                <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-600 border border-blue-200">● 직추천 보상 (네트워크)</span>
+                <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-600 border border-purple-200">● 매칭 보상 (프리미엄)</span>
+            </div>
+        </div>
+
+        <div class="relative w-full max-w-2xl h-[400px] flex justify-center items-end pb-10 fade-in-up">
+            <!-- SVG Arrow Layer -->
+            <svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-10" overflow="visible">
+                <defs>
+                    <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#10B981" />
+                    </marker>
+                    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#3B82F6" />
+                    </marker>
+                    <marker id="arrowhead-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#8B5CF6" />
+                    </marker>
+                </defs>
+                
+                <!-- Daily (Green) - Small loop up -->
+                <path d="M 200,320 Q 180,300 200,280" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" class="arrow-path" />
+                <path d="M 400,320 Q 380,300 400,280" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" class="arrow-path" style="transition-delay: 0.2s"/>
+                <path d="M 600,320 Q 580,300 600,280" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" class="arrow-path" style="transition-delay: 0.4s"/>
+
+                <!-- Direct (Blue) - Bottom to Top Center -->
+                <path d="M 300,280 C 300,200 400,200 400,120" fill="none" stroke="#3B82F6" stroke-width="4" marker-end="url(#arrowhead-blue)" class="arrow-path" style="transition-delay: 0.6s"/>
+                
+                <!-- Matching (Purple) - Far Bottom to Top Center (Curved) -->
+                <path d="M 500,280 C 500,180 420,180 420,120" fill="none" stroke="#8B5CF6" stroke-width="4" marker-end="url(#arrowhead-purple)" class="arrow-path" style="transition-delay: 0.8s"/>
+            </svg>
+
+            <!-- Top User -->
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 flex flex-col items-center z-20">
+                <div class="user-icon large text-slate-800">
+                    <div class="user-head"></div>
+                    <div class="user-body"></div>
+                </div>
+                <span class="mt-2 font-bold text-lg bg-white px-2 shadow-sm rounded">상위 회원</span>
+            </div>
+
+            <!-- Bottom Users Grid -->
+            <div class="absolute bottom-0 w-full flex justify-around items-end z-20 px-10">
+                <!-- User 1 -->
+                <div class="flex flex-col items-center">
+                    <span class="mb-1 text-xs font-bold text-green-600 bg-green-50 px-1 rounded">일반</span>
+                    <div class="user-icon text-slate-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                </div>
+                <!-- User 2 (Source of Direct) -->
+                <div class="flex flex-col items-center relative top-[-40px]">
+                    <span class="mb-1 text-xs font-bold text-blue-600 bg-blue-50 px-1 rounded">신규</span>
+                    <div class="user-icon text-slate-600">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                </div>
+                 <!-- User 3 -->
+                 <div class="flex flex-col items-center">
+                    <div class="user-icon text-slate-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                </div>
+                <!-- User 4 (Source of Matching) -->
+                <div class="flex flex-col items-center relative top-[-40px]">
+                    <span class="mb-1 text-xs font-bold text-purple-600 bg-purple-50 px-1 rounded">프리미엄</span>
+                    <div class="user-icon text-slate-600">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                </div>
+                 <!-- User 5 -->
+                 <div class="flex flex-col items-center">
+                    <div class="user-icon text-slate-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 grid grid-cols-3 gap-4 max-w-4xl w-full text-center text-sm px-4 fade-in-up">
+            <div class="p-4 bg-white rounded shadow border-t-4 border-green-500">
+                <h3 class="font-bold text-green-600 mb-1">데일리 보상</h3>
+                <p class="text-gray-500 text-xs">개인 AI 자동매매 수익</p>
+            </div>
+            <div class="p-4 bg-white rounded shadow border-t-4 border-blue-500">
+                <h3 class="font-bold text-blue-600 mb-1">직추천 보상</h3>
+                <p class="text-gray-500 text-xs">직접 소개 기여도</p>
+            </div>
+            <div class="p-4 bg-white rounded shadow border-t-4 border-purple-500">
+                <h3 class="font-bold text-purple-600 mb-1">매칭 보상</h3>
+                <p class="text-gray-500 text-xs">산하 전체 볼륨 공유</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: 직추천 보상 구조 -->
+    <section id="section2" class="bg-blue-50/50">
+        <div class="container mx-auto text-center mb-8 fade-in-up">
+            <h2 class="text-3xl font-bold text-blue-900">직추천 보상 <span class="text-base font-normal text-blue-600 block mt-2">Direct Reward Structure</span></h2>
+            <p class="text-gray-500 mt-2 text-sm">내가 직접 추천한 회원이 프리미엄 패키지 구매 시 발생</p>
+        </div>
+
+        <div class="relative w-full max-w-lg h-[300px] flex justify-center fade-in-up">
+             <!-- SVG Lines -->
+             <svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-10" overflow="visible">
+                <!-- Center Up -->
+                <path d="M 256,220 C 256,150 256,150 256,90" fill="none" stroke="#3B82F6" stroke-width="5" marker-end="url(#arrowhead-blue)" class="arrow-path" />
+                <!-- Left Up -->
+                <path d="M 120,220 C 120,150 240,150 240,90" fill="none" stroke="#3B82F6" stroke-width="3" marker-end="url(#arrowhead-blue)" class="arrow-path" style="transition-delay: 0.2s" />
+                <!-- Right Up -->
+                <path d="M 392,220 C 392,150 272,150 272,90" fill="none" stroke="#3B82F6" stroke-width="3" marker-end="url(#arrowhead-blue)" class="arrow-path" style="transition-delay: 0.2s" />
+            </svg>
+
+            <!-- Me (Top) -->
+            <div class="absolute top-0 flex flex-col items-center z-20">
+                <span class="mb-2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow">ME (Premium)</span>
+                <div class="user-icon large text-blue-800">
+                    <div class="user-head"></div>
+                    <div class="user-body"></div>
+                </div>
+            </div>
+
+            <!-- New Users (Bottom) -->
+            <div class="absolute bottom-0 w-full flex justify-between px-12 md:px-24 z-20">
+                <div class="flex flex-col items-center">
+                    <div class="user-icon text-gray-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                    <span class="mt-2 text-xs font-bold text-blue-500">신규 A</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="user-icon text-gray-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                    <span class="mt-2 text-xs font-bold text-blue-500">신규 B</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="user-icon text-gray-400">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                    <span class="mt-2 text-xs font-bold text-blue-500">신규 C</span>
+                </div>
+            </div>
+            
+            <!-- Label on Arrow -->
+            <div class="absolute top-[140px] bg-white border border-blue-200 text-blue-600 text-xs font-bold px-2 py-1 rounded shadow z-30">
+                직추천 보상 발생
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: 매칭 보상 단계 구조 -->
+    <section id="section3" class="bg-purple-50/30">
+        <div class="container mx-auto text-center mb-10 fade-in-up">
+            <h2 class="text-3xl font-bold text-purple-900">매칭 보상 <span class="text-base font-normal text-purple-600 block mt-2">Matching Reward Pyramid</span></h2>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center justify-center gap-10 w-full max-w-5xl px-4 fade-in-up">
+            
+            <!-- Left: Pyramid Visual -->
+            <div class="relative w-full md:w-1/2 h-[400px] flex justify-center items-end">
+                <!-- SVG Arrows Sweeping Up -->
+                <svg class="absolute top-0 left-0 w-full h-full pointer-events-none z-30" overflow="visible">
+                    <!-- Deep Level to Top -->
+                    <path d="M 50,350 C 0,200 150,150 200,60" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)" class="arrow-path" />
+                    <path d="M 350,350 C 400,200 250,150 200,60" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)" class="arrow-path" style="transition-delay: 0.3s"/>
+                    
+                    <!-- Mid Level to Top -->
+                    <path d="M 80,250 C 60,180 160,120 200,60" fill="none" stroke="#8B5CF6" stroke-width="3" marker-end="url(#arrowhead-purple)" class="arrow-path" style="transition-delay: 0.6s"/>
+                    <path d="M 320,250 C 340,180 240,120 200,60" fill="none" stroke="#8B5CF6" stroke-width="3" marker-end="url(#arrowhead-purple)" class="arrow-path" style="transition-delay: 0.6s"/>
+                </svg>
+
+                <!-- Top Leader -->
+                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-40 flex flex-col items-center">
+                    <div class="user-icon large text-purple-800 drop-shadow-lg">
+                        <div class="user-head"></div>
+                        <div class="user-body"></div>
+                    </div>
+                    <span class="text-xs font-black text-purple-900 mt-1">고직급자</span>
+                </div>
+
+                <!-- Pyramid Levels -->
+                <div class="flex flex-col items-center w-full z-20 space-y-1">
+                    <!-- Level 1 -->
+                    <div class="w-[30%] h-8 bg-purple-200 rounded flex items-center justify-center text-xs font-bold text-purple-800 mb-6">Level 1</div>
+                    <!-- Level 7 -->
+                    <div class="w-[50%] h-8 bg-purple-300 rounded flex items-center justify-center text-xs font-bold text-purple-900">Level 7</div>
+                    <!-- Level 15 -->
+                    <div class="w-[70%] h-8 bg-purple-400 rounded flex items-center justify-center text-xs font-bold text-white">Level 15</div>
+                    <!-- Level 20 -->
+                    <div class="w-[90%] h-8 bg-purple-500 rounded flex items-center justify-center text-xs font-bold text-white">Level 20</div>
+                    <!-- Infinity -->
+                    <div class="w-full h-8 bg-purple-600 rounded flex items-center justify-center text-xs font-bold text-white">Infinite Depth</div>
+                </div>
+            </div>
+
+            <!-- Right: Condition Cards -->
+            <div class="w-full md:w-1/2 space-y-3">
+                <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">직급별 달성 조건</h3>
+                
+                <div class="flex items-center p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-300">
+                    <div class="w-16 font-bold text-purple-600">직급 1</div>
+                    <div class="text-sm text-gray-600">직추천 3명 달성</div>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-400">
+                    <div class="w-16 font-bold text-purple-600">직급 2</div>
+                    <div class="text-sm text-gray-600">7대 볼륨 1,000 USDT</div>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-500">
+                    <div class="w-16 font-bold text-purple-600">직급 3</div>
+                    <div class="text-sm text-gray-600">15대 볼륨 10,000 USDT</div>
+                </div>
+                <div class="flex items-center p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-600">
+                    <div class="w-16 font-bold text-purple-600">직급 4</div>
+                    <div class="text-sm text-gray-600">20대 볼륨 100,000 USDT</div>
+                </div>
+                <div class="flex items-center p-3 bg-gray-800 rounded-lg shadow-sm border-l-4 border-purple-400">
+                    <div class="w-16 font-bold text-white">직급 5</div>
+                    <div class="text-sm text-gray-200">무제한 (Infinity)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: 데일리 보상 흐름 -->
+    <section id="section4">
+        <div class="container mx-auto text-center mb-10 fade-in-up">
+            <h2 class="text-3xl font-bold text-green-700">데일리 보상 흐름 <span class="text-base font-normal text-green-600 block mt-2">Daily Profit Engine</span></h2>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl gap-6 fade-in-up px-4">
+            
+            <!-- Step 1: User & Investment -->
+            <div class="flex flex-col items-center bg-white p-6 rounded-xl shadow-lg z-10 w-full md:w-auto">
+                <div class="user-icon large text-gray-700 mb-2">
+                    <div class="user-head"></div>
+                    <div class="user-body"></div>
+                </div>
+                <div class="bg-gray-100 px-4 py-2 rounded border border-gray-300 font-bold text-gray-600 text-sm w-full text-center">
+                    투자 원금
+                </div>
+            </div>
+
+            <!-- Arrow Right -->
+            <div class="hidden md:block text-gray-300">
+                <svg width="50" height="20">
+                    <path d="M0,10 L40,10" stroke="currentColor" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+                </svg>
+            </div>
+            <!-- Arrow Down (Mobile) -->
+            <div class="md:hidden text-gray-300 py-2">
+                <svg width="20" height="40">
+                    <path d="M10,0 L10,30" stroke="currentColor" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+                </svg>
+            </div>
+
+            <!-- Step 2: AI Engine -->
+            <div class="flex flex-col items-center justify-center bg-gray-900 text-white p-8 rounded-full shadow-2xl z-10 w-40 h-40 border-4 border-green-400 relative overflow-hidden">
+                <div class="absolute inset-0 bg-green-500 opacity-10 animate-pulse"></div>
+                <!-- Simple AI Icon SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-1 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                <span class="font-bold text-sm z-10">AI 자동매매</span>
+            </div>
+
+            <!-- Arrow Right -->
+             <div class="hidden md:block text-gray-300">
+                <svg width="50" height="20">
+                    <path d="M0,10 L40,10" stroke="currentColor" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+                </svg>
+            </div>
+            <!-- Arrow Down (Mobile) -->
+             <div class="md:hidden text-gray-300 py-2">
+                <svg width="20" height="40">
+                    <path d="M10,0 L10,30" stroke="currentColor" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+                </svg>
+            </div>
+
+            <!-- Step 3: Timeline & Profit -->
+            <div class="relative flex-1 bg-white p-6 rounded-xl shadow-lg min-w-[300px] w-full md:w-auto h-[200px] flex items-end justify-around border-b-4 border-gray-200">
+                 <!-- Timeline Line -->
+                 <div class="absolute bottom-6 left-4 right-4 h-1 bg-gray-300"></div>
+
+                 <!-- Day 1 -->
+                 <div class="relative flex flex-col items-center group">
+                    <svg class="absolute bottom-8 w-10 h-20 overflow-visible opacity-0 group-hover:opacity-100 transition-opacity duration-500 day-arrow">
+                        <path d="M 5,80 Q 5,40 20,10" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" />
+                        <!-- Coin Icon -->
+                        <circle cx="20" cy="0" r="8" fill="#F59E0B" />
+                        <text x="20" y="4" font-size="10" text-anchor="middle" fill="white" font-weight="bold">$</text>
+                    </svg>
+                    <div class="w-3 h-3 bg-gray-400 rounded-full z-10 mb-2"></div>
+                    <span class="text-xs font-bold text-gray-500">Day 1</span>
+                 </div>
+
+                 <!-- Day 2 -->
+                 <div class="relative flex flex-col items-center group">
+                    <svg class="absolute bottom-8 w-10 h-24 overflow-visible opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 day-arrow">
+                        <path d="M 5,90 Q 5,45 20,10" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" />
+                        <circle cx="20" cy="0" r="8" fill="#F59E0B" />
+                        <text x="20" y="4" font-size="10" text-anchor="middle" fill="white" font-weight="bold">$</text>
+                    </svg>
+                    <div class="w-3 h-3 bg-gray-400 rounded-full z-10 mb-2"></div>
+                    <span class="text-xs font-bold text-gray-500">Day 2</span>
+                 </div>
+
+                 <!-- Day 3 -->
+                 <div class="relative flex flex-col items-center group">
+                    <svg class="absolute bottom-8 w-10 h-28 overflow-visible opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200 day-arrow">
+                        <path d="M 5,100 Q 5,50 20,10" fill="none" stroke="#10B981" stroke-width="3" marker-end="url(#arrowhead-green)" />
+                        <circle cx="20" cy="0" r="8" fill="#F59E0B" />
+                        <text x="20" y="4" font-size="10" text-anchor="middle" fill="white" font-weight="bold">$</text>
+                    </svg>
+                    <div class="w-3 h-3 bg-gray-400 rounded-full z-10 mb-2"></div>
+                    <span class="text-xs font-bold text-gray-500">Day 3</span>
+                 </div>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-green-50 px-6 py-4 rounded-lg inline-block text-center border border-green-200 fade-in-up">
+            <h4 class="font-bold text-green-800">일일 변동 수익률</h4>
+            <p class="text-2xl font-black text-green-600 my-1">0.35% ~ 1.00%</p>
+            <p class="text-xs text-gray-500">투자 원금 기반 / 일반·프리미엄 공통 적용</p>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-gray-400 py-8 text-center text-xs">
+        <p>&copy; 2026 LONGRISE AI Platform. All Rights Reserved.</p>
+        <p class="mt-2">본 자료는 플랫폼 구조 이해를 돕기 위한 시각 자료입니다.</p>
+    </footer>
+
+    <script>
+        // Intersection Observer for Scroll Animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const observerOptions = {
+                threshold: 0.3
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Fade In Up Elements
+                        if (entry.target.classList.contains('fade-in-up')) {
+                            entry.target.classList.add('visible');
+                        }
+                        
+                        // Draw SVG Arrows
+                        const arrows = entry.target.querySelectorAll('.arrow-path');
+                        arrows.forEach(arrow => {
+                            arrow.classList.add('drawn');
+                        });
+
+                        // Specific logic for Day arrows in Section 4 (Auto trigger for demo)
+                        const dayArrows = entry.target.querySelectorAll('.day-arrow');
+                        dayArrows.forEach((arrow, index) => {
+                            setTimeout(() => {
+                                arrow.style.opacity = '1';
+                                arrow.style.transform = 'translateY(-10px)';
+                                arrow.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                            }, 500 + (index * 400));
+                        });
+
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const sections = document.querySelectorAll('section');
+            const fadeElements = document.querySelectorAll('.fade-in-up');
+
+            sections.forEach(section => observer.observe(section));
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

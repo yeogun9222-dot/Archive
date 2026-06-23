@@ -1,0 +1,44 @@
+# Memory Index
+
+- [Critical lesson - Always preserve existing structure](lesson_structure_preservation.md) — Never replace components without understanding integration; restore from backup when structure breaks
+- [Admin Panel 최종 단순화 및 구현 계획](final_admin_simplification.md) — 메뉴 8개 축소, 공지 제거, Phase별 4주 로드맵 확정
+- [롱라이즈 플랫폼 팀 구성](project_longrise_team.md) — 바쿠(Data), 피오(Backend), 리리(Frontend), 설리(QA), 제이크(PM), 카이(GTM), 에바(Research Lead), 사라(UX Researcher), 미나(CRO)
+- [팀원 소환 프롬프트](team_persona_prompts.md) — 9명 페르소나 정의, 말투/성격/전문성/소환어 완비
+- [에바 현재 업무 상태](team_eva_status.md) — UX 전략 리드, 사용성 테스트 진행, 투자 전환율 개선 미션
+- [사라 현재 업무 상태](team_sara_status.md) — UX Researcher, 사용자 테스트 30명, 행동 분석 진행 중
+- [미나 현재 업무 상태](team_mina_status.md) — Conversion Optimizer, A/B 테스트 4가지, 전환율 +30% 목표
+- [팀 강점 & 약점 분석](team_strengths_weaknesses.md) — 팀 9명 현황, 강점 3가지, 약점 4가지, 3개월 성장 로드맵
+- [제이크 월간 보고](jake_assessment_report.md) — Jake의 모니터링 책임, 월간 최종 보고 템플릿, 성장 추적
+- [Admin Panel 완벽한 3단계 메뉴 구조](admin_panel_menu_structure.md) — 1단계 6개 그룹 + 2단계 3개 폴더 + 3단계 35개 페이지, 콘텐츠 관리만 계층화
+- [중복 기능 분석 및 개선 계획](overlap_analysis_and_improvement_plan.md) — 5개 불필요 기능 삭제, 16곳 중복 통합, 데이터 모델 통일 전략
+- [LONGRISE 현재 작업 파일](project_current_file.md) — V31.18.html (메인), admin_v4.5.html (운영진 관리 패널 최신)
+- [admin_v4.1 현재 개발 기준점](admin_v4_1_baseline.md) — 1980줄, 16개 view 함수, 3대 기능(이상감지/자산로그/승인) 완전 구현
+- [LONGRISE Admin Panel 구현](admin_panel_implementation.md) — 3단계 권한 시스템(Super/Finance/Operations), 사용자/수익/설정/거래 관리 기능 완료
+- [운영 관리자 패널 완벽 기획서](admin_operational_blueprint.md) — V6 정책 + V31.18 분석, Daily AI/Referral/Rollup/M13 EXIT 자동화 설계
+- [Admin Panel v4 확장 완료](admin_panel_v4_expansion.md) — 12개 관리 섹션(사용자/재정/패키지/보안/추천인/거래/설정), 1421줄 77KB 완성
+- [admin_v4.2 개선사항](admin_v4_2_improvements.md) — CNYT 명칭 변경, 대규모 차단사용자 관리 (페이지네이션/검색) 추가
+- [admin_v4.3 출금 관리 대규모 대응](admin_v4_3_withdrawal_redesign.md) — 페이지네이션(20개/페이지), 필터/검색, 빠른 승인 경로 추가
+- [admin_v4.5 프로모션 지급 기능](admin_v4_5_promotion_system.md) — 직급 보너스 + 돌발 프로모션, 미리보기, 일괄 지급 기능
+- [LONGRISE AI Admin V8.01](project_longrise_admin_v8.md) — React+TS, 32개 모듈, C:\Users\YG\Desktop\LONGRISE_A_ADMIN_V8.01
+- [Admin V8.01 진행상황](admin_v8_progress.md) — 8/8 완료! System Settings + Analytics & Reporting
+- [Admin Dashboard 기능 요구사항](admin_dashboard_requirements.md) — 9개 메뉴, 얼굴인증+거래비밀번호 정책, 500명 관리
+- [마스터 플랜 V7.4 분석](masterplan_v7_4_core.md) — Reserve 83%, CNYT 고정 비율, 3단계 서킷브레이커, M13 EXIT
+- [마스터 플랜 V7.4 상세 학습](masterplan_v7_4_learning.md) — 5개 상품, 동적 수익률, CNYT 배분, DashboardV2 적용 완료
+- [팀원별 최종 업무 지침](team_final_directives.md) — 제이크/제인/마이크/리리/설리 구체적 역할 + 검증 기준
+- [V7.4 구현 Phase 1 완료](implementation_v7_4_phase1.md) — 5가지 핵심 결정사항 (CNYT가격/회원정렬/수익캡경고/출금프로세스) 구현 완료
+- [V7.5 마스터 플랜 전환](v7_5_hybrid_strategy.md) — Gemini(심리) + Claude(정확) 하이브리드, 15% 최소환급금, CNYT 67% 비용절감
+- [V7.5 구현 완전 완료](v7_5_implementation_complete.md) — Phase 1+2 완료, Dashboard 마케팅/비용절감/검증 추가, 5파일 +295줄
+- [Phase 3 Step 3 Dashboard API 통합](phase3_step3_dashboard_api.md) — Express 백엔드 + 실시간 API 연동, 포트 5000/3000
+- [Phase 3 Step 4 모니터링 대시보드](phase3_step4_monitoring_dashboard.md) — HybridStrategyOverview + RevenueCapProgressChart + CostReductionTracker
+- [Phase 3 프론트엔드 독립 실행](phase3_frontend_independent.md) — Mock 데이터 기반, 백엔드 없이 독립 실행 가능, 포트 3000
+- [LONGRISE Admin Panel 필수 기능 (V7.5)](admin_required_features.md) — 10대 범주 47개 기능, 교육용 마스터플랜 V7.5 지원 기능
+- [Phase 3 Backend API Design Complete](phase3_backend_api_design.md) — Express.js 서버, 10+ API 엔드포인트, Mock DB, 감사로깅
+- [Phase 4 Real-time API Integration](phase4_api_integration_complete.md) — UserManagement + UserDetailPanel API 통합, 실시간 동기화, 감사로깅 자동화
+- [Phase 5 Component Library Complete](phase5_component_library_complete.md) — 8개 재사용 컴포넌트, 60% 코드 감소, UserDetailPanel 리팩토링
+- [5-Phase Implementation Progress](implementation_5phase_progress.md) — Phase 1-5 모두 완료, 100% 구현, 종합 진척도
+- [LONGRISE USDT P2P 거래 시스템](longrise_usdt_p2p_system.md) — 5가지 핵심 기능(내부이체/잔액관리/온보딩/평판/신고) 설계, Red Dragon 20% 차익 모델
+- [USDT P2P 시스템 전체 구현 완료](usdt_p2p_implementation_complete.md) — WalletPage/USDTMarketPage 수정, USDTOnboardingPage/USDTFraudReportPage 신규 구현, 모든 5단계 기능 완성
+- [응답 방식 지침](feedback_response_style.md) — 파일 Tool Use 금지, 대화 맥락만 사용, 간결 요점 답변
+- [작업 기본 경로](project_work_directory.md) — 모든 새 프로젝트 파일은 E:\Claude\Desktop\Claude\ 에 저장
+- [LONGRISE UX 리디자인 프로젝트](longrise_ux_redesign_project.md) — 사용자 여정 재설계, 투자 전환율 최적화, 에바/사라/미나 3인 중심, 2026-06-13 시작
+- [CNYT/LONGRISE 설정집 Notion 작업 현황](notion_settings_work_status.md) — The Architects(13섹션)+The Golden Algorithm(10섹션) 업데이트 현황, Notion ID 전체, 미결 사항, 정이사님 확인 중 항목

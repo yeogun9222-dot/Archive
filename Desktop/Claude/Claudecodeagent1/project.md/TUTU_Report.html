@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>TUTU 전략적 타당성 분석 보고서 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:#b0b8c1;padding:30px 20px;line-height:1.6;font-size:9.5pt;color:#2C3E50;}
+.page{width:794px;min-height:1122px;background:white;margin:0 auto 28px;padding:48px 52px 70px;box-shadow:0 6px 24px rgba(0,0,0,.25);position:relative;page-break-after:always;}
+.ph{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #1F4E78;padding-bottom:7px;margin-bottom:22px;}
+.ph .dt{font-size:8pt;color:#999;}.ph .pt{font-size:8pt;color:#1F4E78;font-weight:700;letter-spacing:1px;}
+.pf{position:absolute;bottom:22px;left:52px;right:52px;border-top:1px solid #eee;padding-top:7px;display:flex;justify-content:space-between;font-size:8pt;color:#bbb;}
+h2{font-size:14pt;color:#1F4E78;font-weight:700;border-bottom:2px solid #1F4E78;padding-bottom:7px;margin-bottom:16px;}
+.sn{display:inline-flex;align-items:center;justify-content:center;background:#1F4E78;color:white;width:24px;height:24px;border-radius:50%;font-size:9.5pt;margin-right:8px;}
+h3{font-size:10.5pt;color:#1F4E78;font-weight:700;margin:14px 0 8px;}
+p{margin-bottom:9px;font-size:9.5pt;color:#333;}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:8.8pt;}
+thead tr{background:#1F4E78;color:white;}
+thead th{padding:8px 10px;text-align:left;font-weight:700;}
+tbody tr:nth-child(even){background:#f8f9fa;}
+td{padding:7px 10px;border-bottom:1px solid #e8e8e8;vertical-align:top;}
+.th{font-weight:700;color:#1F4E78;}.tr{color:#E74C3C;font-weight:700;}.tg{color:#27AE60;font-weight:700;}.ty{color:#E67E22;font-weight:700;}
+.ib{background:#EBF5FB;border-left:4px solid #2980B9;padding:12px 14px;border-radius:3px;margin:10px 0;}
+.db{background:#FDEDEC;border-left:4px solid #E74C3C;padding:12px 14px;border-radius:3px;margin:10px 0;}
+.sb{background:#EAFAF1;border-left:4px solid #27AE60;padding:12px 14px;border-radius:3px;margin:10px 0;}
+.wb{background:#FEF9E7;border-left:4px solid #F39C12;padding:12px 14px;border-radius:3px;margin:10px 0;}
+.bt{font-weight:700;font-size:9.5pt;margin-bottom:5px;}
+.ib .bt{color:#1F4E78;}.db .bt{color:#C0392B;}.sb .bt{color:#1E8449;}.wb .bt{color:#D68910;}
+.mc{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+.mc2{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;}
+.mk{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;padding:14px 12px;text-align:center;}
+.mv{font-size:18pt;font-weight:900;color:#1F4E78;line-height:1.2;}
+.ml{font-size:8pt;color:#666;margin-top:4px;}
+.mk.red .mv{color:#E74C3C;}.mk.grn .mv{color:#27AE60;}
+.fl{display:flex;align-items:center;flex-wrap:wrap;padding:14px;background:#f8f9fa;border-radius:6px;margin:10px 0;}
+.fs{background:#1F4E78;color:white;padding:9px 13px;border-radius:5px;text-align:center;font-size:8.5pt;font-weight:700;min-width:100px;}
+.fs.grn{background:#27AE60;}.fs.red{background:#E74C3C;}
+.fa{font-size:16pt;color:#555;padding:0 6px;font-weight:700;}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;}
+.ri{padding:12px;border-radius:5px;border:1px solid;}
+.rc{background:#FDEDEC;border-color:#E74C3C;}.rh{background:#FEF9E7;border-color:#F39C12;}.rm{background:#EBF5FB;border-color:#2980B9;}.rl{background:#EAFAF1;border-color:#27AE60;}
+.rb{font-size:7.5pt;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+.rc .rb{color:#C0392B;}.rh .rb{color:#D68910;}.rm .rb{color:#2471A3;}.rl .rb{color:#1E8449;}
+.rt{font-size:9.5pt;font-weight:700;margin-bottom:4px;}.rd{font-size:8.8pt;color:#555;}
+.pb{background:linear-gradient(135deg,#1F4E78,#2471A3);color:white;border-radius:8px;padding:18px 22px;margin:10px 0;text-align:center;}
+.tl{margin:10px 0;}.tli{display:flex;gap:14px;margin-bottom:14px;}
+.tlm{flex-shrink:0;width:32px;height:32px;background:#1F4E78;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11pt;}
+.tlc{flex:1;padding-top:5px;}.tlt{font-weight:700;font-size:9.5pt;color:#1F4E78;margin-bottom:3px;}.tlb{font-size:8.8pt;color:#444;}
+.tc{background:#1C2833;color:white;border-radius:7px;padding:14px 16px;margin:10px 0;}
+.tutu-col{background:linear-gradient(135deg,#1a6b3c,#27AE60)!important;color:white!important;font-weight:900!important;}
+.tutu-head{background:#1a6b3c!important;}
+.prs{background:linear-gradient(135deg,#1F4E78,#2980B9);color:white;border-radius:8px;padding:22px 26px;margin-bottom:30px;text-align:center;}
+.prob-bar-wrap{background:#e0e0e0;border-radius:20px;height:20px;margin:14px 0;overflow:hidden;}
+.prob-bar{height:100%;background:linear-gradient(90deg,#27AE60,#2ECC71);width:65%;border-radius:20px;display:flex;align-items:center;padding-left:12px;color:white;font-weight:700;font-size:8.5pt;}
+.sc{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+.sk{border-radius:6px;padding:14px;text-align:center;border:1px solid;}
+.sk.before{background:#FDEDEC;border-color:#E74C3C;}.sk.now{background:#EAFAF1;border-color:#27AE60;}.sk.tgt{background:#EBF5FB;border-color:#2980B9;}
+.sv{font-size:20pt;font-weight:900;}.sk.before .sv{color:#E74C3C;}.sk.now .sv{color:#27AE60;}.sk.tgt .sv{color:#2980B9;}
+.sl{font-size:8pt;color:#555;margin-top:3px;}
+@media print{body{background:white;padding:0;}.page{box-shadow:none;margin:0;page-break-after:always;}}
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: 표지 -->
+<div class="page">
+<div style="text-align:center;padding-top:50px;">
+<div style="display:inline-block;background:#E74C3C;color:white;font-size:8.5pt;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:1.5px;margin-bottom:35px;">CONFIDENTIAL · 내부 전용 · 2026년 5월</div>
+<div style="font-size:26pt;font-weight:900;color:#1F4E78;line-height:1.25;margin-bottom:12px;">TUTU 유니레벨 MLM<br>전략적 타당성 분석 보고서</div>
+<div style="font-size:14pt;color:#555;margin-bottom:35px;">캄보디아 시장 진출 · 10억원 연매출 목표 완전 검증</div>
+<hr style="border:none;border-top:3px solid #1F4E78;margin:25px 0;">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:30px;">
+<div style="background:#f8f9fa;border-radius:6px;padding:13px 16px;"><div style="font-size:8pt;color:#999;margin-bottom:3px;">작성일</div><div style="font-size:10pt;font-weight:700;color:#1F4E78;">2026년 5월 18일</div></div>
+<div style="background:#f8f9fa;border-radius:6px;padding:13px 16px;"><div style="font-size:8pt;color:#999;margin-bottom:3px;">대상 시장</div><div style="font-size:10pt;font-weight:700;color:#1F4E78;">캄보디아 (프놈펜 중심)</div></div>
+<div style="background:#f8f9fa;border-radius:6px;padding:13px 16px;"><div style="font-size:8pt;color:#999;margin-bottom:3px;">보고서 등급</div><div style="font-size:10pt;font-weight:700;color:#1F4E78;">기밀 · 내부 전용</div></div>
+<div style="background:#f8f9fa;border-radius:6px;padding:13px 16px;"><div style="font-size:8pt;color:#999;margin-bottom:3px;">총 페이지</div><div style="font-size:10pt;font-weight:700;color:#1F4E78;">17 Pages</div></div>
+</div>
+<h3 style="margin-bottom:10px;">Alpha Squad — 분석팀 구성</h3>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:25px;">
+<div style="background:#f0f4f8;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1F4E78;">바쿠</div><div style="font-size:8pt;color:#666;">Data Architect</div></div>
+<div style="background:#f0f4f8;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1F4E78;">피오</div><div style="font-size:8pt;color:#666;">Backend Dev</div></div>
+<div style="background:#f0f4f8;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1F4E78;">리리</div><div style="font-size:8pt;color:#666;">Frontend Dev</div></div>
+<div style="background:#f0f4f8;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1F4E78;">설리</div><div style="font-size:8pt;color:#666;">QA Engineer</div></div>
+<div style="background:#f0f4f8;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1F4E78;">제이크</div><div style="font-size:8pt;color:#666;">PM</div></div>
+<div style="background:#E8F8F5;border-radius:5px;padding:10px;"><div style="font-weight:900;font-size:10pt;color:#1E8449;">카이</div><div style="font-size:8pt;color:#666;">GTM Strategist</div></div>
+</div>
+<div class="prs"><div style="font-size:9pt;opacity:.8;letter-spacing:2px;margin-bottom:6px;">종합 타당성 판정</div><div style="font-size:18pt;font-weight:900;margin-bottom:5px;">조건부 실행 가능 — 성공 확률 60~70%</div><div style="font-size:9.5pt;opacity:.9;">결제 경로 검증 완료 · 대안 소득 수단 전무로 참여 필연 · 규제 리스크 관리 범위 내</div></div>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 1 / 17</span></div>
+</div>
+
+<!-- PAGE 2: 목차 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 2 / 17</span></div>
+<h2>목차 (Table of Contents)</h2>
+<table>
+<thead><tr><th>PAGE</th><th>섹션</th><th>내용 요약</th><th>담당</th></tr></thead>
+<tbody>
+<tr><td>3</td><td>핵심 지표 대시보드</td><td>6대 핵심 KPI 및 프로젝트 개요</td><td>전체</td></tr>
+<tr><td>4</td><td>KHR↔TUTU 결제 경로 검증</td><td>Pursa(무KYC)+Binance P2P 양방향·iPhone·신분증 해결</td><td>피오</td></tr>
+<tr style="background:#EAFAF1;"><td><strong>5</strong></td><td><strong>왜 참여할 수밖에 없는가</strong></td><td><strong>대안 소득 수단 전무·75% 현금 보관·TUTU 압도적 우위 논거</strong></td><td><strong>바쿠·카이</strong></td></tr>
+<tr><td>6</td><td>2026 캄보디아 규제 환경</td><td>반기술사기법(2026.4) 분석 및 대응</td><td>설리</td></tr>
+<tr><td>7</td><td>캄보디아 MLM 역사 사례</td><td>4대 사례 해부 · TUTU 유사 선례 없음 명시</td><td>바쿠</td></tr>
+<tr><td>8</td><td>TUTU 차별성 분석</td><td>실패 원인 대비 구조적 차별점 6개 항목</td><td>바쿠·카이</td></tr>
+<tr><td>9</td><td>타겟 시장 분석</td><td>5개 세그먼트 소득 검증 + 카지노 6개 직종 급여</td><td>바쿠</td></tr>
+<tr><td>10</td><td>TUTU 운영 모델</td><td>83/10/3/4 분배 + 5개 패키지(V8.6 기준) + 직급 체계 + CNYT</td><td>피오</td></tr>
+<tr><td>11</td><td>18% 수익 메커니즘 해부</td><td>플랫폼 3단 월 수익 구조 + 지속성 시나리오</td><td>피오</td></tr>
+<tr><td>12</td><td>경쟁 환경 + 포지셔닝</td><td>6개 경쟁사 비교 + 공식 포지셔닝 스테이트먼트</td><td>카이</td></tr>
+<tr><td>13</td><td>월별 현금흐름 예측</td><td>12개월 P&amp;L · 손익분기점 분석</td><td>바쿠</td></tr>
+<tr><td>14</td><td>CAC/LTV 수익성 검증</td><td>고객 획득 비용 · 생애 가치 · 패키지별 수익성</td><td>바쿠</td></tr>
+<tr><td>15</td><td>$200 파일럿 접근 전략</td><td>Basic($200) 기반 소개 수당 시연 5단계</td><td>카이</td></tr>
+<tr><td>16</td><td>실전 현장 침투 전략</td><td>씨앗 전략·스크립트·Hui 문화·Blue 달성 경로</td><td>카이</td></tr>
+<tr><td>17</td><td>리스크 매트릭스 + 최종 판정</td><td>6대 리스크 + 점수 + Alpha Squad 권고</td><td>제이크</td></tr>
+</tbody>
+</table>
+<div style="margin-top:16px;">
+<div class="ib"><div class="bt">📌 본 보고서 활용 지침</div><p style="font-size:8.8pt;">TUTU(LONGRISE 가명) 캄보디아 시장 진출 전 내부 타당성 검토 자료. 투자 권유·법적 조언 아님. 최종 의사결정은 현지 법률 자문을 통해 이루어져야 함. 데이터 출처: ILO ILOSTAT, World Bank 2025, Binance P2P, ABA Bank, Al Jazeera, Phnom Penh Post, NagaWorld 노조 자료, Pursa Exchange.</p></div>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 2 / 17</span></div>
+</div>
+
+<!-- PAGE 3: 대시보드 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 3 / 17</span></div>
+<h2><span class="sn">1</span>핵심 지표 대시보드</h2>
+
+<!-- 상단 3개: 사업 목표 -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+
+  <div style="background:linear-gradient(135deg,#1F4E78,#2471A3);border-radius:8px;padding:16px 14px;color:white;text-align:center;">
+    <div style="font-size:8pt;opacity:.75;letter-spacing:1px;margin-bottom:4px;">💰 YEAR 2 목표 매출</div>
+    <div style="font-size:24pt;font-weight:900;line-height:1.1;">10억원</div>
+    <div style="font-size:8.5pt;opacity:.85;margin-top:4px;">≈ $750,000 USD</div>
+    <div style="background:rgba(255,255,255,.15);border-radius:4px;padding:4px 8px;margin-top:8px;font-size:8pt;">Year 1: 7.8억 → Year 2: 20억+</div>
+  </div>
+
+  <div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:16px 14px;text-align:center;">
+    <div style="font-size:8pt;color:#999;letter-spacing:1px;margin-bottom:4px;">👥 월별 신규 모집 목표</div>
+    <div style="font-size:24pt;font-weight:900;color:#1F4E78;line-height:1.1;">1,422명</div>
+    <div style="font-size:8.5pt;color:#666;margin-top:4px;">매월 / 12개월 지속</div>
+    <div style="background:#EBF5FB;border-radius:4px;padding:4px 8px;margin-top:8px;font-size:8pt;color:#1F4E78;">누적 목표: 17,067명 (1년 후)</div>
+  </div>
+
+  <div style="background:#EAFAF1;border:1px solid #27AE60;border-radius:8px;padding:16px 14px;text-align:center;">
+    <div style="font-size:8pt;color:#1E8449;letter-spacing:1px;margin-bottom:4px;">✅ 결제 경로 상태</div>
+    <div style="font-size:20pt;font-weight:900;color:#1E8449;line-height:1.1;">전 구간<br>작동 확인</div>
+    <div style="font-size:8pt;color:#1E8449;margin-top:6px;">KHR 현금 → USDT → TUTU<br>Pursa(무KYC) + Binance P2P</div>
+  </div>
+
+</div>
+
+<!-- 하단 3개: 리스크·근거 지표 -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
+
+  <div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:16px 14px;text-align:center;">
+    <div style="font-size:8pt;color:#999;letter-spacing:1px;margin-bottom:4px;">🏦 플랫폼 수익 기반 규모</div>
+    <div style="font-size:22pt;font-weight:900;color:#1F4E78;line-height:1.1;">月 1,500억원</div>
+    <div style="font-size:8.5pt;color:#666;margin-top:4px;">($112.5M · 4개국 카지노 베팅)</div>
+    <div style="background:#EBF5FB;border-radius:4px;padding:4px 8px;margin-top:8px;font-size:8pt;color:#1F4E78;">캄보디아 카지노 연매출($72M)의 1.6배/月</div>
+  </div>
+
+  <div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:8px;padding:16px 14px;text-align:center;">
+    <div style="font-size:8pt;color:#C0392B;letter-spacing:1px;margin-bottom:4px;">⚠️ 법적 최고 리스크</div>
+    <div style="font-size:22pt;font-weight:900;color:#C0392B;line-height:1.1;">최대<br>징역 10년</div>
+    <div style="font-size:8.5pt;color:#C0392B;margin-top:4px;">반기술사기법 2026.4 통과</div>
+    <div style="background:rgba(231,76,60,.12);border-radius:4px;padding:4px 8px;margin-top:8px;font-size:8pt;color:#C0392B;">법률 자문 없이 진행 불가</div>
+  </div>
+
+  <div style="background:#EAFAF1;border:1px solid #27AE60;border-radius:8px;padding:16px 14px;text-align:center;">
+    <div style="font-size:8pt;color:#1E8449;letter-spacing:1px;margin-bottom:4px;">⏱️ 투자금 회수 시점</div>
+    <div style="font-size:24pt;font-weight:900;color:#1E8449;line-height:1.1;">3개월</div>
+    <div style="font-size:8.5pt;color:#1E8449;margin-top:4px;">손익분기 달성</div>
+    <div style="background:rgba(39,174,96,.12);border-radius:4px;padding:4px 8px;margin-top:8px;font-size:8pt;color:#1E8449;">누적 2,250명 달성 시 흑자 전환</div>
+  </div>
+
+</div>
+<h3>프로젝트 개요</h3>
+<table>
+<thead><tr><th>항목</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td class="th">사업 명칭</td><td>TUTU (LONGRISE 공식 출시 전 가명)</td></tr>
+<tr><td class="th">사업 모델</td><td>유니레벨 MLM + 카지노 베팅 수익 연동 (플랫폼 월 18%~ 수익)</td></tr>
+<tr><td class="th">결제 수단</td><td>TRON 블록체인 / imToken / Pursa Exchange or Binance P2P / ABA Pay (KHR)</td></tr>
+<tr><td class="th">주요 타겟</td><td>캄보디아 특수업종 종사 여성, 카지노 직종 여성, 서비스업 여성</td></tr>
+<tr><td class="th">패키지 구성</td><td>Flexible $100 (무약정) / Basic $200 / Standard $500 / Premium $1,000 / VIP $5,000</td></tr>
+<tr><td class="th">소개 수당</td><td>Basic($200) 이상 구매 시 White 직급 달성 → 소개 수당 권한 활성화 (10% 1회성)</td></tr>
+<tr><td class="th">연간 목표</td><td>Year 1: $585K (7.8억) / Year 2: $1.5M (20억원+)</td></tr>
+</tbody>
+</table>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 3 / 17</span></div>
+</div>
+
+<!-- PAGE 4: 결제 경로 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 4 / 17</span></div>
+<h2><span class="sn">2</span>KHR ↔ TUTU 플랫폼 결제 경로 완전 검증</h2>
+<div class="db" style="margin-bottom:12px;">
+<div class="bt">🚨 현장 실전 장벽: Binance 가입 불가 케이스 — 타겟층에 실재</div>
+<table style="margin-top:8px;font-size:8.5pt;">
+<thead><tr><th>장벽</th><th>실제 상황</th><th>Binance 가능 여부</th></tr></thead>
+<tbody>
+<tr><td class="th">① 신분증 없음</td><td>베트남·태국 출신 불법 체류 특수업종 종사 여성 다수, 신분증 미보유</td><td class="tr">❌ KYC 불가</td></tr>
+<tr><td class="th">② 유심 복수 보유</td><td>요금제 절약용 유심 2~3개 교체 사용 → OTP 수신 번호 불안정</td><td class="tr">❌ 로그인 장애</td></tr>
+<tr><td class="th">③ 아이폰</td><td>중고 아이폰 미국 Apple ID → 캄보디아 App Store 미설정 → Binance 앱 검색 불가</td><td class="tr">❌ 앱 설치 불가</td></tr>
+</tbody>
+</table>
+</div>
+<h3>✅ 경로 A — Pursa Exchange (신분증·Binance·iPhone 문제 전부 해결)</h3>
+<div class="sb" style="margin-bottom:8px;padding:9px 13px;">
+<div class="bt">✅ Pursa Exchange: KYC 없음, ABA Pay로 USDT 구매, 계정 가입 불필요</div>
+<p style="font-size:8.5pt;">금액 입력 → ABA Pay 이체 → imToken 주소로 USDT 자동 수신. 신분증·앱·기종 무관. 스프레드 1~2%.</p>
+</div>
+<div class="fl" style="margin-bottom:8px;">
+<div class="fs red" style="min-width:85px;">KHR 현금</div><div class="fa">→</div>
+<div class="fs" style="min-width:120px;">Pursa Exchange<br><span style="font-size:7pt;opacity:.8;">ABA Pay→USDT, KYC 없음</span></div><div class="fa">→</div>
+<div class="fs grn" style="min-width:90px;">imToken<br><span style="font-size:7pt;">USDT 수령</span></div><div class="fa">→</div>
+<div class="fs grn" style="min-width:110px;">TUTU 입금 주소<br><span style="font-size:7pt;">TRC-20 전송</span></div><div class="fa">→</div>
+<div class="fs grn" style="min-width:80px;">Basic 등록<br><span style="font-size:7pt;">완료</span></div>
+</div>
+<h3>✅ 경로 B — Binance P2P (캄보디아 ID 보유자, 확인됨)</h3>
+<div class="fl" style="margin-bottom:10px;">
+<div class="fs red" style="min-width:85px;">KHR 현금</div><div class="fa">→</div>
+<div class="fs" style="min-width:120px;">Binance P2P<br><span style="font-size:7pt;opacity:.8;">KHR→USDT, ABA Pay 결제</span></div><div class="fa">→</div>
+<div class="fs grn" style="min-width:90px;">imToken</div><div class="fa">→</div>
+<div class="fs grn" style="min-width:110px;">TUTU 입금 주소</div><div class="fa">→</div>
+<div class="fs grn" style="min-width:80px;">Basic 등록</div>
+</div>
+<table style="margin-bottom:10px;">
+<thead><tr><th>구분</th><th>경로 A (Pursa)</th><th>경로 B (Binance P2P)</th></tr></thead>
+<tbody>
+<tr><td>신분증 필요</td><td class="tg">❌ 불필요</td><td class="tr">✅ 필요</td></tr>
+<tr><td>iPhone 가능</td><td class="tg">✅ 기종 무관 (웹 기반)</td><td class="ty">⚠️ Apple ID 국가 설정 필요</td></tr>
+<tr><td>유심 문제</td><td class="tg">✅ 해당 없음</td><td class="ty">⚠️ OTP 불안정 가능</td></tr>
+<tr><td>수수료</td><td>스프레드 1~2%</td><td>스프레드 0.4~1.6%</td></tr>
+<tr><td>적용 대상</td><td class="tg">신분증 없는 특수업종 종사자·미등록 외국인</td><td>캄보디아 ID 보유자</td></tr>
+</tbody>
+</table>
+<h3>출금 경로 — TUTU 수익 → KHR 현금 (완전 검증)</h3>
+<div class="fl">
+<div class="fs grn" style="min-width:90px;">TUTU 수익<br><span style="font-size:7pt;">USDT 출금</span></div><div class="fa">→</div>
+<div class="fs" style="min-width:80px;">imToken</div><div class="fa">→</div>
+<div class="fs" style="min-width:130px;">Pursa 또는 Binance P2P<br><span style="font-size:7pt;opacity:.8;">USDT→KHR 환전</span></div><div class="fa">→</div>
+<div class="fs" style="min-width:80px;">ABA 계좌<br><span style="font-size:7pt;">KHR 입금</span></div><div class="fa">→</div>
+<div class="fs red" style="min-width:80px;">현금 인출<br><span style="font-size:7pt;">ATM</span></div>
+</div>
+<p style="font-size:8.3pt;color:#555;margin-top:6px;">출금 수수료: TUTU 3% + 환전 스프레드 1~2%. imToken 전송: $0.02.</p>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 4 / 17</span></div>
+</div>
+
+<!-- PAGE 5: 왜 참여할 수밖에 없는가 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 5 / 17</span></div>
+<h2><span class="sn">★</span>왜 캄보디아 여성은 TUTU에 참여할 수밖에 없는가</h2>
+<div style="background:linear-gradient(135deg,#1F4E78,#2471A3);color:white;border-radius:8px;padding:16px 18px;margin-bottom:14px;text-align:center;">
+<div style="font-size:9pt;opacity:.8;margin-bottom:6px;letter-spacing:1px;">핵심 논거</div>
+<div style="font-size:13pt;font-weight:900;line-height:1.4;">"현재 캄보디아 여성에게 실질 수익을 주는 저축·투자 수단이 존재하지 않는다.<br>TUTU는 유일하게 접근 가능한 고수익 옵션이다."</div>
+</div>
+<h3>캄보디아 여성 저축·투자 실태 <span style="background:#ECF0F1;color:#666;font-size:7.5pt;padding:2px 7px;border-radius:3px;font-weight:400;">World Bank 2025 · IMF</span></h3>
+<div class="mc2">
+<div class="mk"><div class="mv" style="font-size:20pt;">75%</div><div class="ml">가계가 현금을 집에 보관<br>(수익 0%)</div></div>
+<div class="mk"><div class="mv" style="font-size:20pt;color:#E74C3C;">4%</div><div class="ml">여성 가구주 중<br>공식 저축 이용</div></div>
+<div class="mk"><div class="mv" style="font-size:20pt;">3~5%</div><div class="ml">ABA 정기예금<br>연 최대 수익률</div></div>
+<div class="mk"><div class="mv" style="font-size:20pt;color:#E74C3C;">18%</div><div class="ml">MFI 대출 금리 상한<br>(이자를 내는 구조)</div></div>
+</div>
+<h3>대안 소득 수단 비교 — TUTU vs 기존 선택지</h3>
+<table>
+<thead><tr><th>수단</th><th>연간 수익률</th><th>$200 투자 시 월 수익</th><th>신분증</th><th>접근성</th><th>TUTU 대비</th></tr></thead>
+<tbody>
+<tr><td>집에 현금 보관</td><td class="tr">0% (인플레 손실)</td><td class="tr">$0</td><td class="tg">불필요</td><td class="tg">쉬움</td><td class="tr">압도적 열위</td></tr>
+<tr><td>ABA 일반 저축</td><td>1~2% / 연</td><td>$0.17~$0.33</td><td class="tr">필요</td><td>보통</td><td class="tr">42배 열위</td></tr>
+<tr><td>ABA 정기예금 12개월</td><td>3~5% / 연</td><td>$0.50~$0.83</td><td class="tr">필요</td><td class="tr">12개월 묶임</td><td class="tr">17배 열위</td></tr>
+<tr><td>MFI 저축 (Amret 등)</td><td>4~8% / 연</td><td>$0.67~$1.33</td><td class="tr">필요</td><td>보통</td><td class="tr">10배 열위</td></tr>
+<tr><td>Hui (계모임)</td><td>0% (유동성만 회전)</td><td>$0</td><td class="tg">불필요</td><td class="tg">쉬움</td><td class="tr">수익 없음</td></tr>
+<tr style="background:#EAFAF1;font-weight:700;"><td class="th">TUTU Flexible</td><td class="tg">48% / 연</td><td class="tg">$8/월</td><td class="tg">불필요 (Pursa)</td><td class="tg">쉬움</td><td class="tg">—</td></tr>
+<tr style="background:#EAFAF1;font-weight:700;"><td class="th">TUTU Basic</td><td class="tg">84% / 연 +CNYT</td><td class="tg">$14/월 +소개수당</td><td class="ty">필요 (Binance)</td><td class="tg">쉬움</td><td class="tg">—</td></tr>
+</tbody>
+</table>
+<h3>직종별 TUTU 수익의 실제 의미</h3>
+<table>
+<thead><tr><th>직종</th><th>월 소득</th><th>TUTU Basic $14/월</th><th>소득 대비 비중</th><th>심리적 의미</th></tr></thead>
+<tbody>
+<tr><td class="th">청소·하우스키퍼</td><td>$191~260</td><td class="tg">$14</td><td class="tg" style="font-weight:700;">5.4~7.3%</td><td>하루 일당 이상 추가 수입</td></tr>
+<tr><td class="th">음료 서버</td><td>$210~320</td><td class="tg">$14</td><td class="tg" style="font-weight:700;">4.4~6.7%</td><td>팁 없는 날의 보전</td></tr>
+<tr><td class="th">의류 공장 여성</td><td>$150~250</td><td class="tg">$14</td><td class="tg" style="font-weight:700;">5.6~9.3%</td><td>가족 추가 송금 가능</td></tr>
+<tr><td class="th">특수업종 종사 여성</td><td>$500~1,000</td><td>$14</td><td>1.4~2.8%</td><td>소개 수당 $20이 핵심 동기</td></tr>
+</tbody>
+</table>
+<div class="tc">
+<div style="font-weight:700;font-size:10pt;color:#F1C40F;margin-bottom:10px;">📌 "참여할 수밖에 없는" 3가지 논리 체계</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+<div style="background:rgba(255,255,255,.08);border-radius:5px;padding:10px;">
+<div style="color:#7DCEA0;font-weight:700;font-size:9pt;margin-bottom:6px;">논거 ① 대안 부재</div>
+<p style="font-size:8.3pt;color:#BDC3C7;line-height:1.65;">75%가 현금 집에 보관. 실질 수익 있는 대안 없음. Flexible 48%/연은 비교 불가 수준.</p>
+</div>
+<div style="background:rgba(255,255,255,.08);border-radius:5px;padding:10px;">
+<div style="color:#7DCEA0;font-weight:700;font-size:9pt;margin-bottom:6px;">논거 ② 소셜 압력</div>
+<p style="font-size:8.3pt;color:#BDC3C7;line-height:1.65;">같은 업소·직장 동료가 ABA에서 돈 꺼내는 것을 목격 → 하지 않는 것이 오히려 이상한 상황이 됨.</p>
+</div>
+<div style="background:rgba(255,255,255,.08);border-radius:5px;padding:10px;">
+<div style="color:#7DCEA0;font-weight:700;font-size:9pt;margin-bottom:6px;">논거 ③ 소개 수당</div>
+<p style="font-size:8.3pt;color:#BDC3C7;line-height:1.65;">Basic 전환 시 친구 1명 소개 = $20 즉시. 청소부 하루 일당($8)의 2.5배. 안 할 이유 없음.</p>
+</div>
+</div>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 5 / 17</span></div>
+</div>
+
+<!-- PAGE 6: 규제 환경 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 6 / 17</span></div>
+<h2><span class="sn">3</span>2026년 캄보디아 규제 환경 분석</h2>
+<div class="db">
+<div class="bt">🚨 최고 위험: 반기술사기법 (하원 2026.3.30 · 상원 2026.4.3 만장일치 통과)</div>
+<p>국왕 공포 후 즉시 발효. 5가지 신설 범죄: 사이버 사기 운영 / 모집·훈련 / 악성 데이터 수집 / 특수 자금세탁 / 암호화폐 투자 사기·피그 버처링</p>
+<table style="margin-top:10px;">
+<thead><tr><th>위반 유형</th><th>형량</th><th>벌금</th></tr></thead>
+<tbody>
+<tr><td>사기 개인 운영</td><td class="tr">징역 2~5년</td><td class="tr">최대 $125,000</td></tr>
+<tr><td>사기 조직 운영</td><td class="tr">징역 5~10년</td><td class="tr">—</td></tr>
+<tr><td>폭력·인신매매 동반</td><td class="tr">징역 10~20년</td><td class="tr">—</td></tr>
+<tr><td>사망자 발생</td><td class="tr" style="font-weight:900;">징역 15~30년 또는 종신형</td><td class="tr">—</td></tr>
+</tbody>
+</table>
+</div>
+<h3>TUTU 관련 법률 리스크 매핑</h3>
+<table>
+<thead><tr><th>법률·규정</th><th>TUTU 관련성</th><th>위험도</th><th>대응 방안</th></tr></thead>
+<tbody>
+<tr><td>반기술사기법 (2026.4)</td><td>MLM 모집 + 암호화폐 결합</td><td class="tr">🔴 극고위험</td><td>법률 자문 필수; "수익 보장" 금지</td></tr>
+<tr><td>직접판매법</td><td>유니레벨 MLM 구조</td><td class="tr">🔴 고위험</td><td>AIM Token 경로 활용</td></tr>
+<tr><td>NBC 규정 (2024.12)</td><td>스테이블코인 허용</td><td class="tg">🟢 기회</td><td>USDT 점진적 합법화 방향</td></tr>
+<tr><td>AML 모니터링</td><td>대규모 USDT 이동</td><td class="ty">🟡 중위험</td><td>소액 분산 P2P 구조</td></tr>
+</tbody>
+</table>
+<div class="ib">
+<div class="bt">📌 법 적용 범위 평가</div>
+<p>반기술사기법의 실제 주요 표적은 "강제 감금·인신매매를 동반한 대형 사기 컴파운드". TUTU가 ① 자발적 참여 기반 ② "수익 보장" 미사용 ③ 실제 거래소 연동 수익 투명 공개하면 직접 적용 대상에서 벗어날 여지 있음. <strong>단, 현지 법률 자문 선임 없이 진행 불가.</strong></p>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 6 / 17</span></div>
+</div>
+
+<!-- PAGE 7: MLM 역사 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 7 / 17</span></div>
+<h2><span class="sn">4</span>캄보디아 주요 금융 사기 사례 — 환경 분석</h2>
+<div style="background:#FEF9E7;border:1.5px solid #F39C12;border-radius:6px;padding:12px 16px;margin-bottom:14px;">
+<span style="font-weight:700;color:#D68910;font-size:9.5pt;">📋 분석 범위 명시</span>
+<p style="margin-top:5px;font-size:9pt;color:#555;">아래 4가지는 캄보디아 실제 금융 사기 사례입니다. <strong>단, 어느 것도 TUTU의 유니레벨 MLM 구조(1대→2대→3대 추천 수당)와 동일한 사례가 아닙니다.</strong> TUTU와 동일한 유니레벨 MLM 구조의 캄보디아 선례는 <strong style="color:#E74C3C;">현재까지 확인된 사례 없음.</strong></p>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+<div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:13px;">
+<div style="display:inline-block;background:#E74C3C;color:white;font-size:7.5pt;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:7px;">폰지 · 2013~2017</div>
+<div style="font-size:9.5pt;font-weight:700;color:#1F4E78;margin-bottom:5px;">EBC·AIF·ICA 삼합 폰지</div>
+<div style="font-size:8.5pt;color:#444;line-height:1.65;"><strong>구조:</strong> 단순 예금 돌려막기 (MLM 아님)<br><strong>수법:</strong> "월 10% 이자" 약속, 최소 $2,000<br><strong>피해:</strong> 최대 50,000명 / $60M~$400M<br><strong>결과:</strong> 가짜 신분 운영자 도주, 집단소송</div>
+<div style="font-size:8.5pt;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-weight:700;color:#C0392B;">⚠️ TUTU 비교: 추천 수당 구조 없음</div>
+</div>
+<div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:13px;">
+<div style="display:inline-block;background:#E74C3C;color:white;font-size:7.5pt;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:7px;">폰지 · 2018~2020</div>
+<div style="font-size:9.5pt;font-weight:700;color:#1F4E78;margin-bottom:5px;">Baset 지역 투자 폰지</div>
+<div style="font-size:8.5pt;color:#444;line-height:1.65;"><strong>구조:</strong> 농촌 마을 단위 투자 사기 (MLM 아님)<br><strong>수법:</strong> "15~30% 수익" 약속, 지역 신뢰 악용<br><strong>피해:</strong> 수백 명 / 수백만 달러<br><strong>결과:</strong> 형사 고소, 일부 기소</div>
+<div style="font-size:8.5pt;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-weight:700;color:#C0392B;">⚠️ TUTU 비교: 추천 수당 구조 없음</div>
+</div>
+<div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:13px;">
+<div style="display:inline-block;background:#E74C3C;color:white;font-size:7.5pt;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:7px;">강제 노동 · 2022~현재</div>
+<div style="font-size:9.5pt;font-weight:700;color:#1F4E78;margin-bottom:5px;">시하누크빌 스캠 컴파운드</div>
+<div style="font-size:8.5pt;color:#444;line-height:1.65;"><strong>구조:</strong> 감금·강제 노동 사이버 사기 (MLM 아님)<br><strong>수법:</strong> 피그 버처링, 가짜 암호화폐 투자<br><strong>피해:</strong> 53개 컴파운드, 연 $19B<br><strong>결과:</strong> 5,000명+ 체포, 국제 제재</div>
+<div style="font-size:8.5pt;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-weight:700;color:#C0392B;">⚠️ TUTU 비교: 완전히 다른 범주</div>
+</div>
+<div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:13px;">
+<div style="display:inline-block;background:#E74C3C;color:white;font-size:7.5pt;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:7px;">자금세탁 · 2021~2025</div>
+<div style="font-size:9.5pt;font-weight:700;color:#1F4E78;margin-bottom:5px;">Connectum 핀테크 사건</div>
+<div style="font-size:8.5pt;color:#444;line-height:1.65;"><strong>구조:</strong> 합법 핀테크 외관, 자금 세탁 (MLM 아님)<br><strong>피해:</strong> $500M (FBI 조사 기준)<br><strong>결과:</strong> 미 재무부 직접 제재</div>
+<div style="font-size:8.5pt;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-weight:700;color:#C0392B;">⚠️ TUTU 비교: MLM 구조 아님</div>
+</div>
+</div>
+<div style="background:#1F4E78;color:white;border-radius:6px;padding:14px 16px;">
+<div style="font-weight:700;font-size:10pt;margin-bottom:8px;">📌 핵심 분석 결론</div>
+<table style="font-size:8.5pt;margin:0;border-collapse:collapse;">
+<thead><tr style="background:rgba(255,255,255,.2);"><th style="padding:7px 12px;color:white;text-align:left;">구분</th><th style="padding:7px 12px;color:#F1948A;">EBC·Baset</th><th style="padding:7px 12px;color:#F1948A;">스캠 컴파운드</th><th style="padding:7px 12px;color:#F1948A;">Connectum</th><th style="padding:7px 12px;color:#7DCEA0;">TUTU</th></tr></thead>
+<tbody>
+<tr style="background:rgba(255,255,255,.08);"><td style="padding:7px 12px;color:white;font-weight:700;">MLM 구조</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;font-weight:700;text-align:center;">❌ 없음</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;font-weight:700;text-align:center;">❌ 없음</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;font-weight:700;text-align:center;">❌ 없음</td><td style="padding:7px 12px;background:rgba(39,174,96,.4);color:#A9DFBF;font-weight:700;text-align:center;">✅ 유니레벨</td></tr>
+<tr style="background:rgba(255,255,255,.04);"><td style="padding:7px 12px;color:white;font-weight:700;">캄보디아 선례</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;text-align:center;">폰지만 존재</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;text-align:center;">강제 노동</td><td style="padding:7px 12px;background:rgba(231,76,60,.35);color:#FADBD8;text-align:center;">자금세탁</td><td style="padding:7px 12px;background:rgba(243,156,18,.4);color:#FAD7A0;font-weight:900;text-align:center;">선례 없음</td></tr>
+</tbody>
+</table>
+<p style="margin-top:10px;font-size:8.5pt;color:white;line-height:1.7;"><strong style="color:#FAD7A0;">선례가 없다는 것은 양면입니다.</strong> 실패 사례가 없어 레드카드가 없는 반면, 성공 사례도 없어 현지 수용성 검증이 필요합니다. $200 파일럿이 이 검증의 핵심입니다.</p>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 7 / 17</span></div>
+</div>
+
+<!-- PAGE 8: TUTU 차별성 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 8 / 17</span></div>
+<h2><span class="sn">4</span>TUTU가 과거 실패 사례와 다른 핵심 차별점</h2>
+<table>
+<thead><tr><th>비교 항목</th><th>EBC·ICA (실패)</th><th>스캠 컴파운드 (실패)</th><th class="tutu-head">✅ TUTU (차별점)</th></tr></thead>
+<tbody>
+<tr><td>수익 원천</td><td class="tr">없음 (신규 자금)</td><td class="tr">사기 피해금</td><td class="tutu-col">카지노 베팅 수익<br><small style="opacity:.85;">(4개 거래소 $112.5M/월)</small></td></tr>
+<tr><td>약속 수익률</td><td class="tr">월 10% "보장"</td><td class="tr">가짜 투자 수익</td><td class="tutu-col">월 18%~ 운영<br><small style="opacity:.85;">("보장" 문구 사용 안 함)</small></td></tr>
+<tr><td>진입 금액</td><td class="tr">$2,000+ (고장벽)</td><td class="tr">전 재산 요구</td><td class="tutu-col">Flexible $100부터<br><small style="opacity:.85;">(자유 선택형)</small></td></tr>
+<tr><td>참여 방식</td><td class="tr">강제·감금</td><td class="tr">강제 노동</td><td class="tutu-col">완전 자발적<br><small style="opacity:.85;">(언제든 탈퇴 가능)</small></td></tr>
+<tr><td>결제 투명성</td><td class="tr">현금, 불투명</td><td class="tr">불법 자금 세탁</td><td class="tutu-col">블록체인 기록<br><small style="opacity:.85;">(imToken 투명 공개)</small></td></tr>
+<tr><td>국제 제재 위험</td><td class="tr">높음 (인신매매)</td><td class="tr">미 재무부 직접 제재</td><td class="tutu-col">낮음<br><small style="opacity:.85;">(강제성·감금 없음)</small></td></tr>
+</tbody>
+</table>
+<div class="ib" style="margin-top:14px;">
+<div class="bt">📌 바쿠 핵심 결론</div>
+<p>캄보디아 MLM 실패의 공통 붕괴 트리거: ① 수익 원천 없음 ② 즉시 인출 가능 구조 ③ 강제성·감금. TUTU는 이 3가지 모두에서 구조적으로 차별화되어 있음.</p>
+</div>
+<div class="wb">
+<div class="bt">⚠️ 핵심 유의사항</div>
+<p>EBC는 "월 10% 보장"으로 붕괴했고 TUTU는 "월 18%~"를 운영함. 수치만 보면 TUTU가 더 높음. <strong>수익 원천(카지노 베팅)의 투명한 공개와 거래소 실적 보고서 제공이 TUTU가 EBC와 다름을 증명하는 유일한 방법.</strong></p>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 8 / 17</span></div>
+</div>
+
+<!-- PAGE 9: 타겟 시장 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 9 / 17</span></div>
+<h2><span class="sn">5</span>캄보디아 타겟 시장 분석</h2>
+<h3>세그먼트별 실제 소득 <span style="background:#ECF0F1;color:#7f8c8d;font-size:7.5pt;padding:2px 7px;border-radius:3px;font-weight:400;">ILO · NagaWorld 노조 데이터</span></h3>
+<table>
+<thead><tr><th>세그먼트</th><th>월 소득</th><th>추정 인구</th><th>TUTU 진입 여력</th><th>우선순위</th></tr></thead>
+<tbody>
+<tr><td class="th">카지노 딜러</td><td class="tg">$1,200~1,800/월</td><td>~80,000명</td><td class="tg">높음 ($500~5,000)</td><td class="tg">1순위</td></tr>
+<tr><td class="th">특수업종 종사 여성</td><td class="tg">$500~1,000+/월</td><td>~50,000명</td><td class="tg">높음 (TRON 기보유)</td><td class="tg">1순위</td></tr>
+<tr><td class="th">서비스업 여성</td><td>$300~600/월</td><td>~200,000명</td><td>중간</td><td>2순위</td></tr>
+<tr><td class="th">소규모 자영업</td><td>$200~500/월</td><td>~300,000명</td><td>중간</td><td>2순위</td></tr>
+<tr><td class="th">의류·공장 여성</td><td>$150~250/월 (최저임금 $210)</td><td>~900,000명</td><td class="ty">낮음</td><td class="ty">3순위</td></tr>
+</tbody>
+</table>
+<h3>카지노 직종별 세부 급여 (딜러 외)</h3>
+<table>
+<thead><tr><th>직종</th><th>주요 업무</th><th>월 소득</th><th>팁 수입</th><th>추천 패키지</th></tr></thead>
+<tbody>
+<tr><td class="th">VIP 호스티스</td><td>VIP 고객 전담 접대·관계 관리</td><td class="tg">$350~600</td><td class="tg">$100~500+</td><td>Standard~Premium</td></tr>
+<tr><td class="th">카지노 캐셔</td><td>칩 환전·현금 관리</td><td>$280~420</td><td>없음</td><td>Basic~Standard</td></tr>
+<tr><td class="th">슬롯 어텐던트</td><td>슬롯머신 담당·잭팟 지급</td><td>$230~350</td><td>$20~80</td><td>Basic</td></tr>
+<tr><td class="th">플로어 서포터</td><td>테이블 보조·칩 보충</td><td>$220~330</td><td>$10~50</td><td>Basic</td></tr>
+<tr><td class="th">음료 서버</td><td>카지노 플로어 음료 서빙</td><td>$210~320</td><td>$30~100</td><td>Basic</td></tr>
+<tr><td class="th">청소·하우스키퍼</td><td>카지노 플로어·객실 청소</td><td>$191~260 (NagaWorld 실측)</td><td>거의 없음</td><td class="ty">Basic (부담)</td></tr>
+</tbody>
+</table>
+<div class="ib"><div class="bt">📌 카지노 서비스직 투자 심리</div><p>VIP 호스티스: 고소득 고객 접촉多 → "VIP처럼 투자" 심리. 캐셔: 금융 거래 친숙 → USDT·ABA 이해 빠름. 청소·서버: 동료 네트워크 촘촘 → 입소문 전파 속도 빠름.</p></div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 9 / 17</span></div>
+</div>
+
+<!-- PAGE 10: TUTU 운영 모델 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 10 / 17</span></div>
+<h2><span class="sn">6</span>LONGRISE/TUTU 운영 모델 <span style="font-size:8pt;font-weight:400;color:#aaa;">— V8.6 마스터플랜 기준</span></h2>
+<div class="ib" style="margin-bottom:12px;padding:9px 13px;">
+<div class="bt">📌 소개 수당 권한 안내</div>
+<p style="font-size:8.8pt;">Flexible($100)은 투자·수익 전용 상품. <strong>소개 수당 권한은 Basic($200) 단일 구매로 White 직급 달성 시 활성화.</strong> Flexible 중복 구매($100+$100)로는 White 달성 불가.</p>
+</div>
+<h3>수익 분배 구조 (투자 원금 100% 기준)</h3>
+<table>
+<thead><tr><th>항목</th><th>비율</th><th>내용</th><th>수령자</th></tr></thead>
+<tbody>
+<tr><td class="th">이운금고 (Reserve)</td><td class="th">83%</td><td>베팅 수익·롤수·글로벌 지급·원금 반환 재원</td><td>TUTU/LONGRISE</td></tr>
+<tr><td class="th">직접 추천 수당</td><td class="tg">10%</td><td>1대 직접 추천 시 1회성 즉시 지급 (Basic 이상 보유자만)</td><td>추천인</td></tr>
+<tr><td class="th">글로벌 지급 보너스</td><td>3%</td><td>Red/Black 직급 회원 배당</td><td>Red·Black</td></tr>
+<tr><td class="th">이운비 (운영비)</td><td>4%</td><td>시스템 유지보수·서버·인건비</td><td>플랫폼</td></tr>
+</tbody>
+</table>
+<h3>5개 서비스 패키지 (V8.6 정확 수치)</h3>
+<table>
+<thead><tr><th>패키지</th><th>투자금</th><th>약정</th><th>월 USDT 수익률</th><th>월 수익</th><th>소개 수당 권한</th><th>CNYT 보너스</th><th>연간 수익률</th></tr></thead>
+<tbody>
+<tr style="background:#EBF5FB;"><td style="font-weight:900;color:#2980B9;">Flexible</td><td style="font-weight:700;">$100</td><td style="color:#27AE60;font-weight:700;">무약정 (24h 출금)</td><td>4%~</td><td style="font-weight:700;">~$4/월</td><td class="tr">❌ 없음</td><td style="color:#999;">없음</td><td>48%~</td></tr>
+<tr style="background:#EAFAF1;"><td style="font-weight:900;color:#1E8449;">Basic ⭐</td><td style="font-weight:700;">$200</td><td>12개월</td><td>7%~</td><td style="font-weight:700;">~$14/월</td><td class="tg">✅ White 달성</td><td>USDT×2%</td><td>84%~</td></tr>
+<tr><td style="font-weight:700;">Standard</td><td style="font-weight:700;">$500</td><td>12개월</td><td>9%~</td><td style="font-weight:700;">~$45/월</td><td class="tg">✅ White 이상</td><td>USDT×4%</td><td>108%~</td></tr>
+<tr><td style="font-weight:700;">Premium</td><td style="font-weight:700;">$1,000</td><td>12개월</td><td>11%~</td><td style="font-weight:700;">~$110/월</td><td class="tg">✅ White 이상</td><td>USDT×6%</td><td>132%~</td></tr>
+<tr><td style="font-weight:700;">VIP</td><td style="font-weight:700;">$5,000</td><td>12개월</td><td>18%~</td><td style="font-weight:700;">~$900/월</td><td class="tg">✅ White 이상</td><td>USDT×10%</td><td>216%~</td></tr>
+</tbody>
+</table>
+<h3>직급 체계 (White → Black) — 유니레벨 MLM 핵심</h3>
+<table>
+<thead><tr><th>직급</th><th>최소 패키지</th><th>직접 추천</th><th>하위 조직</th><th>팀 매출</th><th>롤수 깊이</th><th>글로벌 보너스</th></tr></thead>
+<tbody>
+<tr style="background:#f8f9fa;"><td class="th">White</td><td>Basic ($200)+</td><td>0명</td><td>—</td><td>$0</td><td>없음</td><td>없음</td></tr>
+<tr><td style="color:#2980B9;font-weight:700;">Blue</td><td>Standard ($500)+</td><td>3명</td><td>White 3명</td><td>$1,000</td><td>3대</td><td>없음</td></tr>
+<tr><td style="color:#8E44AD;font-weight:700;">Purple</td><td>Premium ($1,000)+</td><td>5명</td><td>Blue 3명</td><td>$10,000</td><td>7대</td><td>없음</td></tr>
+<tr style="background:#FEF0F0;"><td style="color:#E74C3C;font-weight:700;">Red ⭐</td><td>VIP ($5,000)+</td><td>10명</td><td>Purple 3명</td><td>$100,000</td><td>15대</td><td class="tr">1% 일일 배당</td></tr>
+<tr style="background:#1C2833;"><td style="color:#F1C40F;font-weight:900;">Black ⭐⭐</td><td style="color:white;">$10,000+</td><td style="color:white;">15명</td><td style="color:white;">Red 3명</td><td style="color:white;">$1,000,000</td><td style="color:white;">25대</td><td style="color:#F1C40F;font-weight:700;">2% 일일 배당</td></tr>
+</tbody>
+</table>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 10 / 17</span></div>
+</div>
+
+<!-- PAGE 11: 18% 메커니즘 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 11 / 17</span></div>
+<h2><span class="sn">7</span>플랫폼 월 18% 수익 메커니즘 해부 <span style="font-size:8.5pt;font-weight:400;color:#666;">— 피오 담당</span></h2>
+<h3>플랫폼 베팅 수익 3단 구조 (월 기준)</h3>
+<table>
+<thead><tr><th>수익 원천</th><th>메커니즘</th><th>월 기여</th><th>LONGRISE 적용</th></tr></thead>
+<tbody>
+<tr><td class="th">Pool Size Factor</td><td>베팅 풀 규모 기반 하우스 우위</td><td>—</td><td class="tg">6%~/월</td></tr>
+<tr><td class="th">Betting Performance</td><td>4개 거래소 베팅 성과 평균</td><td>—</td><td class="tg">9%~/월</td></tr>
+<tr><td class="th">Futures Return</td><td>코인 AI 선물 거래 수익</td><td>—</td><td class="tg">3%~/월</td></tr>
+<tr style="background:#E8F8F5;font-weight:700;"><td>합산 (VIP 기준)</td><td>V8.6 실례: 14.3%~18.5% (일별 변동)</td><td>평균 17.8%</td><td class="tg" style="font-weight:900;">18%~/월 (변동 14~22%)</td></tr>
+</tbody>
+</table>
+<h3>4개 운영 거래소 실적</h3>
+<table>
+<thead><tr><th>거래소</th><th>월 거래량</th><th>성장률</th><th>안정성</th></tr></thead>
+<tbody>
+<tr><td>미국 거래소</td><td>$28.5M</td><td class="tg">+12.3%</td><td class="tg">높음</td></tr>
+<tr><td>방글라데시 거래소</td><td>$31.2M</td><td class="tg">+6.7%</td><td>중간</td></tr>
+<tr><td>캄보디아 거래소</td><td>$22.8M</td><td>+4.2%</td><td>중간</td></tr>
+<tr><td>필리핀 거래소</td><td>$30.0M</td><td class="tg">+9.8%</td><td class="tg">높음</td></tr>
+<tr style="background:#E8F8F5;font-weight:700;"><td>총계</td><td>$112.5M/월</td><td class="tg">+8.3% 평균</td><td class="tg">전반 성장</td></tr>
+</tbody>
+</table>
+<h3>수익률 지속성 시나리오</h3>
+<table>
+<thead><tr><th>시나리오</th><th>월 수익률</th><th>사용자 지급 여력</th><th>지속성</th></tr></thead>
+<tbody>
+<tr><td>최악 (거래소 부진)</td><td class="tr">8%~</td><td class="tr">Flexible 지급 불가</td><td class="tr">붕괴 위험</td></tr>
+<tr><td>주의 (하락 국면)</td><td class="ty">13%~</td><td class="ty">Flexible만 가능</td><td class="ty">운영 압박</td></tr>
+<tr><td>기준 (현재)</td><td class="tg">18%~</td><td class="tg">전 패키지 지급</td><td class="tg">정상 운영</td></tr>
+<tr><td>최선 (성장 국면)</td><td class="tg">25%~</td><td class="tg">보너스 추가 가능</td><td class="tg">확장 가능</td></tr>
+</tbody>
+</table>
+<h3>CNYT 토큰 가격 로드맵</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;">
+<table>
+<thead><tr><th>월</th><th>CNYT 가격</th><th>단계</th></tr></thead>
+<tbody>
+<tr><td>1~2개월</td><td>$0.02</td><td>초기 진입</td></tr>
+<tr><td>5~6개월</td><td>$0.04</td><td>신뢰 구축</td></tr>
+<tr><td>9개월</td><td>$0.08</td><td>신뢰 폭발</td></tr>
+<tr><td>11개월</td><td>$0.50</td><td>TGE 기대감</td></tr>
+<tr style="background:#E8F8F5;font-weight:700;"><td>12개월</td><td class="tg">$1.00</td><td>TGE 직전</td></tr>
+<tr style="background:#1F4E78;color:white;"><td>14개월+</td><td style="color:#7DCEA0;font-weight:700;">거래소 상장</td><td style="color:white;">글로벌 유통</td></tr>
+</tbody>
+</table>
+<table>
+<thead><tr><th>경과 기간</th><th>패널티</th><th>환급률</th></tr></thead>
+<tbody>
+<tr><td>3개월 이내</td><td class="tr">30%</td><td>70%</td></tr>
+<tr><td>6개월 이내</td><td class="tr">20%</td><td>80%</td></tr>
+<tr><td>9개월 이내</td><td class="ty">15%</td><td>85%</td></tr>
+<tr><td>12개월 이내</td><td class="ty">10%</td><td>90%</td></tr>
+<tr style="background:#EAFAF1;font-weight:700;"><td>만기 (12개월)</td><td class="tg">0%</td><td class="tg">100%</td></tr>
+<tr><td colspan="3" style="font-size:7.5pt;color:#E74C3C;padding:6px 10px;">※ Flexible은 패널티 없음, 24h 내 100% 반환</td></tr>
+</tbody>
+</table>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 11 / 17</span></div>
+</div>
+
+<!-- PAGE 12: 경쟁·포지셔닝 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 12 / 17</span></div>
+<h2><span class="sn">8</span>경쟁 환경 분석 &amp; 포지셔닝 전략 <span style="font-size:8.5pt;font-weight:400;color:#666;">— 카이 담당</span></h2>
+<table>
+<thead><tr><th>경쟁 상품</th><th>연 수익률</th><th>최소 투자</th><th>MLM 수당</th><th>TUTU 대비</th></tr></thead>
+<tbody>
+<tr><td class="th">MFI 정기예금 (Prasac, AMK)</td><td>6~9%</td><td>$50+</td><td class="tr">없음</td><td class="tg">수익률 5~8배 우위</td></tr>
+<tr><td class="th">Rai Capital P2P (SECC 인가)</td><td>10~15%</td><td>$100+</td><td class="tr">없음</td><td class="tg">수익률 우위</td></tr>
+<tr><td class="th">Bakong 저축 (NBC 공식)</td><td>2~4%</td><td>$1</td><td class="tr">없음</td><td class="tg">수익률 12~24배</td></tr>
+<tr><td class="th">Wing 저축</td><td>3~5%</td><td>$1</td><td class="tr">없음</td><td class="tg">압도적 우위</td></tr>
+<tr><td class="th">집에 현금 보관</td><td>0%</td><td>—</td><td class="tr">없음</td><td class="tg">비교 불가</td></tr>
+<tr style="background:#E8F8F5;font-weight:700;"><td class="th">TUTU Flexible</td><td class="tg">48%</td><td>$100</td><td class="tg">Basic 이상 시 가능</td><td class="tg">업계 최고 수준</td></tr>
+</tbody>
+</table>
+<div class="wb" style="margin:10px 0;">
+<div class="bt">⚠️ 카이 경고: 압도적 수익률은 양날의 검</div>
+<p style="font-size:8.8pt;">EBC·ICA 사기 경험 이후 "너무 높은 수익률 = 사기" 인식 깊음. 수익률 전면 마케팅은 역효과. <strong>"친구가 실제로 ABA에서 돈 꺼내는 것을 먼저 보여주는 전략"이 유일한 해법.</strong></p>
+</div>
+<div class="pb">
+<div style="font-size:8.5pt;opacity:.8;margin-bottom:8px;">🎯 TUTU 공식 포지셔닝 스테이트먼트</div>
+<div style="font-size:13pt;font-weight:700;line-height:1.5;">"내가 일하는 동안, 내 돈도 일한다.<br>그리고 내 친구가 시작하면, 나는 또 번다."</div>
+<p style="opacity:.8;font-size:8.5pt;margin-top:8px;">"투자" "코인" 단어 사용 금지 — 수입 다각화 네트워크로 포지셔닝</p>
+</div>
+<h3>타겟별 세일즈 메시지</h3>
+<table>
+<thead><tr><th>타겟</th><th>핵심 메시지</th><th>금지 표현</th></tr></thead>
+<tbody>
+<tr><td class="th">특수업종 종사 여성</td><td>"몸이 쉬는 날에도 통장에 돈이 들어와요. 친구 소개하면 $20 바로."</td><td class="tr">투자·코인·보장</td></tr>
+<tr><td class="th">VIP 호스티스</td><td>"VIP 손님들이 하는 방식이에요. $500으로 시작해볼게요?"</td><td class="tr">MLM·다단계·피라미드</td></tr>
+<tr><td class="th">캐셔·딜러</td><td>"블록체인 기반이라 모든 거래 투명해요. ABA로 바로 인출됩니다."</td><td class="tr">원금 보장·매일 수익</td></tr>
+<tr><td class="th">청소·서버</td><td>"$100 넣고 친구 Basic 소개하면 $20 바로 들어와요. 지금 보여드릴게요."</td><td class="tr">크게 벌 수 있다</td></tr>
+</tbody>
+</table>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 12 / 17</span></div>
+</div>
+
+<!-- PAGE 13: 현금흐름 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 13 / 17</span></div>
+<h2><span class="sn">9</span>월별 현금흐름 예측 — 1년 목표 현실 기반 시나리오 <span style="font-size:8.5pt;font-weight:400;color:#666;">— 바쿠 담당</span></h2>
+
+<div style="background:#1F4E78;color:white;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+<div style="font-weight:700;font-size:10pt;color:#F1C40F;margin-bottom:8px;">📌 10억원 목표 정의 — 두 가지 해석</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+<div style="background:rgba(231,76,60,.25);border-radius:5px;padding:10px;">
+<div style="color:#F1948A;font-weight:700;font-size:8.5pt;margin-bottom:4px;">❌ 해석 A: 12개월 누적 매출 10억원</div>
+<p style="font-size:8.3pt;color:#FDFEFE;line-height:1.6;">평균 17,000명 연중 유지 필요. 초기 3개월 크메르어 장벽·신뢰 구축 현실 고려 시 <strong>달성 불가.</strong></p>
+</div>
+<div style="background:rgba(39,174,96,.25);border-radius:5px;padding:10px;">
+<div style="color:#7DCEA0;font-weight:700;font-size:8.5pt;margin-bottom:4px;">✅ 해석 B: 12월 시점 연환산 수익 10억원</div>
+<p style="font-size:8.3pt;color:#FDFEFE;line-height:1.6;">12월에 월 수익 $62,500 달성 → 연율화 $750K = 10억원. <strong>7,000명 이상 확보 시 달성 가능.</strong></p>
+</div>
+</div>
+<p style="font-size:8.3pt;color:rgba(255,255,255,.85);margin-top:8px;"><strong style="color:#F1C40F;">결론:</strong> 1년 목표 = "12월 기준 10억원/년 수익 궤도 진입". 이것이 현실적이고 달성 가능한 1년 목표입니다.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+<div style="background:#FDEDEC;border:1.5px solid #E74C3C;border-radius:6px;padding:10px;text-align:center;">
+<div style="font-weight:700;color:#C0392B;font-size:9pt;">1~3개월 (준비·극초기)</div>
+<div style="font-size:17pt;font-weight:900;color:#C0392B;margin:5px 0;">10~50명/월</div>
+<div style="font-size:7.5pt;color:#555;">크메르어 에이전트 채용·교육<br>씨앗 발굴·관계 구축·매뉴얼 제작</div>
+</div>
+<div style="background:#FEF9E7;border:1.5px solid #F39C12;border-radius:6px;padding:10px;text-align:center;">
+<div style="font-weight:700;color:#D68910;font-size:9pt;">4~8개월 (입소문·확산)</div>
+<div style="font-size:17pt;font-weight:900;color:#D68910;margin:5px 0;">100~700명/월</div>
+<div style="font-size:7.5pt;color:#555;">다도시 확장 (프놈펜+시엠립)<br>에이전트 독립 운영·플랫폼 자립</div>
+</div>
+<div style="background:#EAFAF1;border:1.5px solid #27AE60;border-radius:6px;padding:10px;text-align:center;">
+<div style="font-weight:700;color:#1E8449;font-size:9pt;">9~12개월 (네트워크 효과)</div>
+<div style="font-size:17pt;font-weight:900;color:#1E8449;margin:5px 0;">900~1,800명/월</div>
+<div style="font-size:7.5pt;color:#555;">자립 네트워크 가동<br>시하누크빌 3도시 동시 운영</div>
+</div>
+</div>
+
+<table>
+<thead><tr><th>월</th><th>단계</th><th>신규</th><th>누적</th><th>투자풀<br>($250 평균)</th><th>월 매출<br>(3.66%)</th><th>월 비용</th><th>월 순익</th><th>누적 손익</th></tr></thead>
+<tbody>
+<tr style="background:#FEF0F0;"><td>1월</td><td>극초기</td><td class="tr">10</td><td>10</td><td>$2.5K</td><td>$92</td><td class="tr">$4,000</td><td class="tr">-$3,908</td><td class="tr">-$3,908</td></tr>
+<tr style="background:#FEF0F0;"><td>2월</td><td>극초기</td><td class="tr">25</td><td>35</td><td>$8.75K</td><td>$320</td><td class="tr">$4,000</td><td class="tr">-$3,680</td><td class="tr">-$7,588</td></tr>
+<tr style="background:#FEF0F0;"><td>3월</td><td>신뢰구축</td><td class="tr">50</td><td>85</td><td>$21.25K</td><td>$778</td><td class="tr">$5,000</td><td class="tr">-$4,222</td><td class="tr">-$11,810</td></tr>
+<tr style="background:#FEF9E7;"><td>4월</td><td>입소문 시작</td><td class="ty">100</td><td>185</td><td>$46.25K</td><td>$1,693</td><td class="tr">$5,000</td><td class="tr">-$3,307</td><td class="tr">-$15,117</td></tr>
+<tr style="background:#FEF9E7;"><td>5월</td><td>다도시 확장</td><td class="ty">200</td><td>385</td><td>$96.25K</td><td>$3,523</td><td class="tr">$6,000</td><td class="tr">-$2,477</td><td class="tr">-$17,594</td></tr>
+<tr style="background:#EAFAF1;"><td>6월</td><td>가속</td><td class="tg">350</td><td>735</td><td>$183.75K</td><td>$6,725</td><td>$6,000</td><td class="tg" style="font-weight:700;">+$725 ✅BEP</td><td class="tr">-$16,869</td></tr>
+<tr style="background:#EAFAF1;"><td>7월</td><td>가속</td><td class="tg">500</td><td>1,235</td><td>$308.75K</td><td>$11,300</td><td>$7,000</td><td class="tg">$4,300</td><td class="tr">-$12,569</td></tr>
+<tr style="background:#EAFAF1;"><td>8월</td><td>네트워크</td><td class="tg">700</td><td>1,935</td><td>$483.75K</td><td>$17,705</td><td>$7,500</td><td class="tg">$10,205</td><td class="tr">-$2,364</td></tr>
+<tr style="background:#E8F8F5;"><td>9월</td><td>네트워크</td><td class="tg">900</td><td>2,835</td><td>$708.75K</td><td>$25,940</td><td>$8,000</td><td class="tg">$17,940</td><td class="tg">+$15,576</td></tr>
+<tr style="background:#E8F8F5;"><td>10월</td><td>확산</td><td class="tg">1,100</td><td>3,935</td><td>$983.75K</td><td>$36,005</td><td>$8,500</td><td class="tg">$27,505</td><td class="tg">$43,081</td></tr>
+<tr style="background:#E8F8F5;"><td>11월</td><td>확산</td><td class="tg">1,400</td><td>5,335</td><td>$1,333.75K</td><td>$48,815</td><td>$9,000</td><td class="tg">$39,815</td><td class="tg">$82,896</td></tr>
+<tr style="background:#E8F8F5;font-weight:700;"><td>12월</td><td>궤도 진입</td><td class="tg">1,800</td><td>7,135</td><td>$1,783.75K</td><td style="font-weight:900;color:#1E8449;">$65,265</td><td>$9,500</td><td class="tg" style="font-weight:900;">$55,765</td><td class="tg">$138,661</td></tr>
+<tr style="background:#1F4E78;color:white;font-weight:700;">
+<td colspan="4" style="color:white;">12개월 합계</td>
+<td style="color:#FAD7A0;">7,135명 누적</td>
+<td style="color:#7DCEA0;">$218,161</td>
+<td style="color:#F1948A;">$79,500</td>
+<td style="color:#7DCEA0;">$138,661</td>
+<td style="color:#7DCEA0;">≈ 1.85억원</td>
+</tr>
+</tbody>
+</table>
+
+<div style="background:linear-gradient(135deg,#1E8449,#27AE60);color:white;border-radius:8px;padding:14px 16px;margin-top:10px;">
+<div style="font-weight:700;font-size:10pt;margin-bottom:8px;">🎯 12월 기준 — 10억원/년 궤도 진입 확인</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+<div style="background:rgba(255,255,255,.15);border-radius:5px;padding:10px;text-align:center;">
+<div style="font-size:8pt;opacity:.85;">12월 월 수익</div>
+<div style="font-size:18pt;font-weight:900;">$65,265</div>
+<div style="font-size:8pt;opacity:.85;">연환산 $783K ≈ 10.4억원</div>
+</div>
+<div style="background:rgba(255,255,255,.15);border-radius:5px;padding:10px;text-align:center;">
+<div style="font-size:8pt;opacity:.85;">12월 누적 사용자</div>
+<div style="font-size:18pt;font-weight:900;">7,135명</div>
+<div style="font-size:8pt;opacity:.85;">투자풀 $1.78M 형성</div>
+</div>
+<div style="background:rgba(255,255,255,.15);border-radius:5px;padding:10px;text-align:center;">
+<div style="font-size:8pt;opacity:.85;">손익분기 달성</div>
+<div style="font-size:18pt;font-weight:900;">6개월</div>
+<div style="font-size:8pt;opacity:.85;">누적 735명 달성 시</div>
+</div>
+</div>
+</div>
+
+<div class="wb" style="margin-top:10px;padding:9px 13px;">
+<div class="bt">⚠️ 이 시나리오가 실현되려면 반드시 필요한 조건</div>
+<p style="font-size:8.5pt;"><strong>① 출시 전 준비 (D-60):</strong> 크메르어 구사 가능 현지 에이전트 3~5명 채용·교육 완료. 크메르어 매뉴얼·스크립트 번역 완료. <strong>② 5개월부터 다도시 동시 운영:</strong> 프놈펜 단독에서 시엠립·시하누크빌 추가 확장. <strong>③ 평균 패키지 $250 이상 유지:</strong> 카지노 딜러·VIP 호스티스 집중 공략으로 Standard($500) 비중 확대.</p>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 13 / 17</span></div>
+</div>
+
+<!-- PAGE 14: CAC/LTV -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 14 / 17</span></div>
+<h2><span class="sn">10</span>CAC / LTV 수익성 검증 <span style="font-size:8.5pt;font-weight:400;color:#666;">— 바쿠 담당</span></h2>
+<h3>CAC (고객 획득 비용)</h3>
+<table>
+<thead><tr><th>획득 방식</th><th>비용</th><th>전환 인원</th><th>CAC</th><th>평가</th></tr></thead>
+<tbody>
+<tr><td class="th">$200 파일럿 시연</td><td>$200/파일럿</td><td>5~9명 신규</td><td class="tg">$22~$40</td><td class="tg">우수</td></tr>
+<tr><td class="th">유기적 추천 (네트워크 성숙)</td><td>커미션 $10~$500</td><td>자발적 모집</td><td>$10~$50</td><td class="tg">우수</td></tr>
+<tr><td class="th">Telegram 그룹 마케팅</td><td>$500/월</td><td>50~100명/월</td><td class="tg">$5~$10</td><td class="tg">최우수</td></tr>
+</tbody>
+</table>
+<h3>LTV (고객 생애 가치) — CAC $40 기준</h3>
+<table>
+<thead><tr><th>패키지</th><th>투자액</th><th>TUTU 월수익/인</th><th>평균 유지</th><th>LTV</th><th>LTV:CAC</th></tr></thead>
+<tbody>
+<tr style="background:#EBF5FB;"><td style="font-weight:700;color:#2980B9;">Flexible</td><td style="font-weight:700;">$100</td><td>$3.66</td><td>3개월</td><td class="tr">$10.98</td><td class="tr">0.27 ❌ (진입 전용)</td></tr>
+<tr><td>Basic</td><td style="font-weight:700;">$200</td><td>$7.32</td><td>5개월</td><td class="ty">$36.60</td><td class="ty">0.92 ⚠️ (업그레이드 필요)</td></tr>
+<tr><td>Standard</td><td>$500</td><td>$18.30</td><td>8개월</td><td class="tg">$146.40</td><td class="tg">3.66 ✅ 우수</td></tr>
+<tr><td>Premium</td><td>$1,000</td><td>$36.60</td><td>10개월</td><td class="tg">$366.00</td><td class="tg">9.15 ✅ 탁월</td></tr>
+<tr><td>VIP</td><td>$5,000</td><td>$109.80</td><td>12개월</td><td class="tg">$1,317.60</td><td class="tg">32.9 ✅ 최상</td></tr>
+</tbody>
+</table>
+<div class="db">
+<div class="bt">🚨 바쿠 긴급 발견: Flexible·Basic 단독 모집 시 수익성 마이너스</div>
+<p>Flexible LTV:CAC = 0.27, Basic = 0.92. 두 패키지 모두 수익성 미달. <strong>2~4주 내 Standard($500) 이상 업그레이드 유도가 전체 수익성의 핵심.</strong> 목표: Flexible·Basic 사용자의 60%+ → Standard 전환.</p>
+</div>
+<h3>손익분기점 분석</h3>
+<table>
+<thead><tr><th>항목</th><th>수치</th><th>비고</th></tr></thead>
+<tbody>
+<tr><td>월 고정비용</td><td>$8,500~$11,000</td><td>Phase별 상이</td></tr>
+<tr><td class="th">손익분기 사용자 수</td><td class="tg">2,322명</td><td>$8,500 ÷ $3.66</td></tr>
+<tr><td class="th">손익분기 도달 시점</td><td class="tg">3개월차</td><td>Phase 1 월 750명 기준</td></tr>
+<tr><td>Standard+ 목표 비율</td><td class="tg">40% 이상</td><td>LTV:CAC 3.0 이상 유지 조건</td></tr>
+</tbody>
+</table>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 14 / 17</span></div>
+</div>
+
+<!-- PAGE 15: $200 파일럿 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 15 / 17</span></div>
+<h2><span class="sn">11</span>$200 파일럿 접근 전략 <span style="font-size:8.5pt;font-weight:400;color:#666;">— 카이 설계</span></h2>
+<div class="pb" style="margin-bottom:14px;"><div style="font-size:9pt;opacity:.8;margin-bottom:6px;">💡 핵심 원칙</div><div style="font-size:13pt;font-weight:700;">"말로 설득하지 말고, 돈으로 증명하라"</div></div>
+<div class="tl">
+<div class="tli"><div class="tlm">1</div><div class="tlc"><div class="tlt">사전 세팅: imToken + ABA 계정 1:1 지원</div><div class="tlb">스마트폰에 imToken 설치 + TRON 지갑 생성 (5분). ABA 앱 연동 (없으면 즉시 개설). 신분증 없는 경우 Pursa Exchange로 USDT 취득 경로 세팅.</div></div></div>
+<div class="tli"><div class="tlm">2</div><div class="tlc"><div class="tlt">핵심: 팀이 $200 USDT 지급 → Basic($200) 등록 → White 즉시 달성</div><div class="tlb">대상자 imToken으로 $200 USDT 직접 송금 (눈 앞에서). 대상자가 직접 TUTU 입금 주소로 $200 전송 → Basic 등록 완료 → <strong>소개 수당 권한 즉시 활성화 (White 달성).</strong></div></div></div>
+<div class="tli"><div class="tlm">3</div><div class="tlc"><div class="tlt">증명 ①: 친구 1명 소개 → $20 ABA 즉시 입금 시연</div><div class="tlb">에이전트가 씨앗의 추천으로 Flexible($100) 등록 → 씨앗 ABA에 <strong>$10 즉시 입금</strong> (Basic 등록이므로 수당 권한 있음). 화면에서 실시간 확인. "Basic이어야 $10 들어오는 것" 명확히 전달.</div></div></div>
+<div class="tli"><div class="tlm">4</div><div class="tlc"><div class="tlt">증명 ②: ABA → ATM 현금 인출 — 실제 지폐를 손에</div><div class="tlb">imToken USDT → Pursa 또는 Binance P2P → ABA 수령 → ATM 인출 전 과정 함께 진행. "디지털 숫자"가 "실제 지폐"가 되는 순간 신뢰 완성.</div></div></div>
+<div class="tli"><div class="tlm">5</div><div class="tlc"><div class="tlt">확산: 씨앗 → Telegram 그룹 → 자동 구축</div><div class="tlb">성공 씨앗이 동료에게 자발 공유. 실제 ABA 입금 영수증·스크린샷 공유 → 가장 강력한 마케팅.</div></div></div>
+</div>
+<h3>파일럿 비용·ROI</h3>
+<table>
+<thead><tr><th>항목</th><th>내용</th><th>금액</th></tr></thead>
+<tbody>
+<tr><td>파일럿 대상</td><td>1차 10명 (특수업종 종사 5명 + 카지노 5명)</td><td>—</td></tr>
+<tr><td>1인당 비용</td><td>$200 USDT (Basic 등록용)</td><td class="tr">총 $2,000</td></tr>
+<tr><td>추천 기대치</td><td>파일럿 1인 → 평균 3~5명 자발 소개</td><td>신규 30~50명</td></tr>
+<tr><td class="th">ROI</td><td>투자 $2,000 → 90명 유입 (보수 추정)</td><td class="tg">4~6주 내 회수</td></tr>
+</tbody>
+</table>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 15 / 17</span></div>
+</div>
+
+<!-- PAGE 16: 실전 침투 전략 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 16 / 17</span></div>
+<h2><span class="sn">12</span>실전 현장 침투 전략 <span style="font-size:8pt;font-weight:400;color:#666;">— 카이 (GTM Strategist)</span></h2>
+<div class="pb" style="padding:12px 16px;margin-bottom:12px;"><div style="font-size:11pt;font-weight:700;">"외부인이 직접 모집하지 않는다. 현지 여성을 에이전트로 만들어 커뮤니티 안에서 퍼지게 한다."</div></div>
+<h3>씨앗(Seed) 전략 — 특수업종 업소 1곳 침투</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0;">
+<div class="ib" style="margin:0;"><div class="bt">📌 씨앗 선정 기준</div><ul style="margin-left:14px;font-size:8.5pt;line-height:1.8;color:#333;"><li>이미 <strong>imToken으로 TRON 수령 중인 사람</strong></li><li>업소에서 가장 오래된 <strong>언니 — 동생들이 따름</strong></li><li>가족 부양 부담 커서 추가 수입 욕구 강한 사람</li></ul></div>
+<div class="wb" style="margin:0;"><div class="bt">⚠️ 절대 금지</div><ul style="margin-left:14px;font-size:8.5pt;line-height:1.8;color:#333;"><li>처음 만나는 사람에게 "투자" 소개</li><li>영업 시간 중 접근</li><li>외국인이 직접 모집</li><li>말로 수익률 설명</li></ul></div>
+</div>
+<h3>실전 스크립트 (크메르어로 진행 · 오후 3~5시)</h3>
+<div class="tc" style="font-size:8.8pt;line-height:1.9;">
+<div style="color:#F1C40F;font-weight:700;margin-bottom:8px;">📱 현지 여성 에이전트 → 씨앗</div>
+<p style="color:#7DCEA0;">"언니, 나 지난달에 ABA에 돈 들어온 거 봐."</p>
+<p style="color:#AEB6BF;font-size:8pt;margin-left:12px;">→ [ABA 앱 실제 입금 알림 스크린샷 — 말보다 화면 먼저]</p>
+<p style="color:#7DCEA0;margin-top:6px;">"언니는 $200 Basic 해. $100짜리는 친구 소개해도 수당이 없어. <strong style="color:#F1C40F;">$200 Basic이어야 친구 소개할 때마다 $20 바로 들어와.</strong>"</p>
+<p style="color:#AEB6BF;font-size:8pt;margin-left:12px;">→ [팀이 $200 지급 → Basic 등록 → Pursa 또는 Binance P2P로 ABA 현금 인출까지 시연]</p>
+<div style="border-top:1px solid #2E4057;margin-top:10px;padding-top:8px;color:#F39C12;font-size:8pt;"><strong>핵심: 설명하지 않고 보여줍니다. 말로 설득하는 순간 지는 겁니다.</strong></div>
+</div>
+<h3>주차별 타임라인 (업소 1곳 기준)</h3>
+<table>
+<thead><tr><th>시점</th><th>실행 내용</th><th>예상 결과</th></tr></thead>
+<tbody>
+<tr style="background:#EAFAF1;"><td class="th">Week 1</td><td>씨앗 발굴 + <strong>Basic $200 등록</strong> → White 즉시 달성 → 소개 수당 권한 ON</td><td class="tg">씨앗 White 달성</td></tr>
+<tr><td class="th">Week 2</td><td>씨앗 Basic 첫 수익 $14 확인 → 동생들에게 자랑. "소개하면 $20 바로" 전달</td><td>동생 3명 관심</td></tr>
+<tr><td class="th">Week 3</td><td>동생 1명 Flexible($100) 등록 → 씨앗 ABA에 $10 즉시 입금. 전원 목격.</td><td>연쇄 소개 시작</td></tr>
+<tr><td class="th">Month 2</td><td>동생들 각자 2~3명 소개. Hui 방식으로 씨앗 Standard 업그레이드 계획</td><td>2차 확산 본격화</td></tr>
+<tr><td class="th">Month 3~4</td><td>씨앗 Standard→Blue 달성. 업소 활성 회원 15~20명</td><td class="tg">씨앗 Blue 달성</td></tr>
+</tbody>
+</table>
+<h3>Hui(계모임) 문화 활용 — Blue 달성 갭 해결</h3>
+<div class="sb" style="padding:9px 13px;">
+<div class="bt">✅ "Hui보다 훨씬 낫잖아" — 진입 장벽 붕괴의 한 마디</div>
+<table style="margin-top:8px;font-size:8.3pt;">
+<thead><tr><th>방식</th><th>투자금</th><th>수익</th><th>원금</th><th>소개 수당</th></tr></thead>
+<tbody>
+<tr><td>기존 Hui</td><td>매월 $20 × 5명</td><td class="tr">없음</td><td>돌려받음</td><td class="tr">없음</td></tr>
+<tr style="background:#E8F8F5;"><td><strong>TUTU Flexible</strong></td><td>$100 1회</td><td class="tg">매월 $4</td><td class="tg">언제든 출금</td><td class="tg"><strong>Basic 시 $10~$500</strong></td></tr>
+</tbody>
+</table>
+</div>
+<div class="pf"><span>TUTU Strategic Feasibility Report 2026</span><span>PAGE 16 / 17</span></div>
+</div>
+
+<!-- PAGE 17: 리스크 + 최종 판정 -->
+<div class="page">
+<div class="ph"><span class="dt">TUTU 전략적 타당성 분석 보고서</span><span class="pt">PAGE 17 / 17</span></div>
+<h2><span class="sn">13</span>리스크 매트릭스 + 최종 타당성 판정</h2>
+<div class="rg">
+<div class="ri rc"><div class="rb">🔴 극고위험</div><div class="rt">반기술사기법 적용</div><div class="rd">2026.4 통과. 조직 운영자 5~10년. <strong>대응:</strong> 현지 법률 자문 즉시 선임.</div></div>
+<div class="ri rc"><div class="rb">🔴 극고위험</div><div class="rt">18% 수익률 붕괴 시</div><div class="rd">EBC와 구조적 유사. 거래소 30% 하락 시 지급 불가. <strong>대응:</strong> 거래소 실적 주기 공개.</div></div>
+<div class="ri rh"><div class="rb">🟡 고위험</div><div class="rt">플랫폼 라이브 지연</div><div class="rd">TUTU 미출시 시 파일럿 진행 불가. <strong>대응:</strong> 플랫폼 입금 주소 사전 소액 테스트 필수.</div></div>
+<div class="ri rh"><div class="rb">🟡 고위험</div><div class="rt">17,067명 목표 미달</div><div class="rd">월 1,422명 12개월 지속 필요. <strong>대응:</strong> Phase 1 실적 조기 검증 후 Phase 2 진입.</div></div>
+<div class="ri rm"><div class="rb">🔵 중위험</div><div class="rt">CNYT 토큰 상장 지연</div><div class="rd">Phase 4 실패 시 신뢰 붕괴. <strong>대응:</strong> 거래소 계약서 사전 공개.</div></div>
+<div class="ri rl"><div class="rb">🟢 저위험</div><div class="rt">결제 경로 장애</div><div class="rd">Binance 차단 시 Pursa Exchange로 즉시 대체 가능. TronLink 등 imToken 대체재 존재.</div></div>
+</div>
+<div style="background:#f8f9fa;border:2px solid #1F4E78;border-radius:8px;padding:24px;margin-top:14px;">
+<h2 style="border:none;margin-bottom:14px;"><span class="sn" style="background:#27AE60;">✓</span>최종 타당성 판정</h2>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+  <div style="background:linear-gradient(135deg,#1F4E78,#2471A3);color:white;border-radius:8px;padding:16px;text-align:center;">
+    <div style="font-size:9pt;opacity:.8;margin-bottom:4px;letter-spacing:1px;">종합 판정</div>
+    <div style="font-size:20pt;font-weight:900;margin-bottom:4px;">조건부 실행 가능</div>
+    <div style="font-size:9.5pt;opacity:.9;">성공 확률 60~70% (기준 시나리오)</div>
+  </div>
+  <div style="display:grid;grid-template-rows:1fr 1fr;gap:8px;">
+    <div style="background:#EAFAF1;border:1px solid #27AE60;border-radius:6px;padding:10px 14px;"><span style="font-weight:700;color:#1E8449;font-size:9pt;">✅ 검증 완료</span><p style="font-size:8.3pt;color:#333;margin-top:3px;">결제 경로 (Pursa+Binance) · 타겟 시장 실재 · 대안 소득 수단 전무 논거</p></div>
+    <div style="background:#FDEDEC;border:1px solid #E74C3C;border-radius:6px;padding:10px 14px;"><span style="font-weight:700;color:#C0392B;font-size:9pt;">⛔ 미해결 조건</span><p style="font-size:8.3pt;color:#333;margin-top:3px;">플랫폼 라이브 확인 · 현지 법률 자문 선임 · 파일럿 10명 실증</p></div>
+  </div>
+</div>
+
+<table style="margin-bottom:14px;">
+<thead><tr><th>평가 항목</th><th>판정</th><th>근거</th></tr></thead>
+<tbody>
+<tr><td>결제 경로 실현 가능성</td><td class="tg">✅ 검증됨</td><td>Pursa(무KYC) + Binance P2P + ABA Pay 양방향 확인</td></tr>
+<tr><td>참여 필연성</td><td class="tg">✅ 논거 확립</td><td>캄보디아 여성 대안 소득 수단 전무 · 75% 현금 집 보관 · TUTU 유일 고수익 옵션</td></tr>
+<tr><td>타겟 시장 존재</td><td class="tg">✅ 확인됨</td><td>특수업종 종사 여성 TRON 수령 실증 · 카지노 6개 직종 급여 데이터</td></tr>
+<tr><td>MLM 구조 선례</td><td class="ty">⚠️ 선례 없음</td><td>캄보디아 내 유니레벨 MLM 선례 미확인 → $200 파일럿으로 검증 필요</td></tr>
+<tr><td>10억원 목표 달성</td><td class="ty">⚠️ Year 2 달성</td><td>Year 1 $585K(7.8억) · Year 2 $1.5M(20억) — 17,067명 모집 시</td></tr>
+<tr><td>18% 수익률 지속성</td><td class="ty">⚠️ 조건부</td><td>4개 거래소 $112.5M/월 유지 시 가능 · 30% 하락 시 지급 불가</td></tr>
+<tr><td>규제 안전성</td><td class="tr">⛔ 고위험</td><td>반기술사기법 2026.4 통과 · 법률 자문 없이 진행 불가</td></tr>
+<tr><td>플랫폼 라이브</td><td class="tr">⛔ 미확인</td><td>입금 주소·시스템 작동 여부 사전 소액 테스트 필수</td></tr>
+</tbody>
+</table>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+  <div style="background:#FDEDEC;border:1.5px solid #E74C3C;border-radius:6px;padding:12px;">
+    <div style="font-weight:700;color:#C0392B;font-size:9pt;margin-bottom:6px;">🚨 즉시 실행 필수</div>
+    <ul style="margin-left:14px;font-size:8.3pt;line-height:1.8;color:#333;">
+      <li>현지 법률 자문사 선임</li>
+      <li>TUTU 플랫폼 소액 입금 테스트</li>
+      <li>Pursa Exchange ABA Pay 거래 테스트</li>
+    </ul>
+  </div>
+  <div style="background:#FEF9E7;border:1.5px solid #F39C12;border-radius:6px;padding:12px;">
+    <div style="font-weight:700;color:#D68910;font-size:9pt;margin-bottom:6px;">⚠️ Phase 1 전 필수</div>
+    <ul style="margin-left:14px;font-size:8.3pt;line-height:1.8;color:#333;">
+      <li>특수업종 여성 10명 파일럿</li>
+      <li>Basic $200 → 수당 시연 → ABA 인출</li>
+      <li>CNYT 거래소 계약서 확보</li>
+    </ul>
+  </div>
+  <div style="background:#FDEDEC;border:1.5px solid #E74C3C;border-radius:6px;padding:12px;">
+    <div style="font-weight:700;color:#C0392B;font-size:9pt;margin-bottom:6px;">🚫 절대 금지 표현</div>
+    <ul style="margin-left:14px;font-size:8.3pt;line-height:1.8;color:#333;">
+      <li>"수익 보장"</li>
+      <li>"원금 보장"</li>
+      <li>"매일 18% 확정"</li>
+      <li>"안전한 투자"</li>
+    </ul>
+  </div>
+</div>
+
+<p style="color:#aaa;font-size:8pt;text-align:center;">© 2026 Alpha Squad (바쿠·피오·리리·설리·제이크·카이) — TUTU Strategic Feasibility Report · CONFIDENTIAL<br>데이터 출처: ILO, World Bank 2025, Binance P2P, Pursa Exchange, ABA Bank, Al Jazeera, The Block, Phnom Penh Post, NagaWorld 노조</p>
+</div>
+<div class="pf"><span>© 2026 Alpha Squad — TUTU Strategic Feasibility Report · CONFIDENTIAL</span><span>PAGE 17 / 17</span></div>
+</div>
+
+</body>
+</html>

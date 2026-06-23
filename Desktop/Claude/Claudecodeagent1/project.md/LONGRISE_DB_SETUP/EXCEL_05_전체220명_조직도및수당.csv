@@ -1,0 +1,264 @@
+﻿번호,Root계정ID,Root닉네임,멤버ID,멤버닉네임,국가,소속라인,Root로부터레벨,직접상위ID,직급,패키지,투자금($),가입일,직접추천수당(1회/$),롤업적용여부(BlueD=3레벨),월롤업기여금($),연롤업기여금($),비고
+1,LR-KIM-001,Kim_Dragon88,KIM-L1-B01,CN_Wei_01,🇨🇳,Line1,1,LR-KIM-001,Blue Dragon,Standard,500,2025-03-07,50,YES,4.5,54,Kim 직접추천 / 중국라인 리더
+2,LR-KIM-001,Kim_Dragon88,KIM-L1-W02-1,CN_Chen_W2_1,🇨🇳,Line1,2,KIM-L1-B01,White Dragon,Basic,200,2025-03-10,20,YES,1.8,21.6,L1 Blue Dragon(KIM-L1-B01)의 자격자 1
+3,LR-KIM-001,Kim_Dragon88,KIM-L1-W02-2,CN_Liu_W2_2,🇨🇳,Line1,2,KIM-L1-B01,White Dragon,Basic,200,2025-03-13,20,YES,1.8,21.6,L1 Blue Dragon(KIM-L1-B01)의 자격자 2
+4,LR-KIM-001,Kim_Dragon88,KIM-L1-W02-3,CN_Wang_W2_3,🇨🇳,Line1,2,KIM-L1-B01,White Dragon,Basic,200,2025-03-16,20,YES,1.8,21.6,L1 Blue Dragon(KIM-L1-B01)의 자격자 3
+5,LR-KIM-001,Kim_Dragon88,KIM-L1-B02,CN_Zhang_02,🇨🇳,Line1,2,KIM-L1-B01,Blue Dragon,Standard,500,2025-03-23,50,YES,4.5,54,척추 Blue Dragon L2
+6,LR-KIM-001,Kim_Dragon88,KIM-L1-W03-1,CN_Li_W3_1,🇨🇳,Line1,3,KIM-L1-B02,White Dragon,Basic,200,2025-03-26,20,YES,1.8,21.6,L2 Blue Dragon(KIM-L1-B02)의 자격자 1
+7,LR-KIM-001,Kim_Dragon88,KIM-L1-W03-2,CN_Zhao_W3_2,🇨🇳,Line1,3,KIM-L1-B02,White Dragon,Basic,200,2025-03-29,20,YES,1.8,21.6,L2 Blue Dragon(KIM-L1-B02)의 자격자 2
+8,LR-KIM-001,Kim_Dragon88,KIM-L1-W03-3,CN_Huang_W3_3,🇨🇳,Line1,3,KIM-L1-B02,White Dragon,Basic,200,2025-04-01,20,YES,1.8,21.6,L2 Blue Dragon(KIM-L1-B02)의 자격자 3
+9,LR-KIM-001,Kim_Dragon88,KIM-L1-B03,CN_Sun_03,🇨🇳,Line1,3,KIM-L1-B02,Blue Dragon,Standard,500,2025-04-08,50,YES,4.5,54,척추 Blue Dragon L3
+10,LR-KIM-001,Kim_Dragon88,KIM-L1-W04-1,CN_Lin_W4_1,🇨🇳,Line1,4,KIM-L1-B03,White Dragon,Basic,200,2025-04-11,20,NO (4레벨+),0,0,L3 Blue Dragon(KIM-L1-B03)의 자격자 1
+11,LR-KIM-001,Kim_Dragon88,KIM-L1-W04-2,CN_Tang_W4_2,🇨🇳,Line1,4,KIM-L1-B03,White Dragon,Basic,200,2025-04-14,20,NO (4레벨+),0,0,L3 Blue Dragon(KIM-L1-B03)의 자격자 2
+12,LR-KIM-001,Kim_Dragon88,KIM-L1-W04-3,CN_Xu_W4_3,🇨🇳,Line1,4,KIM-L1-B03,White Dragon,Basic,200,2025-04-17,20,NO (4레벨+),0,0,L3 Blue Dragon(KIM-L1-B03)의 자격자 3
+13,LR-KIM-001,Kim_Dragon88,KIM-L1-B04,CN_Han_04,🇨🇳,Line1,4,KIM-L1-B03,Blue Dragon,Standard,500,2025-04-24,50,NO (4레벨+),0,0,척추 Blue Dragon L4
+14,LR-KIM-001,Kim_Dragon88,KIM-L1-W05-1,CN_Gao_W5_1,🇨🇳,Line1,5,KIM-L1-B04,White Dragon,Basic,200,2025-04-27,20,NO (4레벨+),0,0,L4 Blue Dragon(KIM-L1-B04)의 자격자 1
+15,LR-KIM-001,Kim_Dragon88,KIM-L1-W05-2,CN_Luo_W5_2,🇨🇳,Line1,5,KIM-L1-B04,White Dragon,Basic,200,2025-04-30,20,NO (4레벨+),0,0,L4 Blue Dragon(KIM-L1-B04)의 자격자 2
+16,LR-KIM-001,Kim_Dragon88,KIM-L1-W05-3,CN_Song_W5_3,🇨🇳,Line1,5,KIM-L1-B04,White Dragon,Basic,200,2025-05-03,20,NO (4레벨+),0,0,L4 Blue Dragon(KIM-L1-B04)의 자격자 3
+17,LR-KIM-001,Kim_Dragon88,KIM-L1-B05,CN_Yang_05,🇨🇳,Line1,5,KIM-L1-B04,Blue Dragon,Standard,500,2025-05-10,50,NO (4레벨+),0,0,척추 Blue Dragon L5
+18,LR-KIM-001,Kim_Dragon88,KIM-L1-W06-1,CN_Zhu_W6_1,🇨🇳,Line1,6,KIM-L1-B05,White Dragon,Basic,200,2025-05-13,20,NO (4레벨+),0,0,L5 Blue Dragon(KIM-L1-B05)의 자격자 1
+19,LR-KIM-001,Kim_Dragon88,KIM-L1-W06-2,CN_Pan_W6_2,🇨🇳,Line1,6,KIM-L1-B05,White Dragon,Basic,200,2025-05-16,20,NO (4레벨+),0,0,L5 Blue Dragon(KIM-L1-B05)의 자격자 2
+20,LR-KIM-001,Kim_Dragon88,KIM-L1-W06-3,CN_Fu_W6_3,🇨🇳,Line1,6,KIM-L1-B05,White Dragon,Basic,200,2025-05-19,20,NO (4레벨+),0,0,L5 Blue Dragon(KIM-L1-B05)의 자격자 3
+21,LR-KIM-001,Kim_Dragon88,KIM-L1-B06,CN_Cao_06,🇨🇳,Line1,6,KIM-L1-B05,Blue Dragon,Standard,500,2025-05-26,50,NO (4레벨+),0,0,척추 Blue Dragon L6
+22,LR-KIM-001,Kim_Dragon88,KIM-L1-W07-1,CN_Zeng_W7_1,🇨🇳,Line1,7,KIM-L1-B06,White Dragon,Basic,200,2025-05-29,20,NO (4레벨+),0,0,L6 Blue Dragon(KIM-L1-B06)의 자격자 1
+23,LR-KIM-001,Kim_Dragon88,KIM-L1-W07-2,CN_Qian_W7_2,🇨🇳,Line1,7,KIM-L1-B06,White Dragon,Basic,200,2025-06-01,20,NO (4레벨+),0,0,L6 Blue Dragon(KIM-L1-B06)의 자격자 2
+24,LR-KIM-001,Kim_Dragon88,KIM-L1-W07-3,CN_Ye_W7_3,🇨🇳,Line1,7,KIM-L1-B06,White Dragon,Basic,200,2025-06-04,20,NO (4레벨+),0,0,L6 Blue Dragon(KIM-L1-B06)의 자격자 3
+25,LR-KIM-001,Kim_Dragon88,KIM-L1-B07,CN_Dong_07,🇨🇳,Line1,7,KIM-L1-B06,Blue Dragon,Standard,500,2025-06-11,50,NO (4레벨+),0,0,척추 Blue Dragon L7
+26,LR-KIM-001,Kim_Dragon88,KIM-L1-W08-1,CN_Bai_W8_1,🇨🇳,Line1,8,KIM-L1-B07,White Dragon,Basic,200,2025-06-14,20,NO (4레벨+),0,0,L7 Blue Dragon(KIM-L1-B07)의 자격자 1
+27,LR-KIM-001,Kim_Dragon88,KIM-L1-W08-2,CN_Yuan_W8_2,🇨🇳,Line1,8,KIM-L1-B07,White Dragon,Basic,200,2025-06-17,20,NO (4레벨+),0,0,L7 Blue Dragon(KIM-L1-B07)의 자격자 2
+28,LR-KIM-001,Kim_Dragon88,KIM-L1-W08-3,CN_Ren_W8_3,🇨🇳,Line1,8,KIM-L1-B07,White Dragon,Basic,200,2025-06-20,20,NO (4레벨+),0,0,L7 Blue Dragon(KIM-L1-B07)의 자격자 3
+29,LR-KIM-001,Kim_Dragon88,KIM-L1-B08,CN_Deng_08,🇨🇳,Line1,8,KIM-L1-B07,Blue Dragon,Standard,500,2025-06-27,50,NO (4레벨+),0,0,척추 Blue Dragon L8
+30,LR-KIM-001,Kim_Dragon88,KIM-L1-W09-1,CN_Mo_W9_1,🇨🇳,Line1,9,KIM-L1-B08,White Dragon,Basic,200,2025-06-30,20,NO (4레벨+),0,0,L8 Blue Dragon(KIM-L1-B08)의 자격자 1
+31,LR-KIM-001,Kim_Dragon88,KIM-L1-W09-2,CN_Gu_W9_2,🇨🇳,Line1,9,KIM-L1-B08,White Dragon,Basic,200,2025-07-03,20,NO (4레벨+),0,0,L8 Blue Dragon(KIM-L1-B08)의 자격자 2
+32,LR-KIM-001,Kim_Dragon88,KIM-L1-W09-3,CN_Yin_W9_3,🇨🇳,Line1,9,KIM-L1-B08,White Dragon,Basic,200,2025-07-06,20,NO (4레벨+),0,0,L8 Blue Dragon(KIM-L1-B08)의 자격자 3
+33,LR-KIM-001,Kim_Dragon88,KIM-L1-B09,CN_Ai_09,🇨🇳,Line1,9,KIM-L1-B08,Blue Dragon,Standard,500,2025-07-13,50,NO (4레벨+),0,0,척추 Blue Dragon L9
+34,LR-KIM-001,Kim_Dragon88,KIM-L1-W10-1,CN_Bi_W10_1,🇨🇳,Line1,10,KIM-L1-B09,White Dragon,Basic,200,2025-07-16,20,NO (4레벨+),0,0,L9 Blue Dragon(KIM-L1-B09)의 자격자 1
+35,LR-KIM-001,Kim_Dragon88,KIM-L1-W10-2,CN_Ci_W10_2,🇨🇳,Line1,10,KIM-L1-B09,White Dragon,Basic,200,2025-07-19,20,NO (4레벨+),0,0,L9 Blue Dragon(KIM-L1-B09)의 자격자 2
+36,LR-KIM-001,Kim_Dragon88,KIM-L1-W10-3,CN_Di_W10_3,🇨🇳,Line1,10,KIM-L1-B09,White Dragon,Basic,200,2025-07-22,20,NO (4레벨+),0,0,L9 Blue Dragon(KIM-L1-B09)의 자격자 3
+37,LR-KIM-001,Kim_Dragon88,KIM-L1-B10,CN_Ei_10,🇨🇳,Line1,10,KIM-L1-B09,Blue Dragon,Standard,500,2025-07-29,50,NO (4레벨+),0,0,척추 Blue Dragon L10
+38,LR-KIM-001,Kim_Dragon88,KIM-L1-W11-1,CN_Fi_W11_1,🇨🇳,Line1,11,KIM-L1-B10,White Dragon,Basic,200,2025-08-01,20,NO (4레벨+),0,0,L10 Blue Dragon(KIM-L1-B10)의 자격자 1
+39,LR-KIM-001,Kim_Dragon88,KIM-L1-W11-2,CN_Gi_W11_2,🇨🇳,Line1,11,KIM-L1-B10,White Dragon,Basic,200,2025-08-04,20,NO (4레벨+),0,0,L10 Blue Dragon(KIM-L1-B10)의 자격자 2
+40,LR-KIM-001,Kim_Dragon88,KIM-L1-W11-3,CN_Hi_W11_3,🇨🇳,Line1,11,KIM-L1-B10,White Dragon,Basic,200,2025-08-07,20,NO (4레벨+),0,0,L10 Blue Dragon(KIM-L1-B10)의 자격자 3
+41,LR-KIM-001,Kim_Dragon88,KIM-L1-B11,CN_Ii_11,🇨🇳,Line1,11,KIM-L1-B10,Blue Dragon,Standard,500,2025-08-14,50,NO (4레벨+),0,0,척추 Blue Dragon L11
+42,LR-KIM-001,Kim_Dragon88,KIM-L1-W12-1,CN_Ji_W12_1,🇨🇳,Line1,12,KIM-L1-B11,White Dragon,Basic,200,2025-08-17,20,NO (4레벨+),0,0,L11 Blue Dragon(KIM-L1-B11)의 자격자 1
+43,LR-KIM-001,Kim_Dragon88,KIM-L1-W12-2,CN_Ki_W12_2,🇨🇳,Line1,12,KIM-L1-B11,White Dragon,Basic,200,2025-08-20,20,NO (4레벨+),0,0,L11 Blue Dragon(KIM-L1-B11)의 자격자 2
+44,LR-KIM-001,Kim_Dragon88,KIM-L1-W12-3,CN_Li2_W12_3,🇨🇳,Line1,12,KIM-L1-B11,White Dragon,Basic,200,2025-08-23,20,NO (4레벨+),0,0,L11 Blue Dragon(KIM-L1-B11)의 자격자 3
+45,LR-KIM-001,Kim_Dragon88,KIM-L1-B12,CN_Mi_12,🇨🇳,Line1,12,KIM-L1-B11,Blue Dragon,Standard,500,2025-08-30,50,NO (4레벨+),0,0,척추 Blue Dragon L12
+46,LR-KIM-001,Kim_Dragon88,KIM-L1-W13-1,CN_Ni_W13_1,🇨🇳,Line1,13,KIM-L1-B12,White Dragon,Basic,200,2025-09-02,20,NO (4레벨+),0,0,L12 Blue Dragon(KIM-L1-B12)의 자격자 1
+47,LR-KIM-001,Kim_Dragon88,KIM-L1-W13-2,CN_Oi_W13_2,🇨🇳,Line1,13,KIM-L1-B12,White Dragon,Basic,200,2025-09-05,20,NO (4레벨+),0,0,L12 Blue Dragon(KIM-L1-B12)의 자격자 2
+48,LR-KIM-001,Kim_Dragon88,KIM-L1-W13-3,CN_Pi_W13_3,🇨🇳,Line1,13,KIM-L1-B12,White Dragon,Basic,200,2025-09-08,20,NO (4레벨+),0,0,L12 Blue Dragon(KIM-L1-B12)의 자격자 3
+49,LR-KIM-001,Kim_Dragon88,KIM-L1-B13,CN_Qi_13,🇨🇳,Line1,13,KIM-L1-B12,Blue Dragon,Standard,500,2025-09-15,50,NO (4레벨+),0,0,척추 Blue Dragon L13
+50,LR-KIM-001,Kim_Dragon88,KIM-L1-W14-1,CN_Ri_W14_1,🇨🇳,Line1,14,KIM-L1-B13,White Dragon,Basic,200,2025-09-18,20,NO (4레벨+),0,0,L13 Blue Dragon(KIM-L1-B13)의 자격자 1
+51,LR-KIM-001,Kim_Dragon88,KIM-L1-W14-2,CN_Si_W14_2,🇨🇳,Line1,14,KIM-L1-B13,White Dragon,Basic,200,2025-09-21,20,NO (4레벨+),0,0,L13 Blue Dragon(KIM-L1-B13)의 자격자 2
+52,LR-KIM-001,Kim_Dragon88,KIM-L1-W14-3,CN_Ti_W14_3,🇨🇳,Line1,14,KIM-L1-B13,White Dragon,Basic,200,2025-09-24,20,NO (4레벨+),0,0,L13 Blue Dragon(KIM-L1-B13)의 자격자 3
+53,LR-KIM-001,Kim_Dragon88,KIM-L1-B14,CN_Ui_14,🇨🇳,Line1,14,KIM-L1-B13,Blue Dragon,Standard,500,2025-10-01,50,NO (4레벨+),0,0,척추 Blue Dragon L14
+54,LR-KIM-001,Kim_Dragon88,KIM-L1-W15-1,CN_Vi_W15_1,🇨🇳,Line1,15,KIM-L1-B14,White Dragon,Basic,200,2025-10-04,20,NO (4레벨+),0,0,L14 Blue Dragon(KIM-L1-B14)의 자격자 1
+55,LR-KIM-001,Kim_Dragon88,KIM-L1-W15-2,CN_Wi_W15_2,🇨🇳,Line1,15,KIM-L1-B14,White Dragon,Basic,200,2025-10-07,20,NO (4레벨+),0,0,L14 Blue Dragon(KIM-L1-B14)의 자격자 2
+56,LR-KIM-001,Kim_Dragon88,KIM-L1-W15-3,CN_Xi_W15_3,🇨🇳,Line1,15,KIM-L1-B14,White Dragon,Basic,200,2025-10-10,20,NO (4레벨+),0,0,L14 Blue Dragon(KIM-L1-B14)의 자격자 3
+57,LR-KIM-001,Kim_Dragon88,KIM-L1-B15,CN_Yi_15,🇨🇳,Line1,15,KIM-L1-B14,Blue Dragon,Standard,500,2025-10-17,50,NO (4레벨+),0,0,척추 Blue Dragon L15
+58,LR-KIM-001,Kim_Dragon88,KIM-L1-W16-1,CN_Zi_W16_1,🇨🇳,Line1,16,KIM-L1-B15,White Dragon,Basic,200,2025-10-20,20,NO (4레벨+),0,0,L15 Blue Dragon(KIM-L1-B15)의 자격자 1
+59,LR-KIM-001,Kim_Dragon88,KIM-L1-W16-2,CN_Ao_W16_2,🇨🇳,Line1,16,KIM-L1-B15,White Dragon,Basic,200,2025-10-23,20,NO (4레벨+),0,0,L15 Blue Dragon(KIM-L1-B15)의 자격자 2
+60,LR-KIM-001,Kim_Dragon88,KIM-L1-W16-3,CN_Bo_W16_3,🇨🇳,Line1,16,KIM-L1-B15,White Dragon,Basic,200,2025-10-26,20,NO (4레벨+),0,0,L15 Blue Dragon(KIM-L1-B15)의 자격자 3
+61,LR-KIM-001,Kim_Dragon88,KIM-L1-B16,CN_Co_16,🇨🇳,Line1,16,KIM-L1-B15,Blue Dragon,Standard,500,2025-11-02,50,NO (4레벨+),0,0,척추 Blue Dragon L16
+62,LR-KIM-001,Kim_Dragon88,KIM-L1-W17-1,CN_Do_W17_1,🇨🇳,Line1,17,KIM-L1-B16,White Dragon,Basic,200,2025-11-05,20,NO (4레벨+),0,0,L16 Blue Dragon(KIM-L1-B16)의 자격자 1
+63,LR-KIM-001,Kim_Dragon88,KIM-L1-W17-2,CN_Eo_W17_2,🇨🇳,Line1,17,KIM-L1-B16,White Dragon,Basic,200,2025-11-08,20,NO (4레벨+),0,0,L16 Blue Dragon(KIM-L1-B16)의 자격자 2
+64,LR-KIM-001,Kim_Dragon88,KIM-L1-W17-3,CN_Fo_W17_3,🇨🇳,Line1,17,KIM-L1-B16,White Dragon,Basic,200,2025-11-11,20,NO (4레벨+),0,0,L16 Blue Dragon(KIM-L1-B16)의 자격자 3
+65,LR-KIM-001,Kim_Dragon88,KIM-L1-B17,CN_Go_17,🇨🇳,Line1,17,KIM-L1-B16,Blue Dragon,Standard,500,2025-11-18,50,NO (4레벨+),0,0,척추 Blue Dragon L17
+66,LR-KIM-001,Kim_Dragon88,KIM-L1-W18-1,CN_Ho_W18_1,🇨🇳,Line1,18,KIM-L1-B17,White Dragon,Basic,200,2025-11-21,20,NO (4레벨+),0,0,L17 Blue Dragon(KIM-L1-B17)의 자격자 1
+67,LR-KIM-001,Kim_Dragon88,KIM-L1-W18-2,CN_Io_W18_2,🇨🇳,Line1,18,KIM-L1-B17,White Dragon,Basic,200,2025-11-24,20,NO (4레벨+),0,0,L17 Blue Dragon(KIM-L1-B17)의 자격자 2
+68,LR-KIM-001,Kim_Dragon88,KIM-L1-W18-3,CN_Jo_W18_3,🇨🇳,Line1,18,KIM-L1-B17,White Dragon,Basic,200,2025-11-27,20,NO (4레벨+),0,0,L17 Blue Dragon(KIM-L1-B17)의 자격자 3
+69,LR-KIM-001,Kim_Dragon88,KIM-L1-B18,CN_Ko2_18,🇨🇳,Line1,18,KIM-L1-B17,Blue Dragon,Standard,500,2025-12-04,50,NO (4레벨+),0,0,척추 Blue Dragon L18
+70,LR-KIM-001,Kim_Dragon88,KIM-L1-W19-1,CN_Lo_W19_1,🇨🇳,Line1,19,KIM-L1-B18,White Dragon,Basic,200,2025-12-07,20,NO (4레벨+),0,0,L18 Blue Dragon(KIM-L1-B18)의 자격자 1
+71,LR-KIM-001,Kim_Dragon88,KIM-L1-W19-2,CN_Wei_W19_2,🇨🇳,Line1,19,KIM-L1-B18,White Dragon,Basic,200,2025-12-10,20,NO (4레벨+),0,0,L18 Blue Dragon(KIM-L1-B18)의 자격자 2
+72,LR-KIM-001,Kim_Dragon88,KIM-L1-W19-3,CN_Chen_W19_3,🇨🇳,Line1,19,KIM-L1-B18,White Dragon,Basic,200,2025-12-13,20,NO (4레벨+),0,0,L18 Blue Dragon(KIM-L1-B18)의 자격자 3
+73,LR-KIM-001,Kim_Dragon88,KIM-L1-B19,CN_Liu_19,🇨🇳,Line1,19,KIM-L1-B18,Blue Dragon,Standard,500,2025-12-20,50,NO (4레벨+),0,0,척추 Blue Dragon L19
+74,LR-KIM-001,Kim_Dragon88,KIM-L1-W20-1,CN_Wang_W20_1,🇨🇳,Line1,20,KIM-L1-B19,White Dragon,Basic,200,2025-12-23,20,NO (4레벨+),0,0,L19 Blue Dragon(KIM-L1-B19)의 자격자 1
+75,LR-KIM-001,Kim_Dragon88,KIM-L1-W20-2,CN_Zhang_W20_2,🇨🇳,Line1,20,KIM-L1-B19,White Dragon,Basic,200,2025-12-26,20,NO (4레벨+),0,0,L19 Blue Dragon(KIM-L1-B19)의 자격자 2
+76,LR-KIM-001,Kim_Dragon88,KIM-L1-W20-3,CN_Li_W20_3,🇨🇳,Line1,20,KIM-L1-B19,White Dragon,Basic,200,2025-12-29,20,NO (4레벨+),0,0,L19 Blue Dragon(KIM-L1-B19)의 자격자 3
+77,LR-KIM-001,Kim_Dragon88,KIM-L1-B20,CN_Zhao_20,🇨🇳,Line1,20,KIM-L1-B19,Blue Dragon,Standard,500,2026-01-05,50,NO (4레벨+),0,0,척추 Blue Dragon L20
+78,LR-KIM-001,Kim_Dragon88,KIM-L1-W21-1,CN_Huang_W21_1,🇨🇳,Line1,21,KIM-L1-B20,White Dragon,Basic,200,2026-01-08,20,NO (4레벨+),0,0,L20 Blue Dragon(KIM-L1-B20)의 자격자 1
+79,LR-KIM-001,Kim_Dragon88,KIM-L1-W21-2,CN_Sun_W21_2,🇨🇳,Line1,21,KIM-L1-B20,White Dragon,Basic,200,2026-01-11,20,NO (4레벨+),0,0,L20 Blue Dragon(KIM-L1-B20)의 자격자 2
+80,LR-KIM-001,Kim_Dragon88,KIM-L1-W21-3,CN_Lin_W21_3,🇨🇳,Line1,21,KIM-L1-B20,White Dragon,Basic,200,2026-01-14,20,NO (4레벨+),0,0,L20 Blue Dragon(KIM-L1-B20)의 자격자 3
+81,LR-KIM-001,Kim_Dragon88,KIM-L1-T21-1,CN_Tang_T21,🇨🇳,Line1,21,KIM-L1-B20,White Dragon,Basic,200,2025-08-14,20,NO (4레벨+),0,0,꼬리구간 L21 — 최대깊이 달성
+82,LR-KIM-001,Kim_Dragon88,KIM-L1-T22-1,CN_Xu_T22,🇨🇳,Line1,22,KIM-L1-T21-1,White Dragon,Basic,200,2025-08-21,20,NO (4레벨+),0,0,꼬리구간 L22 — 최대깊이 달성
+83,LR-KIM-001,Kim_Dragon88,KIM-L1-T23-1,CN_Han_T23,🇨🇳,Line1,23,KIM-L1-T22-1,White Dragon,Basic,200,2025-08-28,20,NO (4레벨+),0,0,꼬리구간 L23 — 최대깊이 달성
+84,LR-KIM-001,Kim_Dragon88,KIM-L1-T24-1,CN_Gao_T24,🇨🇳,Line1,24,KIM-L1-T23-1,White Dragon,Basic,200,2025-09-04,20,NO (4레벨+),0,0,꼬리구간 L24 — 최대깊이 달성
+85,LR-KIM-001,Kim_Dragon88,KIM-L1-T25-1,CN_Luo_T25,🇨🇳,Line1,25,KIM-L1-T24-1,White Dragon,Basic,200,2025-09-11,20,NO (4레벨+),0,0,꼬리구간 L25 — 최대깊이 달성
+86,LR-KIM-001,Kim_Dragon88,KIM-L2-B01,JP_Tanaka_Rise,🇯🇵,Line2,1,LR-KIM-001,Blue Dragon,Standard,500,2025-02-25,50,YES,4.5,54,우연히 성장 / 얕은 Blue Dragon
+87,LR-KIM-001,Kim_Dragon88,KIM-L2-W02-1,JP_Sato_1,🇯🇵,Line2,2,KIM-L2-B01,White Dragon,Basic,200,2025-02-28,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+88,LR-KIM-001,Kim_Dragon88,KIM-L2-W02-2,JP_Ito_2,🇯🇵,Line2,2,KIM-L2-B01,White Dragon,Basic,200,2025-03-03,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+89,LR-KIM-001,Kim_Dragon88,KIM-L2-W02-3,JP_Kato_3,🇯🇵,Line2,2,KIM-L2-B01,White Dragon,Basic,200,2025-03-06,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+90,LR-KIM-001,Kim_Dragon88,KIM-L2-W02-4,JP_Suzuki_4,🇯🇵,Line2,2,KIM-L2-B01,White Dragon,Basic,200,2025-03-09,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+91,LR-KIM-001,Kim_Dragon88,KIM-L2-W02-5,JP_Yamada_5,🇯🇵,Line2,2,KIM-L2-B01,White Dragon,Basic,200,2025-03-12,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+92,LR-KIM-001,Kim_Dragon88,KIM-L2-T03-1,JP_Kobayashi_T1,🇯🇵,Line2,3,KIM-L2-W02-1,White Dragon,Basic,200,2025-04-06,20,YES,1.8,21.6,Line2 꼬리 L3
+93,LR-KIM-001,Kim_Dragon88,KIM-L2-T04-1,JP_Nakamura_T2,🇯🇵,Line2,4,KIM-L2-T03-1,White Dragon,Basic,200,2025-04-16,20,NO (4레벨+),0,0,Line2 꼬리 L4
+94,LR-KIM-001,Kim_Dragon88,KIM-L2-T05-1,JP_Abe_T3,🇯🇵,Line2,5,KIM-L2-T04-1,White Dragon,Basic,200,2025-04-26,20,NO (4레벨+),0,0,Line2 꼬리 L5
+95,LR-KIM-001,Kim_Dragon88,KIM-L3-01,KR_Choi_Star,🇰🇷,Line3,1,LR-KIM-001,White Dragon,Basic,200,2025-02-23,20,YES,1.8,21.6,⭐ Blue Dragon 달성 목표 — 이 라인이 Blue되면 상위계정 Purple Dragon 달성
+96,LR-KIM-001,Kim_Dragon88,KIM-L3-W02-1,KR_Park_1,🇰🇷,Line3,2,KIM-L3-01,White Dragon,Basic,200,2025-02-27,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 1
+97,LR-KIM-001,Kim_Dragon88,KIM-L3-W02-2,KR_Kim_2,🇰🇷,Line3,2,KIM-L3-01,White Dragon,Basic,200,2025-03-03,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 2
+98,LR-KIM-001,Kim_Dragon88,KIM-L3-W02-3,KR_Lee_3,🇰🇷,Line3,2,KIM-L3-01,White Dragon,Basic,200,2025-03-07,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 3
+99,LR-KIM-001,Kim_Dragon88,KIM-L3-W02-4,KR_Yoon_4,🇰🇷,Line3,2,KIM-L3-01,White Dragon,Basic,200,2025-03-11,20,YES,1.8,21.6,추가 멤버
+100,LR-KIM-001,Kim_Dragon88,KIM-L3-W03-1,KR_Jang_D3,🇰🇷,Line3,3,KIM-L3-W02-1,White Dragon,Basic,200,2025-05-04,20,YES,1.8,21.6,Line3 L3
+101,LR-KIM-001,Kim_Dragon88,KIM-L3-W04-1,KR_Shin_D4,🇰🇷,Line3,4,KIM-L3-W02-1,White Dragon,Basic,200,2025-05-14,20,NO (4레벨+),0,0,Line3 L4
+102,LR-KIM-001,Kim_Dragon88,KIM-L3-W05-1,KR_Kwon_D5,🇰🇷,Line3,5,KIM-L3-W02-1,White Dragon,Basic,200,2025-05-24,20,NO (4레벨+),0,0,Line3 L5
+103,LR-KIM-001,Kim_Dragon88,KIM-L4-01,VN_Nguyen_Pro,🇻🇳,Line4,1,LR-KIM-001,White Dragon,Basic,200,2025-02-27,20,YES,1.8,21.6,거의 비활성
+104,LR-KIM-001,Kim_Dragon88,KIM-L4-02-1,VN_Tran_1,🇻🇳,Line4,2,KIM-L4-01,White Dragon,Basic,200,2025-03-19,20,YES,1.8,21.6,비활성 소규모
+105,LR-KIM-001,Kim_Dragon88,KIM-L4-02-2,VN_Le_2,🇻🇳,Line4,2,KIM-L4-01,White Dragon,Basic,200,2025-04-08,20,YES,1.8,21.6,비활성 소규모
+106,LR-KIM-001,Kim_Dragon88,KIM-L4-02-3,VN_Pham_3,🇻🇳,Line4,2,KIM-L4-01,White Dragon,Basic,200,2025-04-28,20,YES,1.8,21.6,비활성 소규모
+107,LR-KIM-001,Kim_Dragon88,KIM-L5-01,CN_Song_Rise2,🇨🇳,Line5,1,LR-KIM-001,White Dragon,Basic,200,2025-03-02,20,YES,1.8,21.6,거의 비활성
+108,LR-KIM-001,Kim_Dragon88,KIM-L5-02-1,CN_Yang_Sub,🇨🇳,Line5,2,KIM-L5-01,White Dragon,Basic,200,2025-05-01,20,YES,1.8,21.6,최소 구성
+109,LR-LEE-002,Lee_Profit99,LEE-L1-B01,CN_Zhu_01,🇨🇳,Line1,1,LR-LEE-002,Blue Dragon,Standard,500,2025-03-12,50,YES,4.5,54,Kim 직접추천 / 중국라인 리더
+110,LR-LEE-002,Lee_Profit99,LEE-L1-W02-1,CN_Pan_W2_1,🇨🇳,Line1,2,LEE-L1-B01,White Dragon,Basic,200,2025-03-15,20,YES,1.8,21.6,L1 Blue Dragon(LEE-L1-B01)의 자격자 1
+111,LR-LEE-002,Lee_Profit99,LEE-L1-W02-2,CN_Fu_W2_2,🇨🇳,Line1,2,LEE-L1-B01,White Dragon,Basic,200,2025-03-18,20,YES,1.8,21.6,L1 Blue Dragon(LEE-L1-B01)의 자격자 2
+112,LR-LEE-002,Lee_Profit99,LEE-L1-W02-3,CN_Cao_W2_3,🇨🇳,Line1,2,LEE-L1-B01,White Dragon,Basic,200,2025-03-21,20,YES,1.8,21.6,L1 Blue Dragon(LEE-L1-B01)의 자격자 3
+113,LR-LEE-002,Lee_Profit99,LEE-L1-B02,CN_Zeng_02,🇨🇳,Line1,2,LEE-L1-B01,Blue Dragon,Standard,500,2025-03-28,50,YES,4.5,54,척추 Blue Dragon L2
+114,LR-LEE-002,Lee_Profit99,LEE-L1-W03-1,CN_Qian_W3_1,🇨🇳,Line1,3,LEE-L1-B02,White Dragon,Basic,200,2025-03-31,20,YES,1.8,21.6,L2 Blue Dragon(LEE-L1-B02)의 자격자 1
+115,LR-LEE-002,Lee_Profit99,LEE-L1-W03-2,CN_Ye_W3_2,🇨🇳,Line1,3,LEE-L1-B02,White Dragon,Basic,200,2025-04-03,20,YES,1.8,21.6,L2 Blue Dragon(LEE-L1-B02)의 자격자 2
+116,LR-LEE-002,Lee_Profit99,LEE-L1-W03-3,CN_Dong_W3_3,🇨🇳,Line1,3,LEE-L1-B02,White Dragon,Basic,200,2025-04-06,20,YES,1.8,21.6,L2 Blue Dragon(LEE-L1-B02)의 자격자 3
+117,LR-LEE-002,Lee_Profit99,LEE-L1-B03,CN_Bai_03,🇨🇳,Line1,3,LEE-L1-B02,Blue Dragon,Standard,500,2025-04-13,50,YES,4.5,54,척추 Blue Dragon L3
+118,LR-LEE-002,Lee_Profit99,LEE-L1-W04-1,CN_Yuan_W4_1,🇨🇳,Line1,4,LEE-L1-B03,White Dragon,Basic,200,2025-04-16,20,NO (4레벨+),0,0,L3 Blue Dragon(LEE-L1-B03)의 자격자 1
+119,LR-LEE-002,Lee_Profit99,LEE-L1-W04-2,CN_Ren_W4_2,🇨🇳,Line1,4,LEE-L1-B03,White Dragon,Basic,200,2025-04-19,20,NO (4레벨+),0,0,L3 Blue Dragon(LEE-L1-B03)의 자격자 2
+120,LR-LEE-002,Lee_Profit99,LEE-L1-W04-3,CN_Deng_W4_3,🇨🇳,Line1,4,LEE-L1-B03,White Dragon,Basic,200,2025-04-22,20,NO (4레벨+),0,0,L3 Blue Dragon(LEE-L1-B03)의 자격자 3
+121,LR-LEE-002,Lee_Profit99,LEE-L1-B04,CN_Mo_04,🇨🇳,Line1,4,LEE-L1-B03,Blue Dragon,Standard,500,2025-04-29,50,NO (4레벨+),0,0,척추 Blue Dragon L4
+122,LR-LEE-002,Lee_Profit99,LEE-L1-W05-1,CN_Gu_W5_1,🇨🇳,Line1,5,LEE-L1-B04,White Dragon,Basic,200,2025-05-02,20,NO (4레벨+),0,0,L4 Blue Dragon(LEE-L1-B04)의 자격자 1
+123,LR-LEE-002,Lee_Profit99,LEE-L1-W05-2,CN_Yin_W5_2,🇨🇳,Line1,5,LEE-L1-B04,White Dragon,Basic,200,2025-05-05,20,NO (4레벨+),0,0,L4 Blue Dragon(LEE-L1-B04)의 자격자 2
+124,LR-LEE-002,Lee_Profit99,LEE-L1-W05-3,CN_Ai_W5_3,🇨🇳,Line1,5,LEE-L1-B04,White Dragon,Basic,200,2025-05-08,20,NO (4레벨+),0,0,L4 Blue Dragon(LEE-L1-B04)의 자격자 3
+125,LR-LEE-002,Lee_Profit99,LEE-L1-T05-1,CN_Bi_T5,🇨🇳,Line1,5,LEE-L1-B04,White Dragon,Basic,200,2025-04-13,20,NO (4레벨+),0,0,꼬리구간 L5 — 최대깊이 달성
+126,LR-LEE-002,Lee_Profit99,LEE-L1-T06-1,CN_Ci_T6,🇨🇳,Line1,6,LEE-L1-T05-1,White Dragon,Basic,200,2025-04-20,20,NO (4레벨+),0,0,꼬리구간 L6 — 최대깊이 달성
+127,LR-LEE-002,Lee_Profit99,LEE-L1-T07-1,CN_Di_T7,🇨🇳,Line1,7,LEE-L1-T06-1,White Dragon,Basic,200,2025-04-27,20,NO (4레벨+),0,0,꼬리구간 L7 — 최대깊이 달성
+128,LR-LEE-002,Lee_Profit99,LEE-L1-T08-1,CN_Ei_T8,🇨🇳,Line1,8,LEE-L1-T07-1,White Dragon,Basic,200,2025-05-04,20,NO (4레벨+),0,0,꼬리구간 L8 — 최대깊이 달성
+129,LR-LEE-002,Lee_Profit99,LEE-L2-B01,JP_Kimura_Rise,🇯🇵,Line2,1,LR-LEE-002,Blue Dragon,Standard,500,2025-03-02,50,YES,4.5,54,우연히 성장 / 얕은 Blue Dragon
+130,LR-LEE-002,Lee_Profit99,LEE-L2-W02-1,JP_Mori_1,🇯🇵,Line2,2,LEE-L2-B01,White Dragon,Basic,200,2025-03-05,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+131,LR-LEE-002,Lee_Profit99,LEE-L2-W02-2,JP_Hayashi_2,🇯🇵,Line2,2,LEE-L2-B01,White Dragon,Basic,200,2025-03-08,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+132,LR-LEE-002,Lee_Profit99,LEE-L2-W02-3,JP_Imai_3,🇯🇵,Line2,2,LEE-L2-B01,White Dragon,Basic,200,2025-03-11,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+133,LR-LEE-002,Lee_Profit99,LEE-L2-W02-4,JP_Ogawa_4,🇯🇵,Line2,2,LEE-L2-B01,White Dragon,Basic,200,2025-03-14,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+134,LR-LEE-002,Lee_Profit99,LEE-L2-W02-5,JP_Okada_5,🇯🇵,Line2,2,LEE-L2-B01,White Dragon,Basic,200,2025-03-17,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+135,LR-LEE-002,Lee_Profit99,LEE-L2-T03-1,JP_Saito_T1,🇯🇵,Line2,3,LEE-L2-W02-1,White Dragon,Basic,200,2025-04-11,20,YES,1.8,21.6,Line2 꼬리 L3
+136,LR-LEE-002,Lee_Profit99,LEE-L2-T04-1,JP_Kondo_T2,🇯🇵,Line2,4,LEE-L2-T03-1,White Dragon,Basic,200,2025-04-21,20,NO (4레벨+),0,0,Line2 꼬리 L4
+137,LR-LEE-002,Lee_Profit99,LEE-L2-T05-1,JP_Fujii_T3,🇯🇵,Line2,5,LEE-L2-T04-1,White Dragon,Basic,200,2025-05-01,20,NO (4레벨+),0,0,Line2 꼬리 L5
+138,LR-LEE-002,Lee_Profit99,LEE-L3-01,KR_Ahn_Star,🇰🇷,Line3,1,LR-LEE-002,White Dragon,Basic,200,2025-02-28,20,YES,1.8,21.6,⭐ Blue Dragon 달성 목표 — 이 라인이 Blue되면 상위계정 Purple Dragon 달성
+139,LR-LEE-002,Lee_Profit99,LEE-L3-W02-1,KR_Jeon_1,🇰🇷,Line3,2,LEE-L3-01,White Dragon,Basic,200,2025-03-04,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 1
+140,LR-LEE-002,Lee_Profit99,LEE-L3-W02-2,KR_Lim_2,🇰🇷,Line3,2,LEE-L3-01,White Dragon,Basic,200,2025-03-08,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 2
+141,LR-LEE-002,Lee_Profit99,LEE-L3-W02-3,KR_Han_3,🇰🇷,Line3,2,LEE-L3-01,White Dragon,Basic,200,2025-03-12,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 3
+142,LR-LEE-002,Lee_Profit99,LEE-L3-W02-4,KR_Ryu_4,🇰🇷,Line3,2,LEE-L3-01,White Dragon,Basic,200,2025-03-16,20,YES,1.8,21.6,추가 멤버
+143,LR-LEE-002,Lee_Profit99,LEE-L3-W03-1,KR_Oh_D3,🇰🇷,Line3,3,LEE-L3-W02-1,White Dragon,Basic,200,2025-05-09,20,YES,1.8,21.6,Line3 L3
+144,LR-LEE-002,Lee_Profit99,LEE-L3-W04-1,KR_Seo_D4,🇰🇷,Line3,4,LEE-L3-W02-1,White Dragon,Basic,200,2025-05-19,20,NO (4레벨+),0,0,Line3 L4
+145,LR-LEE-002,Lee_Profit99,LEE-L3-W05-1,KR_Bae_D5,🇰🇷,Line3,5,LEE-L3-W02-1,White Dragon,Basic,200,2025-05-29,20,NO (4레벨+),0,0,Line3 L5
+146,LR-LEE-002,Lee_Profit99,LEE-L4-01,VN_Vu_Pro,🇻🇳,Line4,1,LR-LEE-002,White Dragon,Basic,200,2025-03-04,20,YES,1.8,21.6,거의 비활성
+147,LR-LEE-002,Lee_Profit99,LEE-L4-02-1,VN_Do_1,🇻🇳,Line4,2,LEE-L4-01,White Dragon,Basic,200,2025-03-24,20,YES,1.8,21.6,비활성 소규모
+148,LR-LEE-002,Lee_Profit99,LEE-L4-02-2,VN_Bui_2,🇻🇳,Line4,2,LEE-L4-01,White Dragon,Basic,200,2025-04-13,20,YES,1.8,21.6,비활성 소규모
+149,LR-LEE-002,Lee_Profit99,LEE-L4-02-3,VN_Hoang_3,🇻🇳,Line4,2,LEE-L4-01,White Dragon,Basic,200,2025-05-03,20,YES,1.8,21.6,비활성 소규모
+150,LR-LEE-002,Lee_Profit99,LEE-L5-01,CN_Fi_Rise2,🇨🇳,Line5,1,LR-LEE-002,White Dragon,Basic,200,2025-03-07,20,YES,1.8,21.6,거의 비활성
+151,LR-LEE-002,Lee_Profit99,LEE-L5-02-1,CN_Gi_Sub,🇨🇳,Line5,2,LEE-L5-01,White Dragon,Basic,200,2025-05-06,20,YES,1.8,21.6,최소 구성
+152,LR-PAR-003,Park_Alpha77,PAR-L1-B01,CN_Hi_01,🇨🇳,Line1,1,LR-PAR-003,Blue Dragon,Standard,500,2025-03-17,50,YES,4.5,54,Kim 직접추천 / 중국라인 리더
+153,LR-PAR-003,Park_Alpha77,PAR-L1-W02-1,CN_Ii_W2_1,🇨🇳,Line1,2,PAR-L1-B01,White Dragon,Basic,200,2025-03-20,20,YES,1.8,21.6,L1 Blue Dragon(PAR-L1-B01)의 자격자 1
+154,LR-PAR-003,Park_Alpha77,PAR-L1-W02-2,CN_Ji_W2_2,🇨🇳,Line1,2,PAR-L1-B01,White Dragon,Basic,200,2025-03-23,20,YES,1.8,21.6,L1 Blue Dragon(PAR-L1-B01)의 자격자 2
+155,LR-PAR-003,Park_Alpha77,PAR-L1-W02-3,CN_Ki_W2_3,🇨🇳,Line1,2,PAR-L1-B01,White Dragon,Basic,200,2025-03-26,20,YES,1.8,21.6,L1 Blue Dragon(PAR-L1-B01)의 자격자 3
+156,LR-PAR-003,Park_Alpha77,PAR-L1-B02,CN_Li2_02,🇨🇳,Line1,2,PAR-L1-B01,Blue Dragon,Standard,500,2025-04-02,50,YES,4.5,54,척추 Blue Dragon L2
+157,LR-PAR-003,Park_Alpha77,PAR-L1-W03-1,CN_Mi_W3_1,🇨🇳,Line1,3,PAR-L1-B02,White Dragon,Basic,200,2025-04-05,20,YES,1.8,21.6,L2 Blue Dragon(PAR-L1-B02)의 자격자 1
+158,LR-PAR-003,Park_Alpha77,PAR-L1-W03-2,CN_Ni_W3_2,🇨🇳,Line1,3,PAR-L1-B02,White Dragon,Basic,200,2025-04-08,20,YES,1.8,21.6,L2 Blue Dragon(PAR-L1-B02)의 자격자 2
+159,LR-PAR-003,Park_Alpha77,PAR-L1-W03-3,CN_Oi_W3_3,🇨🇳,Line1,3,PAR-L1-B02,White Dragon,Basic,200,2025-04-11,20,YES,1.8,21.6,L2 Blue Dragon(PAR-L1-B02)의 자격자 3
+160,LR-PAR-003,Park_Alpha77,PAR-L1-B03,CN_Pi_03,🇨🇳,Line1,3,PAR-L1-B02,Blue Dragon,Standard,500,2025-04-18,50,YES,4.5,54,척추 Blue Dragon L3
+161,LR-PAR-003,Park_Alpha77,PAR-L1-W04-1,CN_Qi_W4_1,🇨🇳,Line1,4,PAR-L1-B03,White Dragon,Basic,200,2025-04-21,20,NO (4레벨+),0,0,L3 Blue Dragon(PAR-L1-B03)의 자격자 1
+162,LR-PAR-003,Park_Alpha77,PAR-L1-W04-2,CN_Ri_W4_2,🇨🇳,Line1,4,PAR-L1-B03,White Dragon,Basic,200,2025-04-24,20,NO (4레벨+),0,0,L3 Blue Dragon(PAR-L1-B03)의 자격자 2
+163,LR-PAR-003,Park_Alpha77,PAR-L1-W04-3,CN_Si_W4_3,🇨🇳,Line1,4,PAR-L1-B03,White Dragon,Basic,200,2025-04-27,20,NO (4레벨+),0,0,L3 Blue Dragon(PAR-L1-B03)의 자격자 3
+164,LR-PAR-003,Park_Alpha77,PAR-L1-T04-1,CN_Ti_T4,🇨🇳,Line1,4,PAR-L1-B03,White Dragon,Basic,200,2025-04-10,20,NO (4레벨+),0,0,꼬리구간 L4 — 최대깊이 달성
+165,LR-PAR-003,Park_Alpha77,PAR-L1-T05-1,CN_Ui_T5,🇨🇳,Line1,5,PAR-L1-T04-1,White Dragon,Basic,200,2025-04-17,20,NO (4레벨+),0,0,꼬리구간 L5 — 최대깊이 달성
+166,LR-PAR-003,Park_Alpha77,PAR-L1-T06-1,CN_Vi_T6,🇨🇳,Line1,6,PAR-L1-T05-1,White Dragon,Basic,200,2025-04-24,20,NO (4레벨+),0,0,꼬리구간 L6 — 최대깊이 달성
+167,LR-PAR-003,Park_Alpha77,PAR-L1-T07-1,CN_Wi_T7,🇨🇳,Line1,7,PAR-L1-T06-1,White Dragon,Basic,200,2025-05-01,20,NO (4레벨+),0,0,꼬리구간 L7 — 최대깊이 달성
+168,LR-PAR-003,Park_Alpha77,PAR-L2-B01,JP_Nishida_Rise,🇯🇵,Line2,1,LR-PAR-003,Blue Dragon,Standard,500,2025-03-07,50,YES,4.5,54,우연히 성장 / 얕은 Blue Dragon
+169,LR-PAR-003,Park_Alpha77,PAR-L2-W02-1,JP_Ueda_1,🇯🇵,Line2,2,PAR-L2-B01,White Dragon,Basic,200,2025-03-10,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+170,LR-PAR-003,Park_Alpha77,PAR-L2-W02-2,JP_Wada_2,🇯🇵,Line2,2,PAR-L2-B01,White Dragon,Basic,200,2025-03-13,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+171,LR-PAR-003,Park_Alpha77,PAR-L2-W02-3,JP_Aoki_3,🇯🇵,Line2,2,PAR-L2-B01,White Dragon,Basic,200,2025-03-16,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+172,LR-PAR-003,Park_Alpha77,PAR-L2-W02-4,JP_Ikeda_4,🇯🇵,Line2,2,PAR-L2-B01,White Dragon,Basic,200,2025-03-19,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+173,LR-PAR-003,Park_Alpha77,PAR-L2-W02-5,JP_Ono_5,🇯🇵,Line2,2,PAR-L2-B01,White Dragon,Basic,200,2025-03-22,20,YES,1.8,21.6,L2-Blue 자격자 / 팀매출$1000 충족용
+174,LR-PAR-003,Park_Alpha77,PAR-L2-T03-1,JP_Maeda_T1,🇯🇵,Line2,3,PAR-L2-W02-1,White Dragon,Basic,200,2025-04-16,20,YES,1.8,21.6,Line2 꼬리 L3
+175,LR-PAR-003,Park_Alpha77,PAR-L2-T04-1,JP_Fujita_T2,🇯🇵,Line2,4,PAR-L2-T03-1,White Dragon,Basic,200,2025-04-26,20,NO (4레벨+),0,0,Line2 꼬리 L4
+176,LR-PAR-003,Park_Alpha77,PAR-L2-T05-1,JP_Ohashi_T3,🇯🇵,Line2,5,PAR-L2-T04-1,White Dragon,Basic,200,2025-05-06,20,NO (4레벨+),0,0,Line2 꼬리 L5
+177,LR-PAR-003,Park_Alpha77,PAR-L3-01,KR_Nam_Star,🇰🇷,Line3,1,LR-PAR-003,White Dragon,Basic,200,2025-03-05,20,YES,1.8,21.6,⭐ Blue Dragon 달성 목표 — 이 라인이 Blue되면 상위계정 Purple Dragon 달성
+178,LR-PAR-003,Park_Alpha77,PAR-L3-W02-1,KR_Gang_1,🇰🇷,Line3,2,PAR-L3-01,White Dragon,Basic,200,2025-03-09,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 1
+179,LR-PAR-003,Park_Alpha77,PAR-L3-W02-2,KR_Do_2,🇰🇷,Line3,2,PAR-L3-01,White Dragon,Basic,200,2025-03-13,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 2
+180,LR-PAR-003,Park_Alpha77,PAR-L3-W02-3,KR_Im_3,🇰🇷,Line3,2,PAR-L3-01,White Dragon,Basic,200,2025-03-17,20,YES,1.8,21.6,L3 Blue Dragon 자격자 예비 3
+181,LR-PAR-003,Park_Alpha77,PAR-L3-W02-4,KR_Choi_4,🇰🇷,Line3,2,PAR-L3-01,White Dragon,Basic,200,2025-03-21,20,YES,1.8,21.6,추가 멤버
+182,LR-PAR-003,Park_Alpha77,PAR-L3-W03-1,KR_Park_D3,🇰🇷,Line3,3,PAR-L3-W02-1,White Dragon,Basic,200,2025-05-14,20,YES,1.8,21.6,Line3 L3
+183,LR-PAR-003,Park_Alpha77,PAR-L3-W04-1,KR_Kim_D4,🇰🇷,Line3,4,PAR-L3-W02-1,White Dragon,Basic,200,2025-05-24,20,NO (4레벨+),0,0,Line3 L4
+184,LR-PAR-003,Park_Alpha77,PAR-L3-W05-1,KR_Lee_D5,🇰🇷,Line3,5,PAR-L3-W02-1,White Dragon,Basic,200,2025-06-03,20,NO (4레벨+),0,0,Line3 L5
+185,LR-PAR-003,Park_Alpha77,PAR-L4-01,VN_Cao_Pro,🇻🇳,Line4,1,LR-PAR-003,White Dragon,Basic,200,2025-03-09,20,YES,1.8,21.6,거의 비활성
+186,LR-PAR-003,Park_Alpha77,PAR-L4-02-1,VN_Vo_1,🇻🇳,Line4,2,PAR-L4-01,White Dragon,Basic,200,2025-03-29,20,YES,1.8,21.6,비활성 소규모
+187,LR-PAR-003,Park_Alpha77,PAR-L4-02-2,VN_Luong_2,🇻🇳,Line4,2,PAR-L4-01,White Dragon,Basic,200,2025-04-18,20,YES,1.8,21.6,비활성 소규모
+188,LR-PAR-003,Park_Alpha77,PAR-L4-02-3,VN_Trinh_3,🇻🇳,Line4,2,PAR-L4-01,White Dragon,Basic,200,2025-05-08,20,YES,1.8,21.6,비활성 소규모
+189,LR-PAR-003,Park_Alpha77,PAR-L5-01,CN_Xi_Rise2,🇨🇳,Line5,1,LR-PAR-003,White Dragon,Basic,200,2025-03-12,20,YES,1.8,21.6,거의 비활성
+190,LR-PAR-003,Park_Alpha77,PAR-L5-02-1,CN_Yi_Sub,🇨🇳,Line5,2,PAR-L5-01,White Dragon,Basic,200,2025-05-11,20,YES,1.8,21.6,최소 구성
+191,LR-CHO-004,Choi_Rise12,CHO-D1,CN_Zi_D,🇨🇳,Line1,1,LR-CHO-004,White Dragon,Basic,200,2025-03-10,20,NO(White Dragon),0,0,직접추천
+192,LR-CHO-004,Choi_Rise12,CHO-D2,CN_Ao_D,🇨🇳,Line2,1,LR-CHO-004,White Dragon,Basic,200,2025-03-15,20,NO(White Dragon),0,0,직접추천
+193,LR-CHO-004,Choi_Rise12,CHO-D3,KR_Yoon_D,🇰🇷,Line3,1,LR-CHO-004,White Dragon,Basic,200,2025-03-20,20,NO(White Dragon),0,0,직접추천
+194,LR-CHO-004,Choi_Rise12,CHO-D4,VN_Dang_D,🇻🇳,Line4,1,LR-CHO-004,White Dragon,Basic,200,2025-03-25,20,NO(White Dragon),0,0,직접추천
+195,LR-CHO-004,Choi_Rise12,CHO-S1,CN_Bo_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-04-11,20,NO(White Dragon),0,0,하부 멤버
+196,LR-CHO-004,Choi_Rise12,CHO-S2,CN_Co_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-04-18,20,NO(White Dragon),0,0,하부 멤버
+197,LR-CHO-004,Choi_Rise12,CHO-S3,CN_Do_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-04-25,20,NO(White Dragon),0,0,하부 멤버
+198,LR-CHO-004,Choi_Rise12,CHO-S4,CN_Eo_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-05-02,20,NO(White Dragon),0,0,하부 멤버
+199,LR-CHO-004,Choi_Rise12,CHO-S5,CN_Fo_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-05-09,20,NO(White Dragon),0,0,하부 멤버
+200,LR-CHO-004,Choi_Rise12,CHO-S6,CN_Go_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-05-16,20,NO(White Dragon),0,0,하부 멤버
+201,LR-CHO-004,Choi_Rise12,CHO-S7,CN_Ho_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-05-23,20,NO(White Dragon),0,0,하부 멤버
+202,LR-CHO-004,Choi_Rise12,CHO-S8,CN_Io_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-05-30,20,NO(White Dragon),0,0,하부 멤버
+203,LR-CHO-004,Choi_Rise12,CHO-S9,CN_Jo_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-06-06,20,NO(White Dragon),0,0,하부 멤버
+204,LR-CHO-004,Choi_Rise12,CHO-S10,CN_Ko2_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-06-13,20,NO(White Dragon),0,0,하부 멤버
+205,LR-CHO-004,Choi_Rise12,CHO-S11,CN_Lo_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-06-20,20,NO(White Dragon),0,0,하부 멤버
+206,LR-CHO-004,Choi_Rise12,CHO-S12,CN_Wei_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-06-27,20,NO(White Dragon),0,0,하부 멤버
+207,LR-CHO-004,Choi_Rise12,CHO-S13,CN_Chen_S,🇨🇳,Line1,2,CHO-D1,White Dragon,Basic,200,2025-07-04,20,NO(White Dragon),0,0,하부 멤버
+208,LR-HAN-005,Han_Node34,HAN-D1,CN_Liu_D,🇨🇳,Line1,1,LR-HAN-005,White Dragon,Basic,200,2025-03-14,20,NO(White Dragon),0,0,직접추천
+209,LR-HAN-005,Han_Node34,HAN-D2,CN_Wang_D,🇨🇳,Line2,1,LR-HAN-005,White Dragon,Basic,200,2025-03-19,20,NO(White Dragon),0,0,직접추천
+210,LR-HAN-005,Han_Node34,HAN-D3,KR_Jang_D,🇰🇷,Line3,1,LR-HAN-005,White Dragon,Basic,200,2025-03-24,20,NO(White Dragon),0,0,직접추천
+211,LR-HAN-005,Han_Node34,HAN-D4,VN_Ngo_D,🇻🇳,Line4,1,LR-HAN-005,White Dragon,Basic,200,2025-03-29,20,NO(White Dragon),0,0,직접추천
+212,LR-HAN-005,Han_Node34,HAN-S1,CN_Zhang_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-04-15,20,NO(White Dragon),0,0,하부 멤버
+213,LR-HAN-005,Han_Node34,HAN-S2,CN_Li_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-04-22,20,NO(White Dragon),0,0,하부 멤버
+214,LR-HAN-005,Han_Node34,HAN-S3,CN_Zhao_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-04-29,20,NO(White Dragon),0,0,하부 멤버
+215,LR-HAN-005,Han_Node34,HAN-S4,CN_Huang_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-05-06,20,NO(White Dragon),0,0,하부 멤버
+216,LR-HAN-005,Han_Node34,HAN-S5,CN_Sun_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-05-13,20,NO(White Dragon),0,0,하부 멤버
+217,LR-HAN-005,Han_Node34,HAN-S6,CN_Lin_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-05-20,20,NO(White Dragon),0,0,하부 멤버
+218,LR-HAN-005,Han_Node34,HAN-S7,CN_Tang_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-05-27,20,NO(White Dragon),0,0,하부 멤버
+219,LR-HAN-005,Han_Node34,HAN-S8,CN_Xu_S,🇨🇳,Line1,2,HAN-D1,White Dragon,Basic,200,2025-06-03,20,NO(White Dragon),0,0,하부 멤버
+220,LR-JUN-006,Jung_Bull56,JUN-D1,CN_Han_D,🇨🇳,Line1,1,LR-JUN-006,White Dragon,Basic,200,2025-03-18,20,NO(White Dragon),0,0,직접추천
+221,LR-JUN-006,Jung_Bull56,JUN-D2,CN_Gao_D,🇨🇳,Line2,1,LR-JUN-006,White Dragon,Basic,200,2025-03-23,20,NO(White Dragon),0,0,직접추천
+222,LR-JUN-006,Jung_Bull56,JUN-D3,KR_Shin_D,🇰🇷,Line3,1,LR-JUN-006,White Dragon,Basic,200,2025-03-28,20,NO(White Dragon),0,0,직접추천
+223,LR-JUN-006,Jung_Bull56,JUN-D4,VN_Duong_D,🇻🇳,Line4,1,LR-JUN-006,White Dragon,Basic,200,2025-04-02,20,NO(White Dragon),0,0,직접추천
+224,LR-JUN-006,Jung_Bull56,JUN-S1,CN_Luo_S,🇨🇳,Line1,2,JUN-D1,White Dragon,Basic,200,2025-04-19,20,NO(White Dragon),0,0,하부 멤버
+225,LR-JUN-006,Jung_Bull56,JUN-S2,CN_Song_S,🇨🇳,Line1,2,JUN-D1,White Dragon,Basic,200,2025-04-26,20,NO(White Dragon),0,0,하부 멤버
+226,LR-JUN-006,Jung_Bull56,JUN-S3,CN_Yang_S,🇨🇳,Line1,2,JUN-D1,White Dragon,Basic,200,2025-05-03,20,NO(White Dragon),0,0,하부 멤버
+227,LR-JUN-006,Jung_Bull56,JUN-S4,CN_Zhu_S,🇨🇳,Line1,2,JUN-D1,White Dragon,Basic,200,2025-05-10,20,NO(White Dragon),0,0,하부 멤버
+228,LR-YOO-007,Yoon_Gold78,YOO-D1,CN_Pan_D,🇨🇳,Line1,1,LR-YOO-007,White Dragon,Basic,200,2025-03-22,20,NO(White Dragon),0,0,직접추천
+229,LR-YOO-007,Yoon_Gold78,YOO-D2,CN_Fu_D,🇨🇳,Line2,1,LR-YOO-007,White Dragon,Basic,200,2025-03-27,20,NO(White Dragon),0,0,직접추천
+230,LR-YOO-007,Yoon_Gold78,YOO-D3,KR_Kwon_D,🇰🇷,Line3,1,LR-YOO-007,White Dragon,Basic,200,2025-04-01,20,NO(White Dragon),0,0,직접추천
+231,LR-YOO-007,Yoon_Gold78,YOO-D4,VN_Ly_D,🇻🇳,Line4,1,LR-YOO-007,White Dragon,Basic,200,2025-04-06,20,NO(White Dragon),0,0,직접추천
+232,LR-YOO-007,Yoon_Gold78,YOO-S1,CN_Cao_S,🇨🇳,Line1,2,YOO-D1,White Dragon,Basic,200,2025-04-23,20,NO(White Dragon),0,0,하부 멤버
+233,LR-YOO-007,Yoon_Gold78,YOO-S2,CN_Zeng_S,🇨🇳,Line1,2,YOO-D1,White Dragon,Basic,200,2025-04-30,20,NO(White Dragon),0,0,하부 멤버
+234,LR-SON-008,Song_Wave90,SON-D1,CN_Qian_D,🇨🇳,Line1,1,LR-SON-008,White Dragon,Basic,200,2025-03-27,20,NO(White Dragon),0,0,직접추천
+235,LR-SON-008,Song_Wave90,SON-D2,CN_Ye_D,🇨🇳,Line2,1,LR-SON-008,White Dragon,Basic,200,2025-04-01,20,NO(White Dragon),0,0,직접추천
+236,LR-SON-008,Song_Wave90,SON-D3,KR_Ahn_D,🇰🇷,Line3,1,LR-SON-008,White Dragon,Basic,200,2025-04-06,20,NO(White Dragon),0,0,직접추천
+237,LR-SON-008,Song_Wave90,SON-D4,VN_Nguyen_D,🇻🇳,Line4,1,LR-SON-008,White Dragon,Basic,200,2025-04-11,20,NO(White Dragon),0,0,직접추천
+238,LR-SON-008,Song_Wave90,SON-S1,CN_Dong_S,🇨🇳,Line1,2,SON-D1,White Dragon,Basic,200,2025-04-28,20,NO(White Dragon),0,0,하부 멤버
+239,LR-LIM-009,Lim_Eagle23,LIM-D1,CN_Bai_D,🇨🇳,Line1,1,LR-LIM-009,White Dragon,Basic,200,2025-04-01,20,NO(White Dragon),0,0,직접추천
+240,LR-LIM-009,Lim_Eagle23,LIM-D2,CN_Yuan_D,🇨🇳,Line2,1,LR-LIM-009,White Dragon,Basic,200,2025-04-06,20,NO(White Dragon),0,0,직접추천
+241,LR-LIM-009,Lim_Eagle23,LIM-D3,KR_Jeon_D,🇰🇷,Line3,1,LR-LIM-009,White Dragon,Basic,200,2025-04-11,20,NO(White Dragon),0,0,직접추천
+242,LR-LIM-009,Lim_Eagle23,LIM-D4,VN_Tran_D,🇻🇳,Line4,1,LR-LIM-009,White Dragon,Basic,200,2025-04-16,20,NO(White Dragon),0,0,직접추천
+243,LR-KOT-010,Ko_Titan45,KOT-D1,CN_Ren_D,🇨🇳,Line1,1,LR-KOT-010,White Dragon,Basic,200,2025-04-06,20,NO(White Dragon),0,0,직접추천
+244,LR-KOT-010,Ko_Titan45,KOT-D2,CN_Deng_D,🇨🇳,Line2,1,LR-KOT-010,White Dragon,Basic,200,2025-04-11,20,NO(White Dragon),0,0,직접추천
+245,LR-KOT-010,Ko_Titan45,KOT-D3,KR_Lim_D,🇰🇷,Line3,1,LR-KOT-010,White Dragon,Basic,200,2025-04-16,20,NO(White Dragon),0,0,직접추천
+,,,,,,,,,,,,,,,,,
+=== 수당 체계 요약 ===,,,,,,,,,,,,,,,,,
+구분,내용,비고,,,,,,,,,,,,,,,
+직접추천수당,패키지금액 × 10% (1회성),하부가 가입할 때 즉시 지급,,,,,,,,,,,,,,,
+롤업수당,하부 일일수익 × 10%,Blue Dragon = 3레벨 / Purple = 7레벨 / Red = 15레벨 / Black = 25레벨,,,,,,,,,,,,,,,
+롤업 계산 예시 (Blue Dragon),,,,,,,,,,,,,,,,,
+Level 1 Blue Dragon (Standard $500),월 수익 $45 × 10% = $4.50/월,연 $54,,,,,,,,,,,,,,,
+Level 2 White Dragon (Basic $200),월 수익 $18 × 10% = $1.80/월,연 $21.60,,,,,,,,,,,,,,,
+Level 3 White Dragon (Basic $200),월 수익 $18 × 10% = $1.80/월,연 $21.60,,,,,,,,,,,,,,,
+Level 4+ (Blue Dragon 미적용),$0/월,Purple Dragon부터 적용됨,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+=== 전체 집계 (V8.8 현실감 재설계) ===,,,,,,,,,,,,,,,,,
+총 생성 멤버 수,245명 (주계정 제외 / 참고용 근사치),,,,,,,,,,,,,,,,
+주계정 수,10개 (Blue Dragon 3개 + White Dragon 7개),,,,,,,,,,,,,,,,
+전체 합계,255개 계정,,,,,,,,,,,,,,,,
+※ 정확한 데이터,03_referral_tree.sql 기준 (220명),실제 DB 삽입은 SQL 파일 사용,,,,,,,,,,,,,,,
+직급 분포,Blue Dragon: Kim/Lee/Park / White Dragon: Choi~Ko,V8.8 현실감 방향A 채택,,,,,,,,,,,,,,,
+USDT 계산 근거,일일수익 + 직추천 + 롤업(Blue만) / White Dragon은 롤업 없음,인출 없음 기준,,,,,,,,,,,,,,,

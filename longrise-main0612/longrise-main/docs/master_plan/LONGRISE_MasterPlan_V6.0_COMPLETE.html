@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGRISE AI - 통합 수당 체계 및 자금 순환 마스터 설계서 V6.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --formal-black: #020617;
+            --formal-gray: #475569;
+            --accent-red: #991b1b;
+            --safe-blue: #1e40af;
+            --table-head: #f1f5f9;
+            --border-color: #cbd5e1;
+            --admin-gray: #94a3b8;
+            --recommend-gold: #b45309;
+            --secret-gold: #f59e0b;
+        }
+
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
+        body { 
+            background-color: #94a3b8; 
+            margin: 0; padding: 40px 0; 
+            font-family: 'Noto Sans KR', sans-serif; 
+            color: var(--formal-black); 
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .toolbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .btn-print {
+            background: #b45309; color: white; border: none; padding: 10px 30px; border-radius: 6px;
+            font-weight: bold; cursor: pointer;
+        }
+
+        #document-wrapper { padding-top: 60px; }
+
+        .document-page {
+            background: #fff; width: 210mm; height: 297mm;
+            margin: 0 auto 20px; padding: 12mm 15mm; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative; overflow: hidden; page-break-after: always;
+        }
+
+        .confidential-mark {
+            position: absolute; top: 20px; right: 25px;
+            color: var(--accent-red); border: 3px double var(--accent-red);
+            padding: 6px 20px; font-weight: 900; font-size: 16px; letter-spacing: 2px;
+            transform: rotate(8deg); opacity: 0.85;
+        }
+
+        h1 { font-size: 22px; font-weight: 900; margin: 0 0 15px 0; border-bottom: 3px solid var(--formal-black); padding-bottom: 8px; }
+        h2 { font-size: 16px; background: var(--formal-black); color: white; padding: 8px 12px; margin: 20px 0 12px 0; border-radius: 4px; }
+        h3 { font-size: 14px; color: var(--safe-blue); margin: 12px 0 8px 0; border-left: 4px solid var(--safe-blue); padding-left: 8px; }
+        
+        p, li { font-size: 11px; line-height: 1.4; margin-bottom: 4px; color: #334155; }
+        
+        .intent-text { 
+            font-size: 11px; color: #1e293b; margin-bottom: 8px; 
+            background: #f8fafc; padding: 6px 10px; border-radius: 4px; 
+            font-weight: 500;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 11px; }
+        th { background: var(--table-head); border: 1px solid var(--border-color); padding: 6px; font-weight: bold; color: #0f172a; text-align: left; }
+        td { border: 1px solid var(--border-color); padding: 6px; vertical-align: top; line-height: 1.4; }
+
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .admin-note { color: var(--admin-gray); font-size: 10px; font-weight: normal; margin-left: 8px; }
+        .page-num { position: absolute; bottom: 12mm; width: calc(100% - 30mm); text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+
+        .core-policy-summary {
+            background: #fffbeb;
+            border: 2px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        .core-policy-summary h4 {
+            margin: 0 0 8px 0; font-size: 15px; color: var(--accent-red); font-weight: 900; text-align: center; border-bottom: 1px solid #fed7aa; padding-bottom: 5px;
+        }
+        .core-policy-list { display: flex; flex-direction: column; gap: 8px; }
+        .policy-item { display: flex; align-items: center; background: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #fde68a; text-align: left; }
+        .policy-num { font-size: 16px; font-weight: 900; color: var(--accent-red); margin-right: 15px; min-width: 25px; display: block; }
+        .policy-desc { font-size: 14px; font-weight: 700; color: #431407; line-height: 1.4; margin: 0; display: block; }
+
+        .example-box {
+            background: #eef2ff; border: 1px solid #c7d2fe; padding: 12px; border-radius: 6px; margin-top: 5px; margin-bottom: 15px;
+        }
+
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .toolbar { display: none !important; }
+            #document-wrapper { padding: 0; }
+            .document-page { margin: 0 !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar"><button class="btn-print" onclick="window.print()">문서 출력 (PDF)</button></div>
+
+    <div id="document-wrapper">
+        
+        <!-- PAGE 01 -->
+        <div class="document-page">
+            <div class="confidential-mark" style="top: 25px; right: 25px; transform: none; border-radius: 4px; font-size: 14px; padding: 8px 20px; letter-spacing: 4px; border: 2px solid var(--accent-red);">대 외 비</div>
+            
+            <h1 style="margin-top: 55px; margin-bottom: 30px; font-size: 22px; text-align: center; border-bottom: 2px solid var(--formal-black); padding-bottom: 15px; letter-spacing: -0.5px;">LONGRISE AI - 마스터 플랜 V6.0</h1>
+
+            <div style="background: #fef2f2; border: 2px solid var(--accent-red); padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                <p style="margin: 0; font-size: 12px; font-weight: 900; color: var(--accent-red); text-align: center;">📌 V6.0 주요 변경 사항</p>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 11px; line-height: 1.6;">
+                    <li><strong>상품 구조 단순화:</strong> 5개 고정 가격 상품 (Flexible/Basic/Standard/Premium/VIP)</li>
+                    <li><strong>중도 해지 정책 강화:</strong> 롤업 수당 손실 반영, 기간별 30%~15% 페널티</li>
+                    <li><strong>Reserve 비율 조정:</strong> 85% → 83% (운영비 2% 추가)</li>
+                    <li><strong>CNYT 배당 차등화:</strong> 상품별 USDT 배당의 2%~10% 차등 지급</li>
+                    <li><strong>EXIT 시나리오:</strong> M13 의도적 종료 전략 반영</li>
+                </ul>
+            </div>
+
+            <div style="margin: 30px 15px 40px 15px;">
+                <h4 style="margin: 0 0 15px 0; font-size: 16px; color: var(--formal-black); font-weight: 900; border-bottom: 2px solid var(--formal-black); padding-bottom: 8px;">목차 (Table of Contents)</h4>
+                <ul style="list-style-type: none; padding: 0; margin: 0; line-height: 2.6; color: var(--formal-black);">
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">1. 자금 운용 및 자동 방어 구조</span> 
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 02</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">2. 핵심 수당 지급 체계 (상품 및 보상)</span> 
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 03</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">3. 글로벌 직급 체계 및 롤업 수당</span> 
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 04</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">4. 중도 해지 정책 및 위기 대응</span>
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 05-06</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">5. CNYT 토큰 생태계</span>
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 06-07</span>
+                    </li>
+                    <li style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding: 5px 0;">
+                        <span style="font-size: 14px; font-weight: 700;">6. EXIT 전략 및 시뮬레이션</span>
+                        <span style="color: var(--formal-gray); font-size: 12px; font-weight: normal;">PAGE 07</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="core-policy-summary" style="margin: 0 15px; padding: 20px;">
+                <h4 style="font-size: 15px; margin-bottom: 15px; padding-bottom: 8px;">[핵심 보상 요약]</h4>
+                <div class="core-policy-list">
+                    <div class="policy-item">
+                        <span class="policy-num">01</span>
+                        <span class="policy-desc">CNYT 1:1 지급 (가입 시 100% 즉시 지급 / M14 상장까지 락업)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-num">02</span>
+                        <span class="policy-desc">데일리 AI 배당금 (USDT + CNYT 상품별 차등)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-num">03</span>
+                        <span class="policy-desc">직접 추천 수당 (하부 결제액의 12% / 최초 1회성)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-num">04</span>
+                        <span class="policy-desc">수익 롤업 수당 (25대 체감형 10% 매칭 / 매일 지급)</span>
+                    </div>
+                    <div class="policy-item">
+                        <span class="policy-num">05</span>
+                        <span class="policy-desc">글로벌 직급 수당 (일일 총수익 공유)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-num">PAGE 01 / 07</div>
+        </div>
+
+        <!-- PAGE 02 -->
+        <div class="document-page">
+            <h2>1. 자금 운용 및 자동 방어 구조</h2>
+            
+            <h3>1.1 자금 분배 구조 (가입액 100% 기준)</h3>
+            <table>
+                <tr><th style="width:25%;">항목</th><th style="width:15%;">비율</th><th>용도</th></tr>
+                <tr style="background:#fef2f2;">
+                    <td><strong>Reserve (리저브)</strong></td>
+                    <td><span class="highlight">83%</span></td>
+                    <td>데일리 배당금, 롤업 수당, 글로벌 풀, 원금 반환 재원</td>
+                </tr>
+                <tr>
+                    <td><strong>추천 수당 금고</strong></td>
+                    <td>12%</td>
+                    <td>직접 추천 수당 (1회성) 지급용</td>
+                </tr>
+                <tr>
+                    <td><strong>글로벌 풀 (직급 수당)</strong></td>
+                    <td>3%</td>
+                    <td>Red/Black 직급 보너스 지급용</td>
+                </tr>
+                <tr>
+                    <td><strong>운영비</strong></td>
+                    <td>2%</td>
+                    <td>시스템 유지보수, 서버, 인건비</td>
+                </tr>
+            </table>
+
+            <h3>1.2 Reserve 지출 항목 상세</h3>
+            <div class="intent-text">Reserve 83%에서 다음 항목들이 매월 지출됩니다.</div>
+            <table>
+                <tr><th style="width:25%;">지출 항목</th><th>계산 방식</th></tr>
+                <tr><td><strong>USDT 배당</strong></td><td>활성 상품 × 투자액 × 상품별 USDT 비율</td></tr>
+                <tr><td><strong>CNYT 매입 비용</strong></td><td>USDT 배당 × 1.9% (P2P 시장 매입)</td></tr>
+                <tr><td><strong>롤업 수당</strong></td><td>USDT 배당 × 11.11% (15대 평균, 25대 체감 구조)</td></tr>
+                <tr><td><strong>글로벌 풀</strong></td><td>(USDT 배당 + CNYT 비용) × 2%</td></tr>
+                <tr><td><strong>원금 반환</strong></td><td>만기 도래 시 원금의 90% 반환</td></tr>
+            </table>
+
+            <h3>1.3 서킷 브레이커 (3단계 자동 방어)</h3>
+            <div class="intent-text">Reserve 잔액에 따라 자동으로 지급 방식이 변경되어 회사 생존을 보장합니다.</div>
+            <table>
+                <tr><th style="width:20%;">단계</th><th style="width:25%;">Reserve 잔액</th><th>조치</th></tr>
+                <tr style="background:#f0fdf4;">
+                    <td><strong>🟢 안전</strong></td>
+                    <td>30% 이상</td>
+                    <td>모든 수당 100% USDT 정상 지급</td>
+                </tr>
+                <tr style="background:#fefce8;">
+                    <td><strong>🟡 주의</strong></td>
+                    <td>10~30%</td>
+                    <td>추천 수당 70% 현금 + 30% 대기 / 직급 수당 정상</td>
+                </tr>
+                <tr style="background:#fef2f2;">
+                    <td><strong>🔴 위험</strong></td>
+                    <td>10% 미만</td>
+                    <td><span class="highlight">모든 수당의 50%를 CNYT로 강제 대체 지급</span></td>
+                </tr>
+            </table>
+
+            <div class="example-box" style="background: #fff0f2; border: 1px solid #fda4af; margin-top: 15px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--accent-red); font-size:13px;">[중요] Reserve 고갈 방지 메커니즘</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; font-size:12px; line-height: 1.6; color: #1e293b;">
+                    <p style="margin:0 0 6px 0;"><strong>▶ 신규 유입 없는 최악 시나리오:</strong> M8~M9 이후 신규 가입이 중단되면 배당 지출이 신규 유입을 초과하여 Reserve가 점진적으로 소진됩니다.</p>
+                    <p style="margin:0;"><strong>▶ 서킷 브레이커 발동:</strong> Reserve 10% 미만 시 자동으로 USDT 50% + CNYT 50% 혼합 지급으로 전환하여 <strong>현금 고갈을 원천 차단</strong>합니다.</p>
+                </div>
+            </div>
+
+            <div class="example-box" style="background: #fdf2f2; border: 1px solid #fecaca;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--accent-red); font-size:13px;">[EXIT 시나리오 타임라인]</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #fca5a5; font-size:12px; line-height: 1.5; color: #1e293b;">
+                    <p style="margin:0 0 6px 0;"><strong>M1~M4:</strong> 저가 상품 집중 판매 (신뢰 구축 단계)</p>
+                    <p style="margin:0 0 6px 0;"><strong>M5~M9:</strong> 본격 모객 (고가 상품 판매로 Reserve 급증)</p>
+                    <p style="margin:0 0 6px 0;"><strong>M10~M12:</strong> Reserve 최대화 (피크 달성)</p>
+                    <p style="margin:0; font-weight:bold; color:var(--accent-red);"><strong>M13:</strong> 의도적 EXIT (첫 만기 도래 전 종료) 🏃💰</p>
+                </div>
+            </div>
+
+            <div class="page-num">PAGE 02 / 07</div>
+        </div>
+
+        <!-- PAGE 03 -->
+        <div class="document-page">
+            <h2>2. 핵심 수당 지급 체계 (상품 및 보상)</h2>
+
+            <h3>2.1 [보상 1] 데일리 AI 배당금 - 상품 구조</h3>
+            <div class="intent-text">투자 금액과 약정 기간에 따라 매일 지급되는 배당금입니다. <strong>모든 약정 상품은 12개월 고정이며, Flexible만 무약정입니다.</strong></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:14%;">상품명</th>
+                        <th style="width:12%;">가격 (USDT)</th>
+                        <th style="width:12%;">약정 기간</th>
+                        <th style="width:18%;">USDT 배당</th>
+                        <th style="width:18%;">CNYT 배당<br><span style="font-size:9px; font-weight:normal;">(USDT 배당 기준)</span></th>
+                        <th style="width:26%;">연 환산 수익률<br><span style="font-size:9px; font-weight:normal;">(USDT만 계산)</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background:#fffbeb;">
+                        <td style="vertical-align: middle;"><strong>Flexible</strong><br><span style="font-size:9px; color:var(--admin-gray);">(미끼 상품)</span></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>$100</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>무약정</strong><br><span style="font-size:9px; color:var(--safe-blue);">언제든 해지</span></td>
+                        <td style="vertical-align: middle; text-align:center;">월 4.0%</td>
+                        <td style="vertical-align: middle; text-align:center; color:#94a3b8;">없음</td>
+                        <td style="vertical-align: middle; text-align:center;">48.0%</td>
+                    </tr>
+                    <tr style="border-top: 2px solid var(--border-color);">
+                        <td style="vertical-align: middle;"><strong>Basic</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>$200</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>12개월</strong></td>
+                        <td style="vertical-align: middle; text-align:center;">월 7.0%</td>
+                        <td style="vertical-align: middle; text-align:center;"><span class="highlight">USDT의 2%</span></td>
+                        <td style="vertical-align: middle; text-align:center;">84.0%<br><span style="font-size:9px; color:#b45309;">+ 1.68% (CNYT)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: middle;"><strong>Standard</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>$500</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>12개월</strong></td>
+                        <td style="vertical-align: middle; text-align:center;">월 9.0%</td>
+                        <td style="vertical-align: middle; text-align:center;"><span class="highlight">USDT의 4%</span></td>
+                        <td style="vertical-align: middle; text-align:center;">108.0%<br><span style="font-size:9px; color:#b45309;">+ 4.32% (CNYT)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align: middle;"><strong>Premium</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>$1,000</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>12개월</strong></td>
+                        <td style="vertical-align: middle; text-align:center;">월 11.0%</td>
+                        <td style="vertical-align: middle; text-align:center;"><span class="highlight">USDT의 6%</span></td>
+                        <td style="vertical-align: middle; text-align:center;">132.0%<br><span style="font-size:9px; color:#b45309;">+ 7.92% (CNYT)</span></td>
+                    </tr>
+                    <tr style="background:#fff0f2; border-top: 2px dashed var(--accent-red);">
+                        <td style="vertical-align: middle;"><strong>VIP</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>$5,000</strong></td>
+                        <td style="vertical-align: middle; text-align:center;"><strong>12개월</strong></td>
+                        <td style="vertical-align: middle; text-align:center; color:var(--accent-red); font-weight:bold;">월 18.0%</td>
+                        <td style="vertical-align: middle; text-align:center;"><span class="highlight">USDT의 10%</span></td>
+                        <td style="vertical-align: middle; text-align:center; font-weight:bold;">216.0%<br><span style="font-size:9px; color:#b45309;">+ 21.6% (CNYT)</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="example-box" style="background: #fffbeb; border: 1px solid #fde68a; margin-top: 12px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:#b45309; font-size:13px;">[Flexible 상품 특별 정책]</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #fde68a; font-size:11px; line-height: 1.5; color: #1e293b;">
+                    <p style="margin:0 0 6px 0;"><strong>▶ 미끼 상품 (손실 감안):</strong> 회사는 Flexible 상품 판매 시 손실을 감안합니다. 이는 초기 신뢰 구축을 위한 전략적 상품입니다.</p>
+                    <p style="margin:0 0 6px 0;"><strong>▶ 즉시 해지 가능:</strong> 24시간 내 원금 100% 반환 (수수료 없음)</p>
+                    <p style="margin:0; color:var(--accent-red); font-weight:bold;">▶ 향후 정책 변경 가능성:</strong> 손실이 클 경우 계정당 1개 제한 또는 판매 중단 검토</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">2.2 [보상 2] 직접 추천 수당</h3>
+            <table>
+                <tr><th style="width:30%;">지급 요율</th><td>내가 추천한 하위 회원이 결제한 금액의 <span class="highlight">12% (USDT)</span> 즉시 지급 <span style="color:var(--accent-red); font-weight:bold;">(최초 1회성)</span></td></tr>
+                <tr><th>수령 조건</th><td>본인의 직급이 최소 <strong>Blue 등급</strong> 이상이어야 받을 수 있습니다. (White 불가)</td></tr>
+                <tr><th>자금 출처</th><td>가입액의 12% (마케팅 펀드에서 지급)</td></tr>
+            </table>
+
+            <h3 style="margin-top: 20px; color: var(--accent-red);">2.3 [핵심 규정] 수익 상한선 (Max-Out) 및 재투자</h3>
+            <div class="intent-text" style="background: #fef2f2; border: 1px solid #fecaca;">무한루프를 방지하고 지속적인 매출을 일으키기 위한 강력한 자금 순환 장치입니다.</div>
+            <table>
+                <tr><th style="width:30%;">10배수 수익 상한 (Max-Out)</th><td>나의 총 누적 수익(배당+추천+롤업+직급 등 모든 수당 합산)이 <strong>내 현재 총 예치금(몸값)의 10배를 달성하는 순간, 모든 수당 지급이 즉시 정지</strong>됩니다.</td></tr>
+                <tr><th>수당 재개 (몸값 증액)</th><td>수당 정지 후 혜택을 다시 받기 위해서는 <strong>추가 패키지를 결제하여 내 예치금(몸값)을 갱신하고 높여야만 합니다.</strong></td></tr>
+            </table>
+
+            <div class="page-num">PAGE 03 / 07</div>
+        </div>
+
+        <!-- PAGE 04 -->
+        <div class="document-page">
+            <h2>3. 글로벌 직급 체계 및 롤업 수당</h2>
+
+            <h3>3.1 [보상 3] 체감형 롤업 수당 (25대 다단계 구조)</h3>
+            <div class="intent-text">직하위 회원의 USDT 배당액의 10%를 매일 지급받으며, 이것이 25대까지 체감하는 구조입니다. <strong>시뮬레이션에서는 평균 15대를 가정하여 총 11.11% 비용으로 계산합니다.</strong></div>
+
+            <div class="example-box" style="background: #fdf2f2; border: 1px solid #fecaca; margin-bottom: 15px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--accent-red); font-size:13px;">[롤업 수당 계산 예시]</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #fca5a5; font-size:11px; line-height: 1.5; color: #1e293b;">
+                    <p style="margin:0 0 6px 0;"><strong>원 배당:</strong> 하위 회원이 $100 USDT 배당을 받음</p>
+                    <p style="margin:0 0 6px 0;"><strong>1대 추천인:</strong> $100 × 10% = $10</p>
+                    <p style="margin:0 0 6px 0;"><strong>2대 추천인:</strong> $10 × 10% = $1</p>
+                    <p style="margin:0 0 6px 0;"><strong>3대 추천인:</strong> $1 × 10% = $0.1</p>
+                    <p style="margin:0; font-weight:bold;">...<strong>25대까지 체감</strong></p>
+                    <p style="margin:6px 0 0 0; padding-top:6px; border-top:1px dashed #cbd5e1; color:var(--accent-red); font-weight:bold;">총합: 원 배당의 11.11% (무한 등비급수 원리)</p>
+                </div>
+            </div>
+
+            <h3>3.2 [보상 4] 글로벌 직급 달성 및 혜택</h3>
+            <div class="intent-text">아래 4가지 조건(몸값, 추천수, 하부육성, 총매출)을 모두 만족해야 직급이 상승하며, 롤업 수령 깊이와 회사 일일 총수익 공유 비율이 차등 적용됩니다.</div>
+            
+            <table style="margin-top: 10px;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width:12%; text-align:center; vertical-align:middle;">직급명</th>
+                        <th colspan="4" style="text-align:center; background:#e2e8f0;">달성 조건 4가지</th>
+                        <th rowspan="2" style="width:14%; text-align:center; vertical-align:middle; background:#fffbeb;">롤업 수령<br>깊이</th>
+                        <th rowspan="2" style="width:14%; text-align:center; vertical-align:middle; background:#dcfce7;">회사 일일<br>총수익 공유</th>
+                    </tr>
+                    <tr style="font-size:10px;">
+                        <th style="width:14%;">내 예치금</th>
+                        <th style="width:12%;">직접 추천</th>
+                        <th style="width:16%;">하부 직급 육성</th>
+                        <th style="width:18%;">팀 전체 매출</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background:#f8fafc;">
+                        <td style="text-align:center;"><strong>White</strong></td>
+                        <td>$0+</td>
+                        <td>0명</td>
+                        <td>없음</td>
+                        <td>$0</td>
+                        <td style="color:#94a3b8; text-align:center;">-</td>
+                        <td style="text-align:center;">없음</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;"><strong>Blue</strong></td>
+                        <td><span class="highlight">$500+</span></td>
+                        <td>3명</td>
+                        <td>White 3명</td>
+                        <td>$3,000</td>
+                        <td style="text-align:center;"><strong>3대</strong></td>
+                        <td style="text-align:center;">없음</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;"><strong>Purple</strong></td>
+                        <td><span class="highlight">$1,000+</span></td>
+                        <td>5명</td>
+                        <td>Blue 3명</td>
+                        <td>$10,000</td>
+                        <td style="text-align:center;"><strong>7대</strong></td>
+                        <td style="text-align:center;">없음</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;"><strong>Red</strong></td>
+                        <td><span class="highlight">$5,000+</span></td>
+                        <td>10명</td>
+                        <td>Purple 3명</td>
+                        <td>$100,000</td>
+                        <td style="text-align:center;"><strong>15대</strong></td>
+                        <td style="text-align:center;"><span class="highlight">총수익의 1%</span><br><span style="font-size:10px; color:var(--formal-gray); font-weight:bold;">(Red 그룹 1/N)</span></td>
+                    </tr>
+                    <tr style="background:#fffbeb; border:2px solid var(--formal-black);">
+                        <td style="text-align:center;"><strong>Black</strong></td>
+                        <td><span class="highlight">$10,000+</span></td>
+                        <td>15명</td>
+                        <td>Red 3명</td>
+                        <td>$1,000,000</td>
+                        <td style="text-align:center; color:var(--accent-red); font-size:13px;"><strong>25대</strong></td>
+                        <td style="text-align:center;"><span class="highlight">총수익의 1%</span><br><span style="font-size:10px; color:var(--formal-gray); font-weight:bold;">(Black 그룹 1/N)</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="example-box" style="background: #eef2ff; border: 1px solid #c7d2fe; margin-top: 15px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--safe-blue); font-size:13px;">[직급 유지 및 하부 추월 규정]</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #c7d2fe; font-size:11px; line-height: 1.6; color: #1e293b;">
+                    <p style="margin:0 0 6px 0;"><strong>1. 직급 강등:</strong> 위 4가지 조건 중 출금 등으로 1개라도 기준 미달이 되면 즉시 하위 직급으로 혜택이 떨어집니다.</p>
+                    <p style="margin:0;"><strong>2. 추월 차단 (낙전 환원):</strong> 내 하부 회원이 나와 직급이 같아지거나 나보다 높아지면, 그쪽 라인에서 올라오는 수익은 끊깁니다. 끊긴 수익은 회사가 갖지 않고 전체 회원 보호를 위한 '공동 방어 금고'에 영구 누적됩니다.</p>
+                </div>
+            </div>
+
+            <div class="example-box" style="background: #fdf2f2; border: 1px solid #fecaca; margin-top: 12px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--accent-red); font-size:13px;">[롤업 수당의 재무적 안전성]</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #fca5a5; font-size:11px; line-height: 1.5; color: #1e293b;">
+                    <p style="margin:0;"><strong>▶ 수학적 상한선:</strong> 무한 등비급수 원리로 25대까지 체감하더라도 회사의 롤업 지출 총합은 <strong>원 배당의 최대 11.11%를 절대 초과하지 않습니다.</strong></p>
+                    <p style="margin:6px 0 0 0; padding-top:6px; border-top:1px dashed #cbd5e1;"><strong>▶ 시뮬레이션 가정:</strong> 실제로는 모든 회원이 25대 트리를 만들지 못하므로, 평균 15대 (11.11%)로 계산합니다.</p>
+                </div>
+            </div>
+
+            <div class="page-num">PAGE 04 / 07</div>
+        </div>
+
+        <!-- PAGE 05 -->
+        <div class="document-page">
+            <h2>4. 중도 해지 정책 및 위기 대응</h2>
+
+            <h3>4.1 중도 해지 시 정산 기준 (약정 상품)</h3>
+            <div class="intent-text" style="background: #fef2f2; border: 1px solid #fecaca;">회사 무손실 원칙: 중도 해지 시 회사가 지출한 모든 비용을 원금에서 차감하여 회사 손실을 최소화합니다. <strong>롤업 수당은 상위에게 이미 지급되어 회수 불가능하므로 이 손실을 페널티로 상쇄합니다.</strong></div>
+
+            <table style="margin-top: 10px;">
+                <tr><th style="width:25%;">환급 계산식</th><td><strong>환급액 = 원금 - 받은 USDT 배당 - 받은 CNYT 가치($0.10) - CNYT 매입비 - 기간별 수수료</strong></td></tr>
+            </table>
+
+            <h4 style="font-size: 13px; margin: 15px 0 8px 0; color: var(--accent-red); border-bottom: 1px solid var(--border-color); padding-bottom: 3px;">약정 상품 (Basic/Standard/Premium/VIP) 기간별 수수료</h4>
+            <table>
+                <tr><th style="width:25%; text-align:center;">가입 경과일</th><th style="text-align:center;">해지 수수료</th><th>사유</th></tr>
+                <tr style="background:#fef2f2;">
+                    <td style="text-align:center;"><strong>1~6개월<br>(1~180일)</strong></td>
+                    <td style="text-align:center;"><span class="highlight" style="font-size:14px;">원금의 30%</span></td>
+                    <td>롤업 수당(11.11%), 추천 수당(12%), 글로벌 풀(2%) 등 회사 지출 손실 보전</td>
+                </tr>
+                <tr style="background:#fffbeb;">
+                    <td style="text-align:center;"><strong>7~9개월<br>(181~270일)</strong></td>
+                    <td style="text-align:center;"><span class="highlight" style="font-size:14px;">원금의 20%</span></td>
+                    <td>누적 배당 증가로 회사 손실 감소, 페널티 완화</td>
+                </tr>
+                <tr style="background:#f0fdf4;">
+                    <td style="text-align:center;"><strong>10~11개월<br>(271~365일)</strong></td>
+                    <td style="text-align:center;"><span class="highlight" style="font-size:14px;">원금의 15%</span></td>
+                    <td>만기 임박으로 최소 페널티 유지</td>
+                </tr>
+                <tr style="background:#eff6ff; border-top:2px solid var(--safe-blue);">
+                    <td style="text-align:center;"><strong>12개월 만기</strong></td>
+                    <td style="text-align:center;"><span style="color:var(--safe-blue); font-weight:bold; font-size:14px;">수수료 없음</span></td>
+                    <td><strong>원금의 90% 반환</strong> (10%는 시스템 수수료로 공제)</td>
+                </tr>
+            </table>
+
+            <h4 style="font-size: 13px; margin: 15px 0 8px 0; color: #b45309; border-bottom: 1px solid var(--border-color); padding-bottom: 3px;">Flexible 상품 특별 정책</h4>
+            <table>
+                <tr><th style="width:25%;">해지 수수료</th><td><strong>없음 (0%)</strong></td></tr>
+                <tr><th>원금 반환</th><td><strong>100% 즉시 반환</strong> (신청 후 24시간 내 처리)</td></tr>
+                <tr><th>추후 정책 변경</th><td>손실이 클 경우 <strong>계정당 1개 제한</strong> 또는 <strong>판매 중단</strong> 검토</td></tr>
+            </table>
+
+            <h3 style="margin-top: 20px;">4.2 중도 해지 시뮬레이션 (롤업 수당 포함)</h3>
+
+            <div class="example-box" style="background: #fff0f2; border: 1px solid #fda4af; margin-bottom: 15px;">
+                <p style="margin:0 0 8px 0; font-weight:900; color:var(--accent-red); font-size:13px;">[케이스 1] Standard $500, 3개월 경과 해지</p>
+                <div style="background: #fff; padding:12px; border-radius:4px; border:1px solid #fca5a5; font-size:11px; line-height: 1.5; color: #1e293b;">
+                    <p style="margin:0 0 4px 0;"><strong>원금:</strong> $500</p>
+                    <p style="margin:0 0 8px 0; padding-bottom:8px; border-bottom:1px dashed #cbd5e1;"><strong>회사 지출:</strong></p>
+                    <p style="margin:0 0 2px 0;">• USDT 배당: $500 × 9% × 3 = $135</p>
+                    <p style="margin:0 0 2px 0;">• CNYT 매입: $135 × 1.9% = $2.57</p>
+                    <p style="margin:0 0 2px 0;">• 추천 수당: $60 (회수 불가)</p>
+                    <p style="margin:0 0 2px 0;">• 롤업 수당: $45 × 11.11% × 3 = $15 (회수 불가)</p>
+                    <p style="margin:0 0 8px 0;">• 글로벌 풀: $2.75</p>
+                    <p style="margin:0 0 8px 0; padding-bottom:8px; border-bottom:1px dashed #cbd5e1;"><strong>총 지출:</strong> $215.32</p>
+                    <p style="margin:0 0 8px 0;"><strong>환급 계산:</strong></p>
+                    <p style="margin:0 0 2px 0;">$500 - $135 - $5.40 - $2.57 - $150 (30%)</p>
+                    <p style="margin:0 0 8px 0; font-weight:bold; color:var(--safe-blue);">= <strong>$207.03 환급</strong></p>
+                    <p style="margin:0; padding-top:8px; border-top:1px dashed #cbd5e1;"><strong>회사 손익:</strong> $415 (Reserve) - $215.32 - $207.03 = <span style="color:#16a34a; font-weight:bold;">-$7.35 ❌</span></p>
+                    <p style="margin:6px 0 0 0; font-size:10px; color:var(--admin-gray);">* 30% 페널티로 손실 최소화, M13 EXIT 전략으로 문제없음</p>
+                </div>
+            </div>
+
+
+            <div class="page-num">PAGE 05 / 07</div>
+        </div>
+
+        <!-- PAGE 06 -->
+        <div class="document-page">
+            <h3 style="margin-top: 0;">4.3 위기 상황 시뮬레이션 (서킷 브레이커 필요성)</h3>
+            <div class="intent-text">만약 신규 가입자가 0명이 되고 기존 유저들이 단체로 환불을 요구할 때 벌어지는 상황입니다.</div>
+
+            <div style="background: #fff; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; margin-top: 5px; margin-bottom: 25px;">
+                <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: var(--formal-black);">Standard $1,000, 한 달 뒤 단체 환불 시나리오</p>
+                <table style="margin-bottom: 0; font-size: 10px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 33%; text-align:center;">회사 지출</th>
+                            <th style="width: 33%; text-align:center;">환급액</th>
+                            <th style="width: 34%; text-align:center;">회사 적자</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="line-height: 1.6;">
+                                Reserve: $830<br>
+                                배당: -$110<br>
+                                CNYT: -$2.09<br>
+                                추천: -$120<br>
+                                롤업: -$12<br>
+                                <strong>잔액: $585.91</strong>
+                            </td>
+                            <td style="line-height: 1.6;">
+                                원금: $1,000<br>
+                                배당: -$110<br>
+                                CNYT: -$6.60<br>
+                                매입비: -$2.09<br>
+                                수수료: -$300<br>
+                                <strong>환급: $581.31</strong>
+                            </td>
+                            <td style="line-height: 1.6;">
+                                $585.91 - $581.31<br>
+                                <strong style="color:#16a34a;">= +$4.60 ✅</strong><br>
+                                <span style="color:#64748b;">30% 페널티로<br>손실 방어 성공</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>5. CNYT 토큰 생태계</h2>
+            
+            <h3>5.1 코인 기본 정보 및 가치 상승 모델</h3>
+            <table>
+                <tr><th style="width:25%;">항목</th><th>설정값</th></tr>
+                <tr><td>총 발행량</td><td>1,000,000,000 CNYT (10억 개 고정)</td></tr>
+                <tr><td>시스템 고정 가격</td><td>1 CNYT = $0.10 (USDT 가치와 고정 연동)</td></tr>
+                <tr><td>상장 일정</td><td><strong>M14</strong> (EXIT 후 명목상 발표)</td></tr>
+                <tr><td>가치 상승(소각)</td><td>글로벌 제휴 리조트에서 결제된 금액의 15%를 시장에서 사들여 즉시 소각</td></tr>
+            </table>
+
+            <h3 style="margin-top: 15px;">5.2 코인 분배 비율</h3>
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">분배처</th><th style="width:15%;">비율</th><th>주요 정책</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>회원 보상 (유저)</td><td>60%</td><td>회원들의 AI 배당 보너스 + 가입 시 1:1 지급</td></tr>
+                    <tr><td>생태계 조성비</td><td>15%</td><td>리조트 연동 및 실물 생태계 지원</td></tr>
+                    <tr><td>운영진 및 개발팀</td><td>15%</td><td>1년 동안 코인을 팔 수 없도록 락업(잠금)</td></tr>
+                    <tr><td>마케팅 및 유동성</td><td>10%</td><td>거래소 상장 및 마케팅 비용</td></tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 15px;">5.3 CNYT 락업 정책</h3>
+            <table>
+                <tr><th style="width:30%;">가입 시 1:1 지급분</th><td><strong>M14 상장 전까지 전액 락업</strong> (매도 불가)</td></tr>
+                <tr><th>배당 CNYT</th><td>지급일 기준 <strong>30일 동안 락업</strong> (30일 후 거래소 매도 가능)</td></tr>
+                <tr><th>락업 목적</th><td>시장 매도 물량 통제로 토큰 가치 폭락 방지</td></tr>
+            </table>
+
+            <h3 style="margin-top: 15px;">5.4 CNYT P2P 매입 시스템</h3>
+            <div class="intent-text">회원에게 지급할 CNYT 배당을 회사가 사전에 P2P 시장에서 매입하는 비용입니다.</div>
+            <table>
+                <tr><th style="width:30%;">매입 비용</th><td><strong>USDT 배당액의 1.9%</strong></td></tr>
+                <tr><th>예시</th><td>Standard $500 월 배당: $45 → CNYT 매입비 $45 × 1.9% = $0.86</td></tr>
+                <tr><th>지출 출처</th><td>Reserve 83%에서 차감</td></tr>
+            </table>
+
+
+            <div class="page-num">PAGE 06 / 07</div>
+        </div>
+
+        <!-- PAGE 07 -->
+        <div class="document-page">
+            <div style="margin-top: 0; border: 1px solid #cbd5e1; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="margin:0 0 5px 0; font-weight: bold; color: #0f172a; font-size: 13px;">[회원 가입 시 필수 동의 조항]</p>
+                <p style="margin:0; font-size: 11px; color: #475569; line-height: 1.5;">본 서킷 브레이커는 타 회사의 무책임한 '출금 정지'를 원천 차단하고, 회사의 영구적인 생존과 유저 자산의 보호를 보장하기 위한 '수학적 안전장치'입니다. 가입 회원은 회사 잔고 위험(Red Zone) 발생 시, 지급받을 수당의 50%가 당사 생태계 토큰(CNYT)으로 대체 지급되는 것에 명시적으로 동의합니다.</p>
+            </div>
+
+            <h3 style="margin-top: 0;">5.5 상품별 CNYT 배당 차등</h3>
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">상품</th><th style="width:25%;">USDT 배당</th><th>CNYT 배당 비율</th><th>월 CNYT 수령량 예시</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Flexible</td><td>월 4%</td><td>없음</td><td>-</td></tr>
+                    <tr><td>Basic</td><td>월 7%</td><td>USDT의 2%</td><td>$200 → $14 USDT → 2.8 CNYT (28개)</td></tr>
+                    <tr><td>Standard</td><td>월 9%</td><td>USDT의 4%</td><td>$500 → $45 USDT → 18 CNYT (180개)</td></tr>
+                    <tr><td>Premium</td><td>월 11%</td><td>USDT의 6%</td><td>$1,000 → $110 USDT → 66 CNYT (660개)</td></tr>
+                    <tr><td>VIP</td><td>월 18%</td><td>USDT의 10%</td><td>$5,000 → $900 USDT → 900 CNYT (9,000개)</td></tr>
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 30px;">6. EXIT 전략 및 시뮬레이션</h2>
+
+            <h3>6.1 M13 시나리오</h3>
+
+
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <table style="margin: 0; border: none;">
+                    <tr style="background: transparent;">
+                        <td style="border: none; width: 15%; text-align: center; color: #22c55e; font-weight: bold; font-size: 12px;">M1~M4</td>
+                        <td style="border: none; color: #fff; font-size: 11px; line-height: 1.6;">
+                            <strong>신뢰 구축 단계</strong><br>
+                            저가 상품(Flexible, Basic) 집중 판매<br>
+                            소규모 투자 유도, 초기 배당 인증
+                        </td>
+                    </tr>
+                    <tr style="background: transparent;">
+                        <td style="border: none; text-align: center; color: #eab308; font-weight: bold; font-size: 12px;">M5~M9</td>
+                        <td style="border: none; color: #fff; font-size: 11px; line-height: 1.6;">
+                            <strong>본격 성장 단계</strong><br>
+                            고가 상품(Standard, Premium, VIP) 판매 가속<br>
+                            Reserve 급증, 롤업 수당으로 바이럴 증폭
+                        </td>
+                    </tr>
+                    <tr style="background: transparent;">
+                        <td style="border: none; text-align: center; color: #f97316; font-weight: bold; font-size: 12px;">M10~M12</td>
+                        <td style="border: none; color: #fff; font-size: 11px; line-height: 1.6;">
+                            <strong>Reserve 최대화</strong><br>
+                            지속적 유입으로 Reserve 피크 달성<br>
+                            EXIT 준비 완료
+                        </td>
+                    </tr>
+                    <tr style="background: transparent; border-top: 2px solid #ef4444;">
+                        <td style="border: none; text-align: center; color: #ef4444; font-weight: bold; font-size: 14px;">M13</td>
+                        <td style="border: none; color: #fef2f2; font-size: 12px; line-height: 1.6; font-weight: bold;">
+                            <strong style="color: #fca5a5;">EXIT SCAM 실행 🏃💰</strong><br>
+                            첫 만기(Basic 12개월) 도래 전 종료<br>
+                            Reserve 전액 탈취 및 프로젝트 폐쇄
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>6.2 시뮬레이터 핵심 가정</h3>
+            <table>
+                <tr><th style="width:30%;">항목</th><th>설정값</th></tr>
+                <tr><td>상품 구조</td><td>Flexible $100 / Basic $200 / Standard $500 / Premium $1,000 / VIP $5,000</td></tr>
+                <tr><td>Reserve 비율</td><td>83% (마케팅 17% = 추천 12% + 글로벌 풀 3% + 운영비 2%)</td></tr>
+                <tr><td>롤업 깊이</td><td>정책상 25대 / 시뮬레이션 평균 15대 (11.11%)</td></tr>
+                <tr><td>M1~M4 판매 제약</td><td>저가 상품(Flexible, Basic, Standard) 집중 예상 (실제 제약 아님)</td></tr>
+                <tr><td>M5~M12 판매</td><td>전체 상품 판매 (Reserve 극대화)</td></tr>
+                <tr><td>원금 반환</td><td>만기 시 원금의 90% 반환 (10% 수수료)</td></tr>
+                <tr><td>EXIT 타이밍</td><td><strong>M13</strong> (첫 만기 전 의도적 종료)</td></tr>
+            </table>
+
+            <h3 style="margin-top: 20px;">6.3 M12 목표 Reserve 달성 시뮬레이션</h3>
+            <div class="intent-text">목표: M12 시점에 Reserve $74M 확보하여 EXIT 전 최대 수익 달성</div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <p style="margin: 0 0 8px 0; font-weight: 900; color: #1e3a8a; font-size: 13px;">📊 역산 계산 결과 (예시)</p>
+                <div style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #bfdbfe; font-size: 11px; line-height: 1.6;">
+                    <p style="margin: 0 0 6px 0;"><strong>목표 Reserve:</strong> $74M (M12 시점)</p>
+                    <p style="margin: 0 0 6px 0;"><strong>필요 총 판매액:</strong> $158.4M (M1~M12 누적)</p>
+                    <p style="margin: 0 0 6px 0;"><strong>필요 총 판매 상품:</strong> 약 278,000개</p>
+                    <p style="margin: 0; padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+                        <strong>상품 구성 예시:</strong> Flexible 12K / Basic 88K / Standard 56K / Premium 56K / VIP 3.2K
+                    </p>
+                </div>
+            </div>
+
+            <h3>6.4 계정 통합 합산 및 직급 기준 (몸값)</h3>
+            <div class="intent-text">모든 혜택은 단일 상품 기준이 아닌, 유저가 구매한 모든 상품의 '총 합산 금액'을 기준으로 합니다.</div>
+            <table>
+                <tr><th style="width:30%;">중복 구매 (다구좌)</th><td>하나의 계정으로 여러 개의 상품을 언제든지 추가 구매 가능합니다.</td></tr>
+                <tr><th>나의 몸값 (Body Value)</th><td>결제한 모든 USDT의 총합입니다. 이것이 <strong>내 직급과 수당을 결정하는 절대 기준</strong>이 됩니다.</td></tr>
+            </table>
+
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #1e293b; margin-top: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #fca5a5; font-size: 13px; font-weight: 900; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                    🚨 최종 결론: M13 EXIT 전략의 현실성
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 11px; line-height: 1.6; color: #e2e8f0;">
+                    <li style="margin-bottom: 6px;"><strong style="color: #fca5a5;">타이밍 완벽:</strong> 첫 만기(Basic 12개월) 도래 전 종료로 원금 반환 회피</li>
+                    <li style="margin-bottom: 6px;"><strong style="color: #fca5a5;">수학적 안정성:</strong> M1~M12 지속적 유입으로 Reserve 누적 보장</li>
+                    <li style="margin-bottom: 6px;"><strong style="color: #fca5a5;">리스크 관리:</strong> 서킷 브레이커로 조기 붕괴 방지</li>
+                    <li><strong style="color: #fde047;">최종 수익:</strong> M12 시점 Reserve $74M 탈취 성공 시나리오</li>
+                </ul>
+            </div>
+
+            <div class="page-num">PAGE 07 / 07</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

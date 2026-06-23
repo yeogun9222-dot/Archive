@@ -1,0 +1,52 @@
+# =============================================
+# LONGRISE Archive - .gitignore
+# =============================================
+
+# 별도 Git 저장소 (충돌 방지)
+longrise-stage/
+longrise-stage.tar.gz
+
+# 대용량 압축/백업 파일
+*.zip
+*.tar.gz
+*.tar
+*.bak
+
+# 로그 파일
+backup_log.txt
+move_log.txt
+logs/
+*.log
+
+# 스냅샷/백업 폴더 (용량 큼)
+Daily snapshots/
+Memory backup/
+
+# 대용량 미디어/바이너리 파일 (GitHub 100MB 제한 초과)
+*.avi
+*.mp4
+*.mov
+*.mkv
+*.bin
+Documents/Adobe/
+Documents/vapshion/
+
+# OS 시스템 파일
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# IDE
+.vscode/settings.json
+.idea/

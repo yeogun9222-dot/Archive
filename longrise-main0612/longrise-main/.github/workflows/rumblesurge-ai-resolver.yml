@@ -1,0 +1,404 @@
+name: RumbleSurge AI Issue Resolver
+
+on:
+  workflow_dispatch:
+    inputs:
+      issueId:
+        description: "RumbleSurge Issue ID"
+        required: true
+        type: string
+
+# 직접 커밋을 위한 필수 권한
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+jobs:
+  resolve-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔧 Normalize Issue ID
+        id: normalize
+        run: |
+          ISSUE_ID="${{ inputs.issueId }}"
+          # RS- 프리픽스가 이미 있는지 확인
+          if [[ "$ISSUE_ID" =~ ^RS- ]]; then
+            NORMALIZED_ID="$ISSUE_ID"
+            RAW_ID="${ISSUE_ID#RS-}"
+          else
+            NORMALIZED_ID="RS-$ISSUE_ID"
+            RAW_ID="$ISSUE_ID"
+          fi
+          echo "normalized_id=$NORMALIZED_ID" >> $GITHUB_OUTPUT
+          echo "raw_id=$RAW_ID" >> $GITHUB_OUTPUT
+          echo "📋 원본 이슈 ID: $ISSUE_ID"
+          echo "📋 정규화된 이슈 ID: $NORMALIZED_ID"
+          echo "📋 원시 이슈 ID: $RAW_ID"
+
+      - name: 🚀 Notify Start
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚀 *[RumbleSurge]* AI 작업 시작%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A⚙️ 에이전트가 코드를 분석 중입니다." \
+            -d parse_mode=Markdown
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          echo "Claude Code 설치 완료"
+          echo "PATH: $PATH"
+          which claude-code || echo "claude-code not in PATH"
+          npx @anthropic-ai/claude-code --version || echo "npx 방식으로 테스트"
+
+      # AI 실행 및 실제 코드 변경 여부 확인 (Hybrid 로직)
+      - name: Execute AI Resolution & Check Diff
+        id: resolve
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RS_API_KEY: ${{ secrets.RS_API_KEY_LR_GHRUNNER }}
+          RUMBLE_API_KEY: ${{ secrets.RS_API_KEY_LR_GHRUNNER }}
+          RUMBLE_API_BASE: http://${{ secrets.RS_API_EC2_HOST }}:4237/api
+        run: |
+          echo "🔍 Running Claude Code..."
+          echo "execution_started=true" >> $GITHUB_OUTPUT
+
+          # 환경변수 확인
+          if [[ -z "$ANTHROPIC_API_KEY" ]]; then
+            echo "error=ANTHROPIC_API_KEY가 설정되지 않았습니다." >> $GITHUB_OUTPUT
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          if [[ -z "$RS_API_KEY" ]] || [[ -z "$RUMBLE_API_KEY" ]]; then
+            echo "error=RUMBLE_API_KEY가 설정되지 않았습니다." >> $GITHUB_OUTPUT
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Claude Code 준비
+          echo "🔧 Claude Code 준비 중..."
+
+          # RumbleSurge 이슈 조회 및 분석 (직접 API 호출)
+          echo "🚀 Executing RumbleSurge issue analysis..."
+          echo "📋 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}"
+
+          # Step 1: 네트워크 연결 진단
+          EC2_HOST="${{ secrets.RS_API_EC2_HOST }}"
+          API_URL="http://${EC2_HOST}:4237/api/ai/issues/${{ steps.normalize.outputs.normalized_id }}/context"
+          echo "🔗 API 호출 대상: ${API_URL}"
+
+          # 네트워크 연결 테스트
+          echo "🌐 네트워크 진단 중..."
+          echo "📍 대상 서버: ${EC2_HOST}"
+
+          # ping 테스트 (3회)
+          if ping -c 3 "${EC2_HOST}" > ping_result.txt 2>&1; then
+            echo "✅ Ping 성공"
+          else
+            echo "❌ Ping 실패"
+            cat ping_result.txt
+          fi
+
+          # 포트 연결 테스트 (5초 타임아웃)
+          if timeout 5 bash -c "cat < /dev/null > /dev/tcp/${EC2_HOST}/4237" 2>/dev/null; then
+            echo "✅ 포트 4237 연결 성공"
+          else
+            echo "❌ 포트 4237 연결 실패"
+          fi
+
+          # API 직접 호출 (Normalized ID - 서버 요구사항)
+          echo "🚀 API 호출: Normalized ID (${{ steps.normalize.outputs.normalized_id }})"
+          if ! curl -v -X GET \
+            -H "Authorization: Bearer $RUMBLE_API_KEY" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Claude-Code-RumbleIssueResolver/1.0" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "${API_URL}" \
+            -o issue_context.json \
+            -w "HTTP_CODE:%{http_code}" > curl_output.txt 2> curl_error.txt; then
+            echo "📄 API 호출 실패:"
+            echo "=== Curl Output ==="
+            cat curl_output.txt 2>/dev/null || echo "Curl 출력 없음"
+            echo "=== Curl Error ==="
+            cat curl_error.txt 2>/dev/null || echo "Curl 에러 없음"
+            echo "error=RumbleSurge API 연결 실패: $(cat curl_error.txt 2>/dev/null | tail -3 | tr '\n' ' ' || echo '타임아웃 또는 연결 거부')" >> $GITHUB_OUTPUT
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # HTTP 상태 코드 추출
+          HTTP_STATUS=$(cat curl_output.txt | grep "HTTP_CODE:" | cut -d':' -f2)
+          echo "📊 HTTP 상태 코드: ${HTTP_STATUS}"
+
+          # HTTP 상태 코드 확인
+          if [[ "$HTTP_STATUS" != "200" ]]; then
+            echo "📄 HTTP 에러: $HTTP_STATUS"
+            cat issue_context.json 2>/dev/null || echo "응답 내용 없음"
+            echo "error=RumbleSurge API HTTP 오류: $HTTP_STATUS" >> $GITHUB_OUTPUT
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ 이슈 컨텍스트 조회 성공"
+          echo "📄 이슈 정보:"
+          cat issue_context.json
+
+          # Step 2: Claude Code로 분석 및 수정 실행
+          echo "🤖 Claude Code로 이슈 해결 중..."
+          if ! npx @anthropic-ai/claude-code --dangerously-skip-permissions -p "RumbleSurge 이슈를 해결해주세요. 이슈 컨텍스트: $(cat issue_context.json)" 2> claude_error.log; then
+            echo "📄 Claude error:"
+            cat claude_error.log 2>/dev/null || echo "Claude 에러 로그 없음"
+            echo "error=Claude Code 실행 실패: $(cat claude_error.log 2>/dev/null || echo '알 수 없는 오류')" >> $GITHUB_OUTPUT
+            echo "failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Git 상태를 확인하여 실제 소스 코드 파일 변경이 있는지 체크
+          # 임시 파일들은 제외하고 실제 코드 파일만 확인
+          CHANGED_FILES=$(git status --porcelain | grep -v -E '(ping_result\.txt|curl_error\.txt|curl_output\.txt|issue_context\.json|claude_error\.log|claude_output\.log)' | wc -l)
+
+          if [[ $CHANGED_FILES -gt 0 ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Source code changes detected."
+            echo "📋 Changed files:"
+            git status --porcelain | grep -v -E '(ping_result\.txt|curl_error\.txt|curl_output\.txt|issue_context\.json|claude_error\.log|claude_output\.log)'
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No source code changes made (only temporary files)."
+            echo "📋 All changes were temporary files:"
+            git status --porcelain || echo "No files changed at all."
+          fi
+
+          echo "success=true" >> $GITHUB_OUTPUT
+
+      # 변경 사항이 있을 때만 직접 커밋 및 푸시 (deploy-staging.yml 트리거)
+      - name: Commit and Push Changes to Stage
+        if: steps.resolve.outputs.changes == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          commit_message: "fix: resolve issue #${{ steps.normalize.outputs.normalized_id }} via RumbleSurge AI"
+          commit_options: "--no-verify --signoff"
+          commit_user_name: RumbleSurge AI
+          commit_user_email: action@github.com
+          commit_author: RumbleSurge AI <action@github.com>
+          push_options: "--force-with-lease"
+
+      # 즉시 deploy-staging 워크플로우 트리거 (GitHub CLI)
+      - name: 🚀 Trigger Deploy Staging Workflow
+        if: steps.resolve.outputs.changes == 'true'
+        run: |
+          echo "🚀 Triggering deploy-staging workflow via GitHub CLI..."
+          gh workflow run deploy-staging.yml --ref stage
+          echo "✅ Deploy workflow triggered via GitHub CLI on stage branch"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 알림: 커밋 완료 및 배포 시작 (작업 요약 포함)
+      - name: 💾 Notify Commit and Deploy Started
+        if: steps.resolve.outputs.changes == 'true'
+        run: |
+          # 최근 커밋의 변경사항 분석해서 30자 요약 생성
+          echo "📝 작업 요약 생성 중..."
+
+          # 변경된 파일 목록만 정확히 추출
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          FILE_COUNT=$(echo "$CHANGED_FILES" | grep -v '^$' | wc -l)
+
+          echo "📋 변경된 파일들: $CHANGED_FILES"
+          echo "📊 파일 개수: $FILE_COUNT"
+
+          # 30자 요약 생성 로직
+          if echo "$CHANGED_FILES" | grep -q "HomePage"; then
+            WORK_SUMMARY="홈페이지 UI 수정"
+          elif echo "$CHANGED_FILES" | grep -q "\.tsx\|\.ts\|\.jsx\|\.js"; then
+            WORK_SUMMARY="프론트엔드 코드 수정"
+          elif echo "$CHANGED_FILES" | grep -q "\.py"; then
+            WORK_SUMMARY="백엔드 API 수정"
+          elif echo "$CHANGED_FILES" | grep -q "config\|\.env\|\.yml\|\.yaml"; then
+            WORK_SUMMARY="설정 파일 수정"
+          elif echo "$CHANGED_FILES" | grep -q "package\.json\|requirements\.txt"; then
+            WORK_SUMMARY="의존성 패키지 수정"
+          else
+            # 파일명 기반 간단 요약 (최대 30자)
+            if [ $FILE_COUNT -eq 1 ]; then
+              FILENAME=$(echo "$CHANGED_FILES" | head -1 | sed 's|.*/||')
+              WORK_SUMMARY="${FILENAME} 파일 수정"
+            else
+              WORK_SUMMARY="${FILE_COUNT}개 파일 수정"
+            fi
+          fi
+
+          # 30자 제한 적용
+          WORK_SUMMARY=$(echo "$WORK_SUMMARY" | head -c 30)
+
+          echo "📋 작업 요약: $WORK_SUMMARY"
+          echo "📁 변경 파일: $CHANGED_FILES"
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="💾 *[RumbleSurge]* 처리 완료%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A🔨 작업 내용: ${WORK_SUMMARY}%0A✅ 변경사항이 커밋되고 푸시되었습니다%0A🚀 배포 워크플로우가 시작되었습니다%0A⏳ 곧 서버에 반영됩니다" \
+            -d parse_mode=Markdown
+
+      # Deploy 워크플로우 완료 대기 및 결과 확인
+      - name: 🔍 Wait for Deploy Workflow
+        id: wait_deploy
+        if: steps.resolve.outputs.changes == 'true'
+        run: |
+          echo "⏳ Waiting for Deploy workflow to start..."
+          sleep 15  # 트리거된 워크플로우가 시작될 시간 대기
+
+          # 최근 Deploy 워크플로우 실행 확인 (최대 5분 대기)
+          for i in {1..30}; do
+            echo "🔍 Checking deploy workflow status (attempt $i/30)..."
+
+            # 최근 Deploy 워크플로우 실행 상태 확인
+            DEPLOY_STATUS=$(gh run list --workflow=deploy-staging.yml --limit=1 --json status,conclusion,workflowName --jq '.[0] | select(.workflowName == "Deploy Longrise to Staging EC2") | .status // .conclusion')
+
+            echo "Deploy workflow status: $DEPLOY_STATUS"
+
+            if [ "$DEPLOY_STATUS" = "completed" ]; then
+              DEPLOY_CONCLUSION=$(gh run list --workflow=deploy-staging.yml --limit=1 --json conclusion --jq '.[0].conclusion')
+              echo "Deploy workflow conclusion: $DEPLOY_CONCLUSION"
+              echo "deploy_conclusion=$DEPLOY_CONCLUSION" >> $GITHUB_OUTPUT
+              break
+            elif [ "$DEPLOY_STATUS" = "in_progress" ] || [ "$DEPLOY_STATUS" = "queued" ] || [ "$DEPLOY_STATUS" = "pending" ]; then
+              echo "Deploy workflow is running, waiting..."
+            else
+              echo "Deploy workflow not found or unexpected status: $DEPLOY_STATUS"
+            fi
+
+            sleep 10
+          done
+
+          # 타임아웃 체크
+          if [ "$DEPLOY_STATUS" != "completed" ]; then
+            echo "deploy_timeout=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Deploy workflow did not complete within timeout"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 배포 성공 알림
+      - name: ✅ Notify Deploy Success
+        if: steps.wait_deploy.outputs.deploy_conclusion == 'success'
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="✅ *[RumbleSurge]* 자동 배포 완료%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A🎉 Deploy 워크플로우가 성공적으로 완료되었습니다.%0A🏥 헬스체크: 모든 서비스 정상%0A🌍 확인: http://${{ secrets.LR_API_EC2_HOST }}:5173" \
+            -d parse_mode=Markdown
+
+      # 배포 실패 알림
+      - name: ❌ Notify Deploy Failure
+        if: steps.wait_deploy.outputs.deploy_conclusion == 'failure' || steps.wait_deploy.outputs.deploy_timeout == 'true'
+        run: |
+          FAILURE_REASON=""
+          if [ "${{ steps.wait_deploy.outputs.deploy_timeout }}" = "true" ]; then
+            FAILURE_REASON="배포 워크플로우가 5분 내에 완료되지 않았습니다."
+          else
+            FAILURE_REASON="Deploy 워크플로우가 실패했습니다."
+          fi
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="❌ *[RumbleSurge]* 자동 배포 실패%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A⚠️ 실패 원인: ${FAILURE_REASON}%0A🔗 [Deploy 워크플로우 로그 확인](https://github.com/${{ github.repository }}/actions/workflows/deploy-staging.yml)%0A💡 수동 배포가 필요할 수 있습니다." \
+            -d parse_mode=Markdown
+
+      # 심각한 실패 시만 PR 생성 폴백 (AI 실행 자체 실패 또는 Deploy 워크플로우 실패)
+      - name: 🚨 Create PR as Fallback
+        id: fallback_pr
+        if: (failure() && steps.resolve.outputs.execution_started == 'true' && steps.resolve.outputs.changes != 'true') || (steps.resolve.outputs.changes == 'true' && (steps.wait_deploy.outputs.deploy_conclusion == 'failure' || steps.wait_deploy.outputs.deploy_timeout == 'true'))
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "fix: resolve issue #${{ steps.normalize.outputs.normalized_id }} via RumbleSurge AI (auto-deploy failed)"
+          title: "🤖⚠️ AI Fix (Auto-Deploy Failed): Issue #${{ steps.normalize.outputs.normalized_id }}"
+          body: |
+            ## 🚨 AI Generated Fix - Auto-Deploy Failed
+
+            이 PR은 RumbleSurge AI 에이전트가 생성했지만, 자동 배포 워크플로우에 실패하여 수동 검토가 필요합니다.
+
+            - **해결 대상 이슈 ID:** ${{ steps.normalize.outputs.normalized_id }}
+            - **실패 단계:** Deploy workflow 실행 실패 또는 타임아웃
+
+            ### 배포 상황
+            - Deploy 워크플로우 결과: ${{ steps.wait_deploy.outputs.deploy_conclusion || 'timeout/unknown' }}
+            - [Deploy 워크플로우 로그 확인](https://github.com/${{ github.repository }}/actions/workflows/deploy-staging.yml)
+
+            ### 수동 확인 필요 사항
+            - [ ] 코드 변경사항 검토
+            - [ ] Deploy 워크플로우 실패 원인 분석
+            - [ ] 스테이징 서버 상태 확인
+            - [ ] 수동 배포 진행
+
+            ### 자동 생성 정보
+            - 워크플로우 실행: [GitHub Actions 로그](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          branch: "ai-fix/issue-${{ steps.normalize.outputs.raw_id }}-auto-deploy-failed"
+          base: stage
+          delete-branch: true
+
+      # 알림: 심각한 실패 + PR 생성
+      - name: ⚠️ Notify Critical Failure with PR
+        if: steps.fallback_pr.outputs.pull-request-url
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="⚠️ *[RumbleSurge]* 심각한 실패%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A❌ AI 수정은 완료되었으나 Deploy 워크플로우가 실패했습니다%0A📦 대안: 수동 검토용 PR이 생성되었습니다%0A🔗 PR 확인: ${{ steps.fallback_pr.outputs.pull-request-url }}%0A💡 Deploy 워크플로우 로그를 확인하여 원인을 파악하세요." \
+            -d parse_mode=Markdown
+
+      # 알림: 코드를 고칠 필요가 없다고 판단한 경우 (Claude 제안)
+      - name: ℹ️ Notify No Changes
+        if: steps.resolve.outputs.changes == 'false'
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="ℹ️ *[RumbleSurge]* AI 분석 완료%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A✋ 변경할 작업이 없어서 아무 작업도 하지 않았습니다.%0A💡 수동 검토가 필요할 수 있습니다." \
+            -d parse_mode=Markdown
+
+      # 강제 실패 알림 (무조건 실행)
+      - name: 🔍 Debug Check
+        if: always()
+        run: |
+          echo "=== DEBUG INFO ==="
+          echo "Job status: ${{ job.status }}"
+          echo "Resolve outcome: ${{ steps.resolve.outcome }}"
+          echo "Resolve failed flag: ${{ steps.resolve.outputs.failed }}"
+          echo "==================="
+
+      # 알림: 완전 실패 (AI 분석 실패 등)
+      - name: 🚨 Notify Complete Failure
+        if: always() && (steps.resolve.outputs.failed == 'true' || steps.resolve.outcome == 'failure') && !steps.fallback_pr.outputs.pull-request-url
+        run: |
+          echo "🚨 Complete failure notification step started"
+
+          # 구체적인 실패 원인 분석
+          ERROR_DETAIL=""
+          if [[ -n "${{ steps.resolve.outputs.error }}" ]]; then
+            ERROR_DETAIL="${{ steps.resolve.outputs.error }}"
+          elif [[ "${{ steps.resolve.outcome }}" == "failure" ]]; then
+            ERROR_DETAIL="AI 분석/실행 실패 - API 연결 또는 Claude 실행 오류"
+          elif [[ "${{ steps.resolve.outputs.execution_started }}" != "true" ]]; then
+            ERROR_DETAIL="AI 실행 시작 실패 - 환경변수 또는 API 설정 문제"
+          else
+            ERROR_DETAIL="워크플로우 단계 실패 - 상세 로그 확인 필요"
+          fi
+
+          echo "Sending complete failure notification: ${ERROR_DETAIL}"
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="🚨 *[RumbleSurge]* 처리 실패%0A📍 이슈 ID: ${{ steps.normalize.outputs.normalized_id }}%0A❌ 실패 원인: ${ERROR_DETAIL}%0A🔍 상세 로그: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})%0A👨‍💻 수동 개입이 필요합니다." \
+            -d parse_mode=Markdown

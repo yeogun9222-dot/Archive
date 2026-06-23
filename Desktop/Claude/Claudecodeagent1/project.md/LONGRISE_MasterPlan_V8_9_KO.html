@@ -1,0 +1,1479 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LONGRISE AI - 마스터 플랜 V8.9</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #0f172a;
+            --accent-red: #dc2626;
+            --accent-blue: #2563eb;
+            --bg-gray: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
+        body { 
+            background-color: var(--bg-gray);
+            margin: 0; padding: 40px 0; 
+            font-family: 'Noto Sans KR', sans-serif; 
+            color: #1e293b;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .toolbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 60px;
+            background: var(--primary-dark); display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .btn-print {
+            background: #b45309; color: white; border: none; padding: 10px 30px; border-radius: 6px;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+
+        #document-wrapper { padding-top: 60px; }
+
+        .document-page {
+            background: #fff; width: 210mm; min-height: 297mm;
+            margin: 0 auto 20px; padding: 8mm 15mm 18mm 15mm; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative; page-break-after: always;
+        }
+
+        .confidential-mark {
+            position: absolute; top: 20px; right: 25px;
+            color: var(--accent-red); border: 3px double var(--accent-red);
+            padding: 6px 20px; font-weight: 900; font-size: 16px; letter-spacing: 2px;
+            transform: rotate(8deg); opacity: 0.85;
+        }
+
+        h1 { font-size: 24px; font-weight: 900; margin: 0 0 15px 0; color: var(--primary-dark); }
+        h2 { font-size: 16px; background: var(--primary-dark); color: white; padding: 8px 12px; margin: 16px 0 10px 0; border-radius: 4px; display: flex; align-items: center; }
+        h3 { font-size: 13px; color: var(--accent-blue); margin: 12px 0 6px 0; font-weight: 700; display: flex; align-items: center; }
+        h4 { display: flex; align-items: center; }
+        
+        p, li { font-size: 10px; line-height: 1.4; margin-bottom: 4px; color: #334155; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
+        th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px; font-weight: bold; color: #0f172a; text-align: left; }
+        td { border: 1px solid #cbd5e1; padding: 5px; vertical-align: top; line-height: 1.4; }
+
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; margin: 8px 0; font-size: 9.5px; line-height: 1.4; }
+        .warning-box { background: #fef2f2; border: 2px solid #dc2626; padding: 10px; border-radius: 6px; margin: 10px 0; }
+        .page-num { position: absolute; bottom: 12mm; width: calc(100% - 30mm); text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+
+        /* Status Tags */
+        .tag-done { background: #22c55e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; margin-left: 8px; vertical-align: middle; display: inline-block; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+        .tag-need-conf { background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; margin-left: 8px; vertical-align: middle; display: inline-block; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+        .tag-need-policy { background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; margin-left: 8px; vertical-align: middle; display: inline-block; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+        .page-warning { background: #fffbeb; border: 2px dashed #f59e0b; padding: 8px; text-align: center; color: #b45309; font-weight: 900; margin-bottom: 15px; font-size: 12px; border-radius: 6px; letter-spacing: -0.5px; }
+
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+            body { background: #fff; padding: 0; display: block !important; }
+            .toolbar { display: none !important; }
+            #document-wrapper { padding: 0; }
+            .document-page { margin: 0 !important; box-shadow: none !important; }
+            .document-page:last-child { page-break-after: avoid !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar"><button class="btn-print" onclick="window.print()">📥 문서 출력 (PDF)</button></div>
+
+    <div id="document-wrapper">
+        
+        <!-- PAGE 01 -->
+        <div class="document-page">
+            <div class="confidential-mark">대 외 비</div>
+            
+            <h1 style="margin-top: 55px; text-align: center;">LONGRISE AI - 마스터 플랜 V8.9</h1>
+
+            <div style="margin: 25px 0 35px 0;">
+                <h3 style="margin: 0 0 12px 0; font-size: 15px; color: var(--primary-dark); border-bottom: 2px solid var(--primary-dark); padding-bottom: 8px;">목차</h3>
+                <table style="border: none; margin: 0; font-size: 11px;">
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">1. 자금 운용 및 방어 구조</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 02</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">2. 핵심 수당 지급 체계</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 03</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">3. 롤업 수당 및 글로벌 직급</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 04</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">4. 동적 수익률 시스템</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 05</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">5. 중도 해지 정책</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 06</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">6. CNYT 토큰 생태계</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 07~08</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">7. 플랫폼 운영 지침</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 09</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">8. 장기 운영 및 시뮬레이션</td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #64748b;">PAGE 09</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none; padding: 6px 0; font-weight: 700;">9. [개발자 지침] 쇼케이스 DB 세팅 — 계정·조직도·수익 데이터 완전 명세 <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:3px;font-size:9px;">V8.9 업그레이드</span></td>
+                        <td style="border: none; padding: 6px 0; text-align: right; color: #dc2626; font-weight: 900;">PAGE 11~13</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="background: #fffbeb; border: 2px solid #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #78350f; font-weight: 900; text-align: center; border-bottom: 1px solid #fde68a; padding-bottom: 5px;">핵심 보상 요약 <span class="tag-done">✅ 확정완료</span></h4>
+                <div style="display: flex; flex-direction: column; gap: 5px; font-size: 10px;">
+                    <div style="background: #fff; padding: 5px 8px; border-radius: 3px;"><strong>01</strong> 데일리 AI 배팅 수익 (USDT + CNYT 차등 지급)</div>
+                    <div style="background: #fff; padding: 5px 8px; border-radius: 3px;"><strong>02</strong> 직접 추천 수당 (1대 직접추천 패키지 금액의 10%)</div>
+                    <div style="background: #fff; padding: 5px 8px; border-radius: 3px;"><strong>03</strong> 롤업 수당 (25대 체감 배당금의 10%)</div>
+                    <div style="background: #fff; padding: 5px 8px; border-radius: 3px;"><strong>04</strong> 글로벌 직급 수당 (RED, BLACK / 일일 총수익 공유)</div>
+                    <div style="background: #fff; padding: 5px 8px; border-radius: 3px;"><strong>05</strong> CNYT 초기 보너스 지급 (구매금액 ÷ $0.02 / 패키지 구매 건당 즉시 / 상장전 락업)</div>
+                </div>
+            </div>
+
+            <!-- 5개 보상 구조 그래픽 (본문 순서로 재배치) -->
+            <div style="margin-bottom: 15px; padding: 15px 0;">
+                <div style="display: flex; justify-content: space-around; gap: 8px; width: 100%;">
+                    
+                    <!-- 1. 초기 CNYT 지급 칸 -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; position: relative; width: 100%;">
+                        <!-- 제목 -->
+                        <div style="font-size: 9px; font-weight: 700; color: #F59E0B; text-align: center; margin-bottom: 8px;">1. 가입시 초기 CNYT 보너스</div>
+                        
+                        <div style="width: 85%; background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9px; font-weight: 700; color: #92400E; text-align: center;">
+                            패키지 구매<br/><span style="font-size: 8px;">공식: 구매금액 ÷ CNYT 현재가</span>
+                        </div>
+                        <svg width="30" height="20" viewBox="0 0 30 20" style="margin-bottom: 8px;">
+                            <defs><marker id="arrowhead-yellow-down" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#F59E0B" /></marker></defs>
+                            <path d="M 15,2 L 15,18" fill="none" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowhead-yellow-down)" />
+                        </svg>
+                        <div style="width: 85%; background: #FFFBEB; border: 2px solid #F59E0B; border-radius: 4px; padding: 6px; margin-bottom: 8px; font-size: 8px; font-weight: 700; color: #B45309; text-align: center;">
+                            구매금액 ÷ CNYT 현재가<br/><span style="font-size: 7px;">(구매금액 전액 상당 CNYT 지급)</span>
+                        </div>
+                        <svg width="30" height="20" viewBox="0 0 30 20" style="margin-bottom: 8px;">
+                            <path d="M 15,2 L 15,18" fill="none" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowhead-yellow-down)" />
+                        </svg>
+                        <div style="width: 85%; background: #FEE2E2; border: 2px solid #DC2626; border-radius: 4px; padding: 8px; margin-bottom: 8px; font-size: 9px; font-weight: 700; color: #991B1B; text-align: center;">
+                            CNYT 지급 예시<br/><span style="font-size: 8px;">$1,000 ÷ $0.02<br/>= 50,000개 (공식 기준)</span>
+                        </div>
+                        
+                        <div style="font-size: 8px; color: #666; text-align: center;">1회성 지급,<br/>상장전까지 인출불가</div>
+                    </div>
+
+                    <!-- 2. 데일리 AI 배팅 수익 칸 -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; position: relative;">
+                        <!-- 제목 -->
+                        <div style="font-size: 9px; font-weight: 700; color: #10B981; text-align: center; margin-bottom: 8px;">2. 데일리 배팅 수익</div>
+                        
+                        <!-- 1. 투자 원금 -->
+                        <svg width="32" height="38" viewBox="0 0 32 38" style="margin-bottom: 6px;">
+                            <circle cx="16" cy="10" r="6" fill="#64748b" />
+                            <path d="M 8,18 Q 8,22 16,22 Q 24,22 24,18 L 22,34 Q 22,36 20,36 L 12,36 Q 10,36 10,34 Z" fill="#64748b" />
+                        </svg>
+                        <div style="font-size: 8px; color: #666; font-weight: 600; margin-bottom: 6px;">투자 원금</div>
+                        
+                        <!-- 화살표 -->
+                        <svg width="30" height="20" viewBox="0 0 30 20" style="margin-bottom: 6px;">
+                            <defs>
+                                <marker id="arrowhead-green2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#10B981" />
+                                </marker>
+                            </defs>
+                            <path d="M 15,0 L 15,15" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrowhead-green2)" />
+                        </svg>
+                        
+                        <!-- 2. AI 자동매매 (원형) -->
+                        <svg width="45" height="45" viewBox="0 0 45 45" style="margin-bottom: 6px;">
+                            <circle cx="22.5" cy="22.5" r="19" fill="#10B981" />
+                            <circle cx="22.5" cy="22.5" r="16" fill="none" stroke="#10B981" stroke-width="1.5" opacity="0.5" />
+                            <!-- AI 아이콘 -->
+                            <rect x="14" y="14" width="17" height="17" rx="2" fill="none" stroke="white" stroke-width="1.5" />
+                            <circle cx="18" cy="18" r="1.5" fill="white" />
+                            <circle cx="27" cy="18" r="1.5" fill="white" />
+                            <circle cx="18" cy="27" r="1.5" fill="white" />
+                            <circle cx="27" cy="27" r="1.5" fill="white" />
+                        </svg>
+                        <div style="font-size: 8px; color: #666; font-weight: 600; margin-bottom: 6px;">AI 자동매매</div>
+                        
+                        <!-- 화살표 -->
+                        <svg width="30" height="20" viewBox="0 0 30 20" style="margin-bottom: 6px;">
+                            <path d="M 15,0 L 15,15" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrowhead-green2)" />
+                        </svg>
+                        
+                        <!-- 3. 데일리 수익 발생 -->
+                        <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 8px; color: #10B981; font-weight: 700; margin-bottom: 4px;">수익 발생</div>
+                            <svg width="85" height="50" viewBox="0 0 85 50" style="margin-bottom: 4px;">
+                                <line x1="5" y1="40" x2="80" y2="40" stroke="#ddd" stroke-width="1.5" />
+                                <line x1="18" y1="40" x2="18" y2="28" stroke="#10B981" stroke-width="2" />
+                                <circle cx="18" cy="25" r="4" fill="#10B981" />
+                                <text x="18" y="47" font-size="7" text-anchor="middle" fill="#666" font-weight="600">Day 1</text>
+                                <line x1="42" y1="40" x2="42" y2="20" stroke="#10B981" stroke-width="2" />
+                                <circle cx="42" cy="17" r="4" fill="#10B981" />
+                                <text x="42" y="47" font-size="7" text-anchor="middle" fill="#666" font-weight="600">Day 2</text>
+                                <line x1="66" y1="40" x2="66" y2="12" stroke="#10B981" stroke-width="2" />
+                                <circle cx="66" cy="9" r="4" fill="#10B981" />
+                                <text x="66" y="47" font-size="7" text-anchor="middle" fill="#666" font-weight="600">Day 3</text>
+                            </svg>
+                        </div>
+                        <div style="font-size: 8px; color: #666; text-align: center; margin-top: 4px;">월 ~4~18%<br/>일일 변동</div>
+                    </div>
+                    
+                    <!-- 3. 직접 추천수당 칸 -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; position: relative;">
+                        <!-- 제목 -->
+                        <div style="font-size: 9px; font-weight: 700; color: #3B82F6; text-align: center; margin-bottom: 8px;">3. 직추 보상</div>
+                        
+                        <!-- 본인 (ME) -->
+                        <svg width="45" height="55" viewBox="0 0 45 55" style="margin-bottom: 3px; z-index: 5; position: relative;">
+                            <rect x="8" y="0" width="29" height="15" rx="7" fill="#3B82F6" />
+                            <text x="22.5" y="11" font-size="9" font-weight="bold" text-anchor="middle" fill="white">ME</text>
+                            <circle cx="22.5" cy="26" r="7" fill="#3B82F6" />
+                            <path d="M 12,36 Q 12,40 22.5,40 Q 33,40 33,36 L 31,52 Q 31,54 29,54 L 16,54 Q 14,54 14,52 Z" fill="#3B82F6" />
+                        </svg>
+                        
+                        <!-- 연결선 -->
+                        <svg width="100%" height="60" viewBox="0 0 100 60" style="position: relative; margin-top: -3px;">
+                            <line x1="50" y1="0" x2="50" y2="15" stroke="#3B82F6" stroke-width="1.5" />
+                            <line x1="50" y1="15" x2="20" y2="45" stroke="#3B82F6" stroke-width="1.5" />
+                            <line x1="50" y1="15" x2="50" y2="45" stroke="#3B82F6" stroke-width="1.5" />
+                            <line x1="50" y1="15" x2="80" y2="45" stroke="#3B82F6" stroke-width="1.5" />
+                            <circle cx="20" cy="50" r="5" fill="#9CA3AF" />
+                            <circle cx="50" cy="50" r="5" fill="#9CA3AF" />
+                            <circle cx="80" cy="50" r="5" fill="#9CA3AF" />
+                        </svg>
+                        
+                        <div style="display: flex; justify-content: space-around; width: 100%; margin-top: 5px; padding: 0 5px;">
+                            <div style="font-size: 7px; color: #666; font-weight: 600;">신규 A</div>
+                            <div style="font-size: 7px; color: #666; font-weight: 600;">신규 B</div>
+                            <div style="font-size: 7px; color: #666; font-weight: 600;">신규 C</div>
+                        </div>
+                        
+                        <div style="font-size: 8px; color: #666; text-align: center; margin-top: 8px;">1대 직접추천<br/>소개수당 10% 지급</div>
+                    </div>
+                    
+                    <!-- 4. 글로벌풀 (롤업) 칸 -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; position: relative; width: 100%;">
+                        <!-- 제목 -->
+                        <div style="font-size: 9px; font-weight: 700; color: #A855F7; text-align: center; margin-bottom: 8px;">4. 롤업 수당</div>
+                        
+                        <!-- 본인 -->
+                        <svg width="40" height="48" viewBox="0 0 40 48" style="margin-bottom: 2px; z-index: 5; position: relative;">
+                            <circle cx="20" cy="12" r="7" fill="#A855F7" />
+                            <path d="M 10,22 Q 10,26 20,26 Q 30,26 30,22 L 28,42 Q 28,44 26,44 L 14,44 Q 12,44 12,42 Z" fill="#A855F7" />
+                        </svg>
+                        <div style="font-size: 8px; color: #A855F7; font-weight: 700; margin-bottom: 2px;">본인</div>
+                        
+                        <!-- 1대 -->
+                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 18px; position: relative;">
+                            <svg width="25" height="18" viewBox="0 0 25 18"><defs><marker id="arrowhead-up-1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><polygon points="0 6, 6 0, 3 3" fill="#A855F7" /></marker></defs><path d="M 12,18 L 12,2" fill="none" stroke="#A855F7" stroke-width="1.5" marker-end="url(#arrowhead-up-1)" /></svg>
+                            <div style="font-size: 7px; color: #A855F7; font-weight: 700;">10%</div>
+                        </div>
+                        <div style="width: 85%; background: #E9D5FF; border: 2px solid #A855F7; border-radius: 4px; padding: 4px; font-size: 8px; font-weight: 700; color: #6B21A8; text-align: center;">1대</div>
+                        
+                        <!-- 2대 -->
+                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 18px; position: relative;">
+                            <svg width="25" height="18" viewBox="0 0 25 18"><path d="M 12,18 L 12,2" fill="none" stroke="#A855F7" stroke-width="1.5" marker-end="url(#arrowhead-up-1)" /></svg>
+                            <div style="font-size: 7px; color: #A855F7; font-weight: 700;">10%</div>
+                        </div>
+                        <div style="width: 90%; background: #D8B4FE; border: 2px solid #A855F7; border-radius: 4px; padding: 4px; font-size: 8px; font-weight: 700; color: #6B21A8; text-align: center;">2대</div>
+                        
+                        <!-- 3대 -->
+                        <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 18px; position: relative;">
+                            <svg width="25" height="18" viewBox="0 0 25 18"><path d="M 12,18 L 12,2" fill="none" stroke="#A855F7" stroke-width="1.5" marker-end="url(#arrowhead-up-1)" /></svg>
+                            <div style="font-size: 7px; color: #A855F7; font-weight: 700;">10%</div>
+                        </div>
+                        <div style="width: 95%; background: #C084FC; border: 2px solid #A855F7; border-radius: 4px; padding: 4px; margin-bottom: 8px; font-size: 8px; font-weight: 700; color: #6B21A8; text-align: center;">3대</div>
+                        
+                        <div style="font-size: 8px; color: #666; text-align: center;">배팅 수익금의 10%</div>
+                    </div>
+                    
+                    <!-- 5. 직급자 보너스 칸 -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 5px; position: relative; width: 100%;">
+                        <!-- 제목 -->
+                        <div style="font-size: 9px; font-weight: 700; color: #EF4444; text-align: center; margin-bottom: 10px;">5. 직급 보너스</div>
+                        
+                        <div style="width: 90%; background: #FEE2E2; border: 2px solid #EF4444; border-radius: 4px; padding: 8px; margin-bottom: 10px; font-size: 9px; font-weight: 700; color: #991B1B; text-align: center;">매출 발생</div>
+                        <svg width="30" height="20" viewBox="0 0 30 20" style="margin-bottom: 6px;">
+                            <defs><marker id="arrowhead-down-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#EF4444" /></marker></defs>
+                            <path d="M 15,2 L 15,18" fill="none" stroke="#EF4444" stroke-width="2" marker-end="url(#arrowhead-down-red)" />
+                        </svg>
+                        
+                        <div style="width: 40%; background: #FCA5A5; border: 2px solid #EF4444; border-radius: 50%; padding: 8px; margin-bottom: 8px; font-size: 8px; font-weight: 700; color: #991B1B; text-align: center;">Red<br/>1%</div>
+                        <svg width="100%" height="30" viewBox="0 0 100 30" style="margin-bottom: 4px;">
+                            <path d="M 25,5 Q 50,15 75,5" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="3,3" />
+                            <path d="M 75,25 Q 50,15 25,25" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="3,3" />
+                        </svg>
+                        <div style="width: 40%; background: #1F2937; border: 2px solid #EF4444; border-radius: 50%; padding: 8px; font-size: 8px; font-weight: 700; color: white; text-align: center;">Black<br/>2%</div>
+                        
+                        <div style="font-size: 8px; color: #666; text-align: center; margin-top: 10px;">Red/Black만<br/>참여</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="page-num">PAGE 01 / 10</div>
+        </div>
+
+        <!-- PAGE 02 -->
+        <div class="document-page">
+            <h2>1. 자금 운용 및 자동 방어 구조 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <h3>1.1 자금 분배 (가입액 100% 기준) <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">항목</th><th style="width:15%;">비율</th><th>용도</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>운영자 금고</td><td class="highlight">83%</td><td>배팅 수익, 롤업, 글로벌 풀, 원금 반환</td></tr>
+                    <tr><td>추천 수당</td><td>10%</td><td>직접 추천 수당 (구매 건당 10% 지급)</td></tr>
+                    <tr><td>글로벌 풀 (직급 수당)</td><td>3%</td><td>Red/Black 직급 보너스</td></tr>
+                    <tr><td>운영비</td><td>4%</td><td>시스템 유지보수, 서버, 인건비</td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.2 운영자 금고 지출 항목 <span class="tag-need-conf">🚨 확정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">지출</th><th>계산 방식</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>USDT 배팅 수익</td><td>활성 상품 = 투자액 × (상품별 USDT 비율)</td></tr>
+                    <tr><td>CNYT 매입</td><td>월 $978,000, 연 $11,740,000 (고정 비율 배분 + 7일 후 강제 락업)</td></tr>
+                    <tr><td>롤업 수당</td><td>USDT 배팅 수익 × 11.11% (평균 25대)</td></tr>
+                    <tr><td>직급자 매출공유 풀</td><td>(USDT 배팅 수익 + CNYT 비용) × 2%</td></tr>
+                    <tr><td>원금 반환</td><td>만기 시 원금의 <strong>100% 반환 (수수료 0% 확정)</strong></td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <strong>[CNYT 매입 비용 최적화]</strong><br>
+                고정 비율 배분 ((원금/USDT) × 비율 ÷ CNYT 가격) + 7일 강제 매각 → 월 $978,000 고정 (운영자 금고의 52.2%)<br>
+                초기 지급은 락업 처리로 P2P 비용 $0
+            </div>
+
+            <div style="background: #fff5f5; border: 2px solid #dc2626; padding: 10px; border-radius: 6px; margin: 10px 0;">
+                <strong style="color: #dc2626; font-size: 11px;">🚨 [확정 필요] CNYT 매입 & 관리 정책</strong><br>
+                <span style="font-size: 9.5px; color: #334155; line-height: 1.8;">
+                <strong>1. 대시보드 인터페이스:</strong><br>
+                &nbsp;&nbsp;• 락업 해지 타이머 표시 (카운트다운)<br>
+                &nbsp;&nbsp;• 유효기간 가장 짧은 순서부터 배치 (선입선출 FIFO)<br>
+                &nbsp;&nbsp;• 만기 임박 CNYT 우선 매각 유도<br><br>
+                <strong>2. USDT ↔ LR캐시 변환 정책:</strong><br>
+                &nbsp;&nbsp;• 입금 비율: 1 USDT = 1 LR캐시 (1:1 비율 고정)<br>
+                &nbsp;&nbsp;• 입금/환전 수수료: 없음 (0%)<br>
+                &nbsp;&nbsp;• 네트워크 수수료: 0.5% 적용
+                </span>
+            </div>
+
+            <h3>1.3 서킷 브레이커 (3단계) <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:20%;">단계</th><th style="width:20%;">운영자 금고</th><th>조치</th></tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #f0fdf4;"><td>🟢 안전</td><td>30% 이상</td><td>모든 수당 100% USDT 지급</td></tr>
+                    <tr style="background: #fef9c3;"><td>🟡 주의</td><td>10~30%</td><td>추천 수당 70% 현금 + 30% 대기</td></tr>
+                    <tr style="background: #fecaca;"><td>🔴 위험</td><td>10% 미만</td><td>모든 수당 50% CNYT 대체</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background: #fff5f5; border: 2px solid #dc2626;">
+                <strong style="color: #dc2626;">⚠️ 감지기준(분모분자) 서킷브레이커 실행 방식</strong><br>
+                <span style="font-size: 10px; color: #334155; line-height: 1.6;">
+                • <strong>위험 감지 및 알림:</strong> 자동 (시스템이 임계치 도달 시 관리자에게 즉시 경고 알림 전송)<br>
+                • <strong>정책 전환(혼합 지급 등):</strong> 수동 승인제 (알림 확인 후 관리자가 '전환 버튼'을 직접 클릭해야 최종 적용됨)<br>
+                • <strong>대기 수당 처리:</strong> 🟢안전 단계 복귀 시, 기존 🟡주의 단계에서 보류된 '30% 대기 수당'은 현금 소급 지급하지 않고 <strong>전액 CNYT로 변환하여 일괄 지급</strong>
+                </span>
+            </div>
+
+            <div class="box">
+                <strong>[운영자 금고 고갈 방지]</strong><br>
+                운영자 금고 10% 미만 시 USDT 50% + CNYT 50% 혼합 지급으로 전환하여 현금 고갈 원천 차단
+            </div>
+
+            <div style="background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 6px; margin: 10px 0;">
+                <strong style="font-size: 11px;">[중장기 타임라인]</strong><br>
+                <span style="font-size: 10px;">1~4개월: 저가 상품 (신뢰 구축) → 5~9개월: 고가 상품 (성장) → 10~12개월: 운영자 금고 안정화 → 13개월 이후: 플랫폼 고도화 및 확장 🚀</span>
+            </div>
+
+            <div class="page-num">PAGE 02 / 10</div>
+        </div>
+
+        <!-- PAGE 03 -->
+        <div class="document-page">
+            <h2>2. 핵심 수당 지급 체계 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <h3>2.1 데일리 AI 배팅 수익 - 상품 구조 <span class="tag-done">✅ 확정완료</span></h3>
+            <p style="font-size: 9.5px; margin-bottom: 6px;">모든 약정 상품은 12개월 고정, Flexible만 무약정</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:14%;">상품</th>
+                        <th style="width:12%;">가격</th>
+                        <th style="width:10%;">약정</th>
+                        <th style="width:15%;">USDT</th>
+                        <th style="width:15%;">CNYT</th>
+                        <th>연 수익률</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Flexible</td><td>$100</td><td>무약정</td><td>월 4%~</td><td>없음</td><td>48%~</td></tr>
+                    <tr><td>Basic</td><td>$200</td><td>12M</td><td>월 7%~</td><td>USDT 수익의 2%</td><td>84%~ +1.68%</td></tr>
+                    <tr><td>Standard</td><td>$500</td><td>12M</td><td>월 9%~</td><td>USDT 수익의 4%</td><td>108%~ +4.32%</td></tr>
+                    <tr><td>Premium</td><td>$1,000</td><td>12M</td><td>월 11%~</td><td>USDT 수익의 6%</td><td>132%~ +7.92%</td></tr>
+                    <tr><td>VIP</td><td>$5,000</td><td>12M</td><td>월 18%~</td><td>USDT 수익의 10%</td><td>216%~ +21.6%</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background: #f0fdf4; border: 2px solid #16a34a; margin-top: 10px; margin-bottom: 12px;">
+                <strong style="color: #15803d;">💡 [재무 검증] 데일리 배팅 수익 대비 CNYT 추가 지급량의 안전성 증명</strong><br>
+                <span style="font-size: 9.5px; color: #166534; line-height: 1.6;">
+                <strong>의문점:</strong> "매일 USDT 수익의 2~10%를 CNYT로 추가 지급하면, 추후 회사의 P2P 매입(현금화) 부담이 너무 커지지 않는가?"<br>
+                <strong>결론:</strong> 달러(USD) 가치 고정 지급 방식이므로 <strong>회사의 재무적 부담은 극히 미미하며 완벽히 통제</strong>됩니다.<br><br>
+                <strong>📊 100만 불($1M, 약 13.5억 원) 대규모 투자 유치 시뮬레이션 (Premium 상품 6% 적용 시):</strong><br>
+                • 월 USDT 수익 (11% 가정): $110,000 (약 1.48억 원) → 일일 수익 약 $3,666 (약 495만 원)<br>
+                • 일일 CNYT 지급액 (수익의 6%): 약 $220 (약 30만 원) → <em>코인가 $0.05 시 매일 약 4,400개 지급</em><br>
+                • <strong>회사의 월간 총 매입(현금화) 부담액: $6,600 (약 890만 원)</strong><br><br>
+                <strong>🎯 팩트 체크:</strong> 약 13.5억 원 규모의 자금이 유입되어도, 회사가 한 달에 책임져야 할 CNYT 매입 비용은 1천만 원이 채 되지 않습니다 (투자금 대비 단 0.66%). 나아가 향후 CNYT 가격이 $0.2 ~ $0.4 이상 폭등하더라도, 지급 기준이 '코인 개수'가 아닌 '정해진 USD 가치($220/일)'로 고정되어 있으므로 코인 발행량만 줄어들 뿐 <strong>회사의 실제 재무 지출액($6,600/월)은 절대 증가하지 않는 완벽한 구조입니다.</strong>
+                </span>
+            </div>
+
+            <div class="box" style="background: #fef3c7; border: 2px solid #fbbf24;">
+                <strong style="color: #b45309;">💡 [개발자 필독] 관리자 수치 입력 정책</strong><br>
+                <span style="font-size: 9.5px; color: #334155; line-height: 1.8;">
+                <strong>입력 기준:</strong><br>
+                &nbsp;&nbsp;• 절대값 금지 (%, $, CNYT 등 기호 없이 숫자만 입력)<br>
+                &nbsp;&nbsp;• <strong>소수점 입력 허용</strong> (예: 15.7과 같이 소수점 입력 가능)<br>
+                &nbsp;&nbsp;• 소수점 계산은 시스템에서 자동 처리<br><br>
+                <strong>검증 프로세스:</strong><br>
+                &nbsp;&nbsp;1. 관리자 입력 완료<br>
+                &nbsp;&nbsp;2. 모달/컨펌: "이 수치가 맞습니까? [확인] [취소]"<br>
+                &nbsp;&nbsp;3. 확인 후에만 시스템 적용<br>
+                &nbsp;&nbsp;4. 입력 로그 기록 (누가, 언제, 무엇을 변경했는지)<br><br>
+                <strong>주의:</strong> 관리자 도구 미숙자가 많으니 각별한 주의 필요
+                </span>
+            </div>
+
+            <div class="box">
+                <strong>[Flexible 특별 정책]</strong><br>
+                미끼 상품 (손실 감안) / 즉시 해지 가능 24시간 내 원금 100% / 단, White직급 달성을 원할 시 $200 예치금 필요
+            </div>
+
+            <div style="background: #ffffff; border: 1px solid #dc2626; border-radius: 4px; padding: 10px; margin-top: 10px; margin-bottom: 12px;">
+                <p style="margin: 0 0 8px 0; font-weight: 700; font-size: 10px; color: #dc2626;">⚠️ 영업자 외상 장부 시스템 처리 로직 (DB 이중 지갑 및 만기 지급 확정)</p>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 6px; font-size: 10px; color: #334155; width: 25%;"><strong>계정 활성화</strong></td>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;">회사 지원금 $900 + 영업자 실입금 $100 = Premium ($1,000)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;"><strong>데일리 수익 및 롤업</strong></td>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;">$1,000 기준으로 계산되어 <strong>락(Lock) 없이 매일 전액 정상 지급</strong></td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 6px; font-size: 10px; color: #334155;"><strong>1대 직추천 수당 (10%)</strong></td>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;">- 실입금액($100) 분량 = <strong>$10 즉시 지급</strong><br>- 지원금($900) 분량 = <strong>$90 'Lock 지갑'에 보관</strong> (대시보드 노출, 12개월 만기 시 해제)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;"><strong>중도 해지 시</strong></td>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;">지원금 $900 및 Lock 지갑의 수당 $90은 전액 소멸. 실입금액 $100에 대해서만 수수료 차감 후 환급</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 6px; font-size: 10px; color: #334155;"><strong>12개월 만기 처리</strong></td>
+                        <td style="padding: 6px; font-size: 10px; color: #334155;"><strong style="color: #dc2626;">지원금 본금($900)과 Lock 수당($90)이 모두 Lock 해제되어 유저에게 온전히 지급됨</strong></td>
+                    </tr>
+                </table>
+                <p style="margin: 0; font-size: 9.5px; color: #dc2626; line-height: 1.4;">💡 <strong>개발자 필수 사항 (DB 구조 추가):</strong> 일반 지갑(USDT) 외에 <strong>'만기 지급용 Lock 지갑'</strong> 테이블을 반드시 추가하여 유저 대시보드에 보이게 하십시오. 데일리 배팅 및 롤업은 $1,000 기준으로 매일 락 없이 전액 지급되며, 12개월 만기 시점 도달 시 시스템은 지원금 본금($900)과 락업 수당($90)을 자동 해제시켜 유저의 출금 가능 지갑으로 전환해야 합니다.<br><strong style="color: #991b1b;">[UI 반영 보류]</strong> 해당 정책과 관련된 유저 프론트엔드 화면(새로운 기능 및 UI) 개발은 현재 진행 중인 버그 수정 완료 후 추후 개발될 예정입니다. 당분간 유저들에게는 구두로 정책을 전달할 예정이므로, 우선은 백엔드 및 관리자 로직 처리에만 집중해 주십시오.</p>
+            </div>
+
+            <h3>2.2 직접 추천 수당 (1대 직접추천) <span class="tag-done">✅ 확정완료</span></h3>
+            
+            <p style="font-size: 10px; margin-bottom: 8px; color: #334155;"><strong>정책 개요:</strong> 본인이 직접추천한 1대(신규 회원)의 패키지 구매 건당 구매금액의 10%를 즉시 지급. 동일 회원이 추가 구매할 때마다 매회 동일하게 적용.</p>
+            
+            <table>
+                <thead>
+                    <tr><th style="width:35%;">추천 상품</th><th style="width:20%;">구매금액</th><th style="width:20%;">수당비율</th><th>수령금액</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Flexible</td><td>$100</td><td>10%</td><td>$10</td></tr>
+                    <tr><td>Basic</td><td>$200</td><td>10%</td><td>$20</td></tr>
+                    <tr><td>Standard</td><td>$500</td><td>10%</td><td>$50</td></tr>
+                    <tr><td>Premium</td><td>$1,000</td><td>10%</td><td>$100</td></tr>
+                    <tr><td>VIP</td><td>$5,000</td><td class="highlight">10%</td><td class="highlight">$500</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background: #f0fdf4; border: 1px solid #86efac; margin-top: 10px;">
+                <strong style="color: #16a34a;">✅ 핵심 정책</strong><br>
+                • <strong>적용 대상:</strong> 본인이 직접 소개한 신규 회원 (1대만 적용)<br>
+                • <strong>지급 방식:</strong> 1대의 패키지 구매금액 × 10% (구매 건당)<br>
+                • <strong>지급 시점:</strong> 신규 회원 가입 및 패키지 구매 후 즉시 지급<br>
+                • <strong>추가 조건:</strong> 동일 회원의 추가 구매 시에도 구매 건당 10% 매회 지급 (예: 동일 회원이 Premium $1,000을 3회 구매 시 → $100 × 3회 = $300 지급)
+            </div>
+
+            <h3>2.3 계정 통합 (Body Value) <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <tr><th style="width:30%;">중복 구매</th><td>하나의 계정으로 여러 상품 추가 구매 가능</td></tr>
+                <tr><th>나의 몸값</th><td>현재 남아있는 계정의 USDT 총합 = 직급과 수당 결정 기준</td></tr>
+            </table>
+
+            <div class="page-num">PAGE 03 / 10</div>
+        </div>
+
+        <!-- PAGE 04 -->
+        <div class="document-page">
+            <h2>3. 롤업 수당 및 글로벌 직급 체계 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <h3>3.1 롤업 수당 (배팅 수익금의 10%, 25대 체감형) <span class="tag-done">✅ 확정완료</span></h3>
+            <p style="font-size: 10px; margin-bottom: 8px; color: #334155;"><strong>핵심:</strong> 직하위 회원들의 <strong>배팅 수익금</strong>의 10%를 매칭 → 25대까지 체감. 평균 15대 기준 총 11.11%</p>
+
+            <div class="box">
+                <strong>[롤업 수당 계산 예시]</strong><br>
+                <span style="color: #dc2626; font-weight: 700;">※ 배팅 수익금 기반 (패키지 구매금액 아님)</span><br>
+                하위 회원의 월 배팅 수익금 $100 → 1대: $10 (10%) → 2대: $1 (10% of 10%) → 3대: $0.1 → ... 25대까지 체감<br>
+                총합: 11.11% (무한 등비급수)
+            </div>
+
+            <h3>3.2 글로벌 직급 달성 조건 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:12%;">직급</th>
+                        <th style="width:15%;">패키지구매금</th>
+                        <th style="width:13%;">직접추천</th>
+                        <th style="width:13%;">하부육성</th>
+                        <th style="width:16%;">팀매출</th>
+                        <th style="width:12%;">롤업</th>
+                        <th>Red/Black 직급별 산하 매출 공유</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>White</td><td>Basic($200)+</td><td>0명</td><td>-</td><td>$0</td><td>없음</td><td>없음</td></tr>
+                    <tr><td>Blue</td><td>Standard($500)+</td><td>3명</td><td>White 3명</td><td>$1,000</td><td>3대</td><td>없음</td></tr>
+                    <tr><td>Purple</td><td>Premium($1,000)+</td><td>5명</td><td>Blue 3명</td><td>$10,000</td><td>7대</td><td>없음</td></tr>
+                    <tr><td>Red</td><td>VIP($5,000)+</td><td>10명</td><td>Purple 3명</td><td>$100,000</td><td>15대</td><td>1% (Red 직급 내)</td></tr>
+                    <tr><td>Black</td><td>$10,000+</td><td>15명</td><td>Red 3명</td><td>$1,000,000</td><td>25대</td><td>2% (Black 직급 내)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box">
+                <strong>[직급 달성 및 유지/추월 규정]</strong><br>
+                1. White 직급 달성 조건: Flexible 패키지 중복 구매($100+$100)로는 달성 불가하며, <strong>단일 Basic($200) 이상 패키지 구매 시</strong>에만 달성됩니다.<br>
+                2. White 직급 혜택 제한: White 직급은 <strong>롤업 수당을 받을 수 없으며</strong> (대상 제외), 1대 직접 추천 수당(10%)만 지급받습니다.<br>
+                3. 직급 평가 및 강등: 4가지 조건 중 1개라도 미달 시 즉시 반영되지 않으며, <strong>매일 자정(00:00) 정산 배치를 돌릴 때 하위 직급으로 일괄 강등 처리</strong>됩니다.<br>
+                4. 라인 단절: 하부 회원이 나와 동급 이상 시 해당 라인 수익 단절 (공동 방어 금고로 이전)
+            </div>
+
+            <div class="box" style="background: #fff5f5; border: 2px solid #dc2626;">
+                <strong style="color: #dc2626;">⚠️ 직접추천 수당 vs 롤업 수당 명확한 구분</strong><br>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9.5px;">
+                    <tr style="background: #fef2f2;">
+                        <td style="padding: 6px; border: 1px solid #fca5a5;"><strong>직접추천 수당</strong></td>
+                        <td style="padding: 6px; border: 1px solid #fca5a5;">패키지 구매금액 × 10% (구매 건당, 추가 구매 시 매회 적용)</td>
+                        <td style="padding: 6px; border: 1px solid #fca5a5;">예: VIP($5,000) → $500</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #fca5a5;"><strong>롤업 수당</strong></td>
+                        <td style="padding: 6px; border: 1px solid #fca5a5;"><strong style="color: #dc2626;">배팅 수익금 × 10%</strong> (지속적, 25대 체감)</td>
+                        <td style="padding: 6px; border: 1px solid #fca5a5;">예: 월 배팅 $100 → $10/월</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="box" style="background: #eff6ff; border: 1px solid #93c5fd;">
+                <strong>[롤업 재무 안전성]</strong><br>
+                25대 체감 구조로 회사 롤업 지출 총합은 원 배팅 수익의 11.11%를 절대 초과 불가 (무한 등비급수 원리)
+            </div>
+
+            <h3>3.3 P2P 차익 거래 시스템 (CNYT) <span class="tag-done">✅ 확정완료</span></h3>
+            <p style="font-size: 9.5px; margin-bottom: 6px;">상위 직급자에게 CNYT 차익 거래 권한을 부여하여 회사의 자금 이탈을 방어하고 승급 동기를 부여합니다.</p>
+            
+            <div class="box" style="background: #eff6ff; border: 2px solid #2563eb;">
+                <strong style="color: #1e3a8a;">✅ [확정 기본 정책] 옵션 B: 총 6% 차익 모델 (안정성 및 불만 최소화)</strong><br>
+                • 매도자 (일반 회원): 기준가의 <strong>97%</strong>에 CNYT 판매 (-3% 체감)<br>
+                • 매수자 (Red 직급 이상): 기준가의 <strong>97%</strong>에 CNYT 매수 (3% 할인)<br>
+                • 수익 실현: 산하 신규 매출 등록 시 <strong>103%</strong> 가치로 인정받아 <strong>총 6% 마진</strong> 확보<br>
+                <em style="color: #1d4ed8; font-size: 9px;">효과: 판매자의 페널티가 3%에 불과하여 생태계 내 시장 저항이 극히 낮음</em>
+            </div>
+
+            <div class="box" style="background: #fef3c7; border: 2px solid #f59e0b; margin-top: 8px;">
+                <strong style="color: #b45309;">💡 [개발자 필수 전달 사항] CNYT 대시보드 노출 시점</strong><br>
+                <span style="font-size: 9px; line-height: 1.6; color: #92400e;">
+                • 본 P2P 차익 거래 시스템(CNYT) 기능은 <strong>초기 오픈 시점에는 UI/UX에서 숨김 처리(Hide)</strong> 되어야 합니다.<br>
+                • 추후 <strong>6월 말경 CNYT 개발 및 연동 시점</strong>에 맞춰 대시보드에 활성화되도록 개발 일정을 조율해 주시기 바랍니다.
+                </span>
+            </div>
+
+            <div class="box" style="background: #f8fafc; border: 1px dashed #cbd5e1; opacity: 0.8;">
+                <strong style="color: #475569;">⚠️ [예비 대안] 옵션 A: 총 10% 차익 모델 (리더 동기부여 최적화)</strong><br>
+                • 매도자 95% 판매 / 매수자 95% 매수 / 매출 인정 105% (총 10% 마진)<br>
+                <em style="color: #64748b; font-size: 9px;">상황 변화 시 상위 사업자 보상 강화를 위해 예비 카드로 유지</em>
+            </div>
+
+            <div class="box" style="background: #f0fdf4; border: 1px solid #22c55e;">
+                <strong style="color: #15803d;">✅ [확정 정책] 전 회원 P2P 매도 전면 허용 (All)</strong><br>
+                <span style="font-size: 9.5px; color: #166534; line-height: 1.6;">
+                • <strong>적용:</strong> 최하위 Flexible 패키지 구매 회원을 포함하여 <strong>CNYT를 보유한 모든 회원 누구나 매도 가능</strong><br>
+                • (단, Flexible 회원이 가입 시 지급받은 웰컴 보너스 물량은 14개월 락업 해제가 완료된 이후에 매도 가능합니다.)<br>
+                • <strong>전략적 효과:</strong><br>
+                &nbsp;&nbsp;1. 진입 장벽 완화 및 환전 경험을 통한 강력한 신뢰 구축 (자발적 추가 투자 유도)<br>
+                &nbsp;&nbsp;2. P2P 시장 내 매물(공급) 증가로 상위 직급(Red/Black)의 차익 거래 기회 및 마진 극대화
+                </span>
+            </div>
+
+            <div class="page-num">PAGE 04 / 10</div>
+        </div>
+
+        <!-- PAGE 05 -->
+        <div class="document-page">
+            <h2>4. 동적 수익률 시스템 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <h3>4.1 3요소 분해 구조 <span class="tag-done">✅ 확정완료</span></h3>
+            <p style="font-size: 9.5px; margin-bottom: 6px;">회원 수익률은 베팅 성과에 따라 일일 변동하며, 3가지 요소로 구성됩니다.</p>
+            
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">요소</th><th style="width:15%;">평균 기여</th><th>설명</th></tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #fffbeb;">
+                        <td>🎲 Pool Size Factor(쉐어)</td>
+                        <td class="highlight">6%~</td>
+                        <td>총 판돈 규모에 따른 하우스 우위</td>
+                    </tr>
+                    <tr style="background: #eff6ff;">
+                        <td>🎰 Betting Performance(아바타)</td>
+                        <td class="highlight">9%~</td>
+                        <td>4개 거점 베팅 성과 평균</td>
+                    </tr>
+                    <tr style="background: #f0fdf4;">
+                        <td>💰 Futures Return(코인 선물거래)</td>
+                        <td class="highlight">3%~</td>
+                        <td>코인 AI선물 거래 수익</td>
+                    </tr>
+                    <tr>
+                        <td><strong>합계 (VIP 기준)</strong></td>
+                        <td class="highlight">18%~</td>
+                        <td>월 평균 (변동폭 14~22%)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>4.2 일일 변동 예시 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:15%;">날짜</th><th>Pool</th><th>Betting</th><th>Futures</th><th>합계</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Day 1</td><td>6.0%</td><td>9.2%</td><td>1.8%</td><td>17.0%</td></tr>
+                    <tr><td>Day 2</td><td>6.3%</td><td>7.5%</td><td>4.1%</td><td>17.9%</td></tr>
+                    <tr><td>Day 3</td><td>5.8%</td><td>6.3%</td><td>2.2%</td><td>14.3%</td></tr>
+                    <tr><td>Day 4</td><td>6.2%</td><td>11.8%</td><td>0.5%</td><td>18.5%</td></tr>
+                    <tr><td>Day 5</td><td>6.1%</td><td>5.2%</td><td>5.3%</td><td>16.6%</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box">
+                <strong>30일 통계:</strong> 평균 17.8% / 최고 21.7% / 최저 14.2% / 변동성 2.1% (표준편차)
+            </div>
+
+            <h3>4.3 거점 운영 현황 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:20%;">거점</th><th style="width:18%;">도시</th><th style="width:22%;">베팅 규모</th><th>평균 성과</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>🇬🇪 조지아</td><td>바투미</td><td>$28,500,000</td><td>+12.3%</td></tr>
+                    <tr><td>🇻🇳 베트남</td><td>다낭</td><td>$31,200,000</td><td>+6.7%</td></tr>
+                    <tr><td>🇰🇭 캄보디아</td><td>프놈펜</td><td>$22,800,000</td><td>+4.2%</td></tr>
+                    <tr><td>🇵🇭 필리핀</td><td>마닐라</td><td>$30,000,000</td><td>+9.8%</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.4 선물 포지션 현황 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">페어</th><th style="width:18%;">방향</th><th style="width:20%;">레버리지</th><th>성과</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>BTC/USDT Perpetual</td><td>Long</td><td>5x</td><td>+4.2%</td></tr>
+                    <tr><td>ETH/USDT Perpetual</td><td>Short</td><td>3x</td><td>+1.8%</td></tr>
+                    <tr><td>SOL/USDT Perpetual</td><td>Long</td><td>4x</td><td>+3.1%</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.5 실제 작동 방식 <span class="tag-done">✅ 확정완료</span></h3>
+            <div class="warning-box">
+                <p style="margin: 0 0 6px 0; font-weight: 900; font-size: 11px; color: #991b1b;">🚨 백엔드 실행 로직 (하드코딩 제약 필수)</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 9.5px; line-height: 1.5;">
+                    <li><strong>수익률 생성:</strong> 알고리즘 기반 랜덤 <strong>(무조건 14.0% ~ 22.0% 사이에서만 발생토록 하드코딩, 평균 18% 목표)</strong></li>
+                    <li><strong>정산 기준 시점:</strong> 프론트엔드 대시보드는 30초마다 변동되나, 실제 수익 지급은 <strong>매일 00:00 UTC에 생성된 최종 난수값 1개를 전 회원에게 일괄 적용</strong>하여 정산</li>
+                    <li><strong>거점 데이터:</strong> 시뮬레이션 모델</li>
+                    <li><strong>선물 데이터:</strong> 시장 연동 프로젝션</li>
+                    <li><strong>플랫폼 표시:</strong> 30초마다 자동 업데이트 + 30일 차트</li>
+                </ul>
+            </div>
+
+            <div class="box" style="background: #f0fdf4; border: 2px solid #16a34a; margin-top: 10px; margin-bottom: 15px;">
+                <strong style="color: #15803d;">✅ [확정 정책] 회사 수익 모델 (Win Bonus) 및 마이너스 방어 로직</strong><br>
+                <span style="font-size: 10px; color: #334155; line-height: 1.6;">
+                <strong>1. 회사의 수익 창출 방식 (Win Bonus):</strong><br>
+                인건비, 유지비, 서버 운영비 등으로 전체 재원의 약 11%(7/3 비율 등)가 할당되며, 시스템 디스플레이 및 실제 정산 로직 구현 시 수익 발생일의 <strong>전체 움직임/흐름 수익금 중 약 30%를 회사가 '윈 보너스(승률 수수료)' 명목으로 수취</strong>합니다. (유저 최종 지급 전 선공제 비율)<br><br>
+                <strong>2. 마이너스 방어 (무손실) 정책:</strong><br>
+                게임(베팅)에서 <strong>졌을 때(손실 발생일)의 리스크는 온전히 회사가 감당</strong>합니다. 유저의 데일리 자산에는 마이너스(-)가 절대 반영되지 않으며(0% 처리), 회사가 윈 보너스를 통해 잘 축적해 둔 리저브 금고를 통해 마이너스가 나지 않도록 유저 수익을 전액 보충(방어)합니다.<br>
+                <strong style="color: #166534;">💡 결론:</strong> 유저는 원금 손실 리스크 없이 안정적인 우상향 수익을 보장받고, 회사는 수익이 난 날의 약 30%를 쉐어받아 손실 방어 및 운영 수익으로 사용함으로써 상호 윈-윈 구조를 확립합니다.
+                </span>
+            </div>
+
+            <div class="box" style="background: #eff6ff; border: 2px solid #2563eb; margin-top: 8px;">
+                <strong style="color: #1e3a8a;">📋 [4.5 ↔ 9.5 관계 설명] 두 섹션은 충돌이 아닌 상호보완 구조</strong><br>
+                <span style="font-size: 9.5px; color: #334155; line-height: 1.8;">
+                <strong>• Section 4.5 (프론트엔드 표시 방식):</strong> 매일 00:00 UTC에 생성된 최종 난수 1개를 전 회원에게 동일하게 적용. 대시보드에는 30초마다 변동하는 숫자가 표시되나, 실제 정산은 하루에 단 1개의 확정값으로 처리.<br>
+                <strong>• Section 9.5 (백엔드 알고리즘 로직):</strong> 그 '1개의 확정값'이 어떻게 생성되는지를 설명. 수익일(80%) / 방어일(15%) / 역전일(5%) 확률 분포에 따라 당일의 수익률 범위가 결정되며, 월 합산이 14~22% 범위에 수렴하도록 자동 보정됨.<br>
+                <strong style="color: #1e40af;">→ 결론: 4.5는 "어떻게 보여주는가", 9.5는 "어떻게 만드는가"를 설명. 개발자는 9.5 알고리즘으로 값 생성 → 4.5 방식으로 전 회원에게 일괄 적용하면 됨.</strong>
+                </span>
+            </div>
+
+            <div class="box" style="background: #fef3c7; border: 2px solid #f59e0b; margin-top: 8px;">
+                <strong style="color: #b45309;">⚙️ [개발자 가이드] Win Bonus DB 처리 방침</strong><br>
+                <span style="font-size: 9.5px; color: #334155; line-height: 1.8;">
+                Win Bonus 30%는 <strong>내부 비즈니스 수익 구조 설명 개념</strong>이며, 실제 코드 및 DB에 구현하지 않아도 됩니다.<br>
+                <strong>• daily_returns.usdt_earned</strong> = 회원이 실제 지급받는 순수익만 저장 (선공제 계산 불필요)<br>
+                <strong>• 알고리즘</strong>은 14~22% 범위 내 수익률을 생성하고, 그 비율로 회원에게 직접 지급하는 것만 구현<br>
+                <strong>• 30% 선공제 별도 컬럼이나 win_bonus 필드 추가 불필요</strong>
+                </span>
+            </div>
+
+            <div class="page-num">PAGE 05 / 10</div>
+        </div>
+
+        <!-- PAGE 06 -->
+        <div class="document-page">
+            <h2>5. 중도 해지 정책 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <div class="warning-box" style="background: #450a0a; border-color: #dc2626;">
+                <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 900; color: #fef2f2;">🚨 핵심 변경: 배당 차감 제거</p>
+                <p style="margin: 0; font-size: 10px; color: #fecaca; line-height: 1.5;">
+                    <strong>환급 = 원금 × (1 - 수수료율)</strong><br>
+                    배당은 별도로 매월 지급되었으므로 환급 계산에 포함하지 않음!
+                </p>
+            </div>
+
+            <h3>5.1 환급 계산 공식 <span class="tag-done">✅ 확정완료</span></h3>
+            
+            <div class="box" style="background: #dcfce7; border: 2px solid #16a34a;">
+                <strong style="color: #15803d;">환급 계산식 (단순화):</strong><br>
+                <span style="font-size: 11px; font-weight: 900; color: #15803d;">환급액 = 원금 × (1 - 수수료율)</span>
+            </div>
+
+            <p style="font-size: 9.5px; margin: 8px 0;">
+                <strong>핵심 논리:</strong><br>
+                • 원금 = 카지노 판돈 (도박 예치금)<br>
+                • 배팅 수익 = 도박 이익 (별도로 이미 지급됨)<br>
+                • 중도 해지 = 카지노 예치 약정 위반<br>
+                • 수수료 = 롱라이즈가 카지노에 내는 페널티를 유저에게 전가
+            </p>
+
+            <h3>5.2 약정 상품 (Basic/Standard/Premium/VIP) 기간별 수수료 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:20%;">경과 기간</th><th style="width:18%;">수수료율</th><th>환급률</th><th>사유</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>3개월 이내</td><td class="highlight">30%</td><td>70%</td><td>카지노 예치 약정 위반 페널티 (최대)</td></tr>
+                    <tr><td>6개월 이내</td><td class="highlight">20%</td><td>80%</td><td>약정 이행률 증가, 페널티 감소</td></tr>
+                    <tr><td>9개월 이내</td><td class="highlight">15%</td><td>85%</td><td>만기 임박으로 최소 페널티</td></tr>
+                    <tr><td>12개월 이내 해지</td><td class="highlight">10%</td><td>90%</td><td>약정기간 대부분 이행</td></tr>
+                    <tr><td>만기 (12개월)</td><td class="highlight">0%</td><td>100%</td><td>원금 전액 반환</td></tr>
+                </tbody>
+            </table>
+
+            <h3>5.3 Flexible 상품 특별 정책 <span class="tag-done">✅ 확정완료</span></h3>
+            <table>
+                <tr><th style="width:30%;">해지 수수료</th><td>없음 (0%)</td></tr>
+                <tr><th>원금 반환</th><td>100% 즉시 반환 (24시간 내 처리)</td></tr>
+            </table>
+
+            <h3>5.4 중도 해지 시뮬레이션 (마케팅 누수 포함) <span class="tag-done">✅ 확정완료</span></h3>
+            <div class="box" style="background: #fef2f2; border: 1px solid #ef4444;">
+                <strong>[케이스 1] VIP $5,000, 6개월 경과 해지 (최악의 적자 시나리오)</strong><br>
+                <span style="font-size: 9px; line-height: 1.6;">
+                원금: $5,000 / 수수료율: 20% (6개월 이내) → <strong>환급액: $4,000</strong><br><br>
+                회원 입장:<br>
+                • 배팅 수익 수령: $5,400 (6개월 × $900/월, 이미 받음)<br>
+                • 환급: $4,000<br>
+                • <strong>총 회수: $9,400 (원금 대비 +88%)</strong><br><br>
+                회사 입장 (실제 지출):<br>
+                • 유입: $5,000<br>
+                • 직접 지출: $5,400 (배팅 수익) + $4,000 (환급) = $9,400<br>
+                • 숨은 지출(마케팅): $500 (1대 직추천 10%) + $600 (롤업 11.11%) = $1,100<br>
+                • <strong>실제 손실: -$5,500 (원금 대비 110% 적자!) 🚨</strong>
+                </span>
+            </div>
+
+            <div class="box" style="background: #f0fdf4; border: 1px solid #22c55e;">
+                <strong>[케이스 2] Premium $1,000, 1개월 경과 해지 (방어 성공 시나리오)</strong><br>
+                <span style="font-size: 9px; line-height: 1.6;">
+                원금: $1,000 / 수수료율: 30% (3개월 이내) → <strong>환급액: $700</strong><br><br>
+                회원 입장:<br>
+                • 배팅 수익 수령: $110 (1개월)<br>
+                • 환급: $700<br>
+                • <strong>총 회수: $810 (원금 대비 -19% 손실)</strong><br><br>
+                회사 입장 (실제 지출):<br>
+                • 유입: $1,000<br>
+                • 직접 지출: $110 (배팅 수익) + $700 (환급) = $810<br>
+                • 숨은 지출(마케팅): $100 (1대 직추천 10%) + $12 (롤업 11.11%) = $112<br>
+                • <strong>실제 손익: +$78 (7.8% 흑자 방어 성공) ✅</strong>
+                </span>
+            </div>
+
+            <div class="page-num">PAGE 06 / 10</div>
+        </div>
+
+        <!-- PAGE 07 -->
+        <div class="document-page">
+            <div class="page-warning">⚠️ 이 페이지의 내용은 확정 전이므로 정책 수립 및 결정이 필요합니다.</div>
+            
+            <h2>6. CNYT 토큰 생태계 <span class="tag-need-policy">⚠️ 정책수립 및 결정필요</span></h2>
+
+            <h3>6.1 코인 기본 정보 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <tr><th style="width:30%;">총 발행량</th><td>1,000,000,000 CNYT (10억 개 고정)</td></tr>
+                <tr><th>시스템 가격</th><td>$0.02 ~ $1.00 (1~12개월, 단계별 상승)</td></tr>
+                <tr><th>상장 일정</th><td>14개월 (글로벌 거래소 상장 추진)</td></tr>
+                <tr><th>가치 상승</th><td>리조트 결제 15%를 시장 매입 후 소각</td></tr>
+            </table>
+
+            <h3>6.2 코인 분배 비율 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">분배처</th><th style="width:15%;">비율</th><th>정책</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>회원 보상</td><td>60%</td><td>초기 지급 + AI 배팅 수익 보너스</td></tr>
+                    <tr><td>생태계 조성</td><td>15%</td><td>리조트 연동 및 실물 생태계</td></tr>
+                    <tr><td>운영진/개발</td><td>15%</td><td>1년 락업 (매도 불가)</td></tr>
+                    <tr><td>마케팅/유동성</td><td>10%</td><td>거래소 상장 및 마케팅</td></tr>
+                </tbody>
+            </table>
+
+            <h3>6.3 CNYT 고정 비율 배분 시스템 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            
+            <div class="box" style="background: #dcfce7; border: 2px solid #16a34a;">
+                <p style="margin: 0 0 6px 0; font-weight: 900; font-size: 11px; color: #15803d;">🎯 핵심 원칙: 공정성 + 예측성</p>
+                <p style="margin: 0; font-size: 9.5px; line-height: 1.6; color: #166534;">
+                    <strong>모든 CNYT 지급은 고정 USD 비율로 계산되며, CNYT 가격에 따라 개수만 자동 조정됩니다.</strong><br>
+                    → 1개월 가입자나 9개월 가입자나 동일한 USD 가치 보장<br>
+                    → 가입 시점과 무관하게 공평한 구조
+                </p>
+            </div>
+
+            <h4 style="font-size: 11px; font-weight: 700; color: #0f172a; margin: 12px 0 6px 0;">A. 초기 CNYT 지급 (가입 시 웰컴 보너스) <span class="tag-need-policy">⚠️ 결정필요</span></h4>
+            
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">항목</th><th>내용</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>지급 공식</td><td><strong>구매금액 ÷ CNYT 현재가</strong> (구매금액 전액 상당 CNYT 지급)</td></tr>
+                    <tr><td>지급 시점</td><td>패키지 구매 건당 즉시 (건바이건)</td></tr>
+                    <tr><td>락업 정책</td><td>즉시 락업 (14개월 TGE까지 매각 불가)</td></tr>
+                    <tr><td>P2P 매입 비용</td><td>$0 (락업으로 P2P 거래 없음)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box">
+                <strong>[초기 CNYT 예시 - VIP $5,000]</strong><br>
+                <table style="margin: 6px 0 0 0; font-size: 9px;">
+                    <tr style="background: #f8fafc;">
+                        <th>가입월</th><th>CNYT 가격</th><th>구매금액</th><th>CNYT 개수</th><th>상태</th>
+                    </tr>
+                    <tr>
+                        <td>1개월</td><td>$0.02</td><td>$5,000</td><td><strong>250,000개</strong></td><td>락업</td>
+                    </tr>
+                    <tr>
+                        <td>5개월</td><td>$0.04</td><td>$5,000</td><td><strong>125,000개</strong></td><td>락업</td>
+                    </tr>
+                    <tr>
+                        <td>9개월</td><td>$0.08</td><td>$5,000</td><td><strong>62,500개</strong></td><td>락업</td>
+                    </tr>
+                    <tr style="background: #fef3c7;">
+                        <td colspan="5" style="text-align: center; font-weight: 700;">✅ 구매금액 전액 상당 CNYT 지급 / CNYT 가격 상승 시 개수 감소</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h4 style="font-size: 11px; font-weight: 700; color: #0f172a; margin: 12px 0 6px 0;">B. 월 CNYT 배팅 수익 (매월 지급) <span class="tag-need-policy">⚠️ 결정필요</span></h4>
+            
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">항목</th><th>내용</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>지급 공식</td><td><strong>(USDT 배팅 수익 × CNYT 비율) ÷ CNYT 현재가</strong></td></tr>
+                    <tr><td>CNYT 비율</td><td>Basic 2%, Standard 4%, Premium 6%, VIP 10%</td></tr>
+                    <tr><td>지급 시점</td><td>월 배팅 수익과 함께</td></tr>
+                    <tr><td>매각 정책</td><td>7일 강제 매각 (7일 강제 락업)</td></tr>
+                    <tr><td>P2P 매입 비용</td><td>월 $978,000, 연 $11,740,000 (운영자 금고의 52.2%)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>6.4 전체 상품 CNYT 배분 (1개월 기준, CNYT $0.02) <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:14%;">상품</th>
+                        <th style="width:12%;">원금</th>
+                        <th style="width:16%;">초기 (락업)</th>
+                        <th style="width:12%;">월 USDT</th>
+                        <th style="width:16%;">월 CNYT</th>
+                        <th>월 P2P (예상 매각 수령액)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Flexible</td><td>$100</td><td>5,000개 ($100)</td><td>$4</td><td>-</td><td>-</td></tr>
+                    <tr><td>Basic</td><td>$200</td><td>10,000개 ($200)</td><td>$14</td><td>14개 ($0.28)</td><td class="highlight">$0.27</td></tr>
+                    <tr><td>Standard</td><td>$500</td><td>25,000개 ($500)</td><td>$45</td><td>90개 ($1.80)</td><td class="highlight">$1.74</td></tr>
+                    <tr><td>Premium</td><td>$1,000</td><td>50,000개 ($1,000)</td><td>$110</td><td>330개 ($6.60)</td><td class="highlight">$6.40</td></tr>
+                    <tr><td>VIP</td><td>$5,000</td><td>250,000개 ($5,000)</td><td>$900</td><td>4,500개 ($90)</td><td class="highlight">$87.30</td></tr>
+                </tbody>
+            </table>
+
+            <div class="page-num">PAGE 07 / 10</div>
+        </div>
+
+        <!-- PAGE 08 -->
+        <div class="document-page">
+            <div class="page-warning">⚠️ 이 페이지의 내용은 확정 전이므로 정책 수립 및 결정이 필요합니다.</div>
+            
+            <h3>6.5 7일 강제 매각 정책 (월 배팅 수익 CNYT) <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            
+            <p style="font-size: 9.5px; margin-bottom: 6px;"><strong>정책 개요:</strong> 배팅 수익 CNYT는 수령 후 7일 이내만 P2P 매각 가능, 7일 경과 시 자동 락업</p>
+            
+            <table>
+                <thead>
+                    <tr><th style="width:25%;">항목</th><th>내용</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>매각 가능 기간</td><td>배팅 수익 수령 후 7일 이내</td></tr>
+                    <tr><td>7일 경과 시</td><td>자동 락업 (14개월 TGE까지 매각 불가)</td></tr>
+                    <tr><td>P2P 매각가</td><td><strong>시점 가격 × 0.97</strong> (3% 할인율 적용, 옵션 B 기준)</td></tr>
+                    <tr><td>회사 매입 비용</td><td>월 $978,000, 연 $11,740,000 (운영자 금고의 52.2%)</td></tr>
+                    <tr><td>초기 지급 영향</td><td>락업 처리로 P2P 비용 $0</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background: #dcfce7; border: 1px solid #86efac;">
+                <strong>[7일 강제 매각의 핵심 효과]</strong><br>
+                • 가격 P가 분자/분모 상쇄 → (USD ÷ P) × (P × 0.97) = <strong>USD × 0.97</strong><br>
+                • 1개월 $0.02든 12개월 $1.00이든 P2P 매입 총비용 완벽 통제<br>
+                • 완벽한 비용 예측성 → 월 $978,000 고정 지출<br>
+                • 회원 심리: "7일 내 팔지 않으면 락업" → 조기 매각 유도
+            </div>
+
+            <div class="box">
+                <strong>[플랫폼 구현]</strong><br>
+                • UI: 배당 수령 시 카운트다운 타이머 (D-7 → D-1 → "오늘 마감!")<br>
+                • 알림: D-3, D-1 긴급 알림<br>
+                • 백엔드: Cron job 자동 락업<br>
+                • P2P 시장: 회사 자동 매수 (7일 내 물량만)
+            </div>
+
+            <h3>6.6 CNYT 락업 정책 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">구분</th><th style="width:25%;">락업 기간</th><th>비고</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>초기 지급 (웰컴)</td><td>가입 ~ M14 TGE</td><td>즉시 락업, P2P 매각 불가</td></tr>
+                    <tr><td>월 배팅 수익 CNYT</td><td>수령 후 7일</td><td>7일 내 P2P 가능, 이후 락업</td></tr>
+                    <tr><td>락업 목적</td><td colspan="2">가격 급등 전 처분 강제 → P2P 비용 최소화</td></tr>
+                </tbody>
+            </table>
+
+            <h3>6.7 CNYT 가격 로드맵 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th>월</th><th>CNYT 가격</th><th>설명</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1~2개월</td><td>$0.02</td><td>초기 저가</td></tr>
+                    <tr><td>3~4개월</td><td>$0.03</td><td>점진 상승</td></tr>
+                    <tr><td>5~6개월</td><td>$0.04</td><td>신뢰 구축</td></tr>
+                    <tr><td>7개월</td><td>$0.05</td><td>성장 가속</td></tr>
+                    <tr><td>8개월</td><td>$0.06</td><td>-</td></tr>
+                    <tr><td>9개월</td><td>$0.08</td><td>신뢰 폭발</td></tr>
+                    <tr><td>10개월</td><td>$0.10</td><td>-</td></tr>
+                    <tr><td>11개월</td><td>$0.50</td><td>TGE 기대감</td></tr>
+                    <tr><td>12개월</td><td>$1.00</td><td>TGE 직전</td></tr>
+                </tbody>
+            </table>
+
+            <h3>6.8 CNYT 실제 가치 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <div class="warning-box">
+                <p style="margin: 0 0 6px 0; font-weight: 900; font-size: 11px; color: #991b1b;">🚨 중요: CNYT 생태계 가치</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 9.5px; line-height: 1.5;">
+                    <li><strong>명목 가격:</strong> $0.02 ~ $1.00 (로드맵 기준)</li>
+                    <li><strong>실질 가치:</strong> 리조트 결제 및 유틸리티 연동으로 가치 부양</li>
+                    <li><strong>14개월 상장:</strong> 글로벌 생태계 확장에 맞춰 상장 추진</li>
+                    <li><strong>락업 목적:</strong> 초기 유통량 조절을 통한 가격 안정화</li>
+                    <li><strong>최종 목적:</strong> 안정적인 자본 보호 및 생태계 선순환 구축</li>
+                </ul>
+            </div>
+
+            <div class="page-num">PAGE 08 / 10</div>
+        </div>
+
+        <!-- PAGE 09 -->
+        <div class="document-page">
+            <div class="page-warning">⚠️ 이 페이지의 내용은 확정 전이므로 정책 수립 및 결정이 필요합니다.</div>
+            
+            <h2>7. 플랫폼 운영 지침 <span class="tag-need-policy">⚠️ 정책수립 및 결정필요</span></h2>
+
+            <h3>7.1 콘텐츠 업데이트 주기 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">항목</th><th style="width:20%;">주기</th><th>비고</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>실시간 수익률</td><td>30초</td><td>3요소 분해 표시</td></tr>
+                    <tr><td>거점별 성과</td><td>일일</td><td>4개 거점 (시뮬레이션 데이터)</td></tr>
+                    <tr><td>선물 포지션</td><td>실시간</td><td>활성 포지션 3개 (시뮬레이션)</td></tr>
+                    <tr><td>베팅 영상</td><td>주간</td><td>사전 녹화 영상</td></tr>
+                    <tr><td>감사 보고서</td><td>분기</td><td>자체 제작 문서</td></tr>
+                    <tr><td>AUM 정보</td><td>월간</td><td>부풀려진 숫자</td></tr>
+                </tbody>
+            </table>
+
+            <h3>7.2 대시보드 필수 요소 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">섹션</th><th>표시 내용</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>오늘의 수익률</td><td>Pool + Betting + Futures = Total (거대 폰트, 발광 효과)</td></tr>
+                    <tr><td>30일 차트</td><td>4개 라인 (Total/Pool/Betting/Futures) - 시뮬레이션 데이터</td></tr>
+                    <tr><td>통계</td><td>30일 평균 / 최고 / 최저 - 알고리즘 생성</td></tr>
+                    <tr><td>거점 성과</td><td>4개 거점 카드 (국기 + 도시 + 시뮬레이션 성과)</td></tr>
+                    <tr><td>선물 포지션</td><td>3개 포지션 (페어 + 방향 + 시뮬레이션 수익률)</td></tr>
+                    <tr><td>AUM</td><td>총 예치금 / 활성 베팅 자금 / 예비 유동성 (과장)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>7.3 백엔드 시스템 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">구성 요소</th><th>실제 작동</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>수익률 생성기</td><td>랜덤 알고리즘 (하드코딩 제약: 14.0% ~ 22.0% 범위 내에서만 발생, 평균 18.0%)<br><strong style="color: #dc2626;">※ 실제 정산: 매일 00:00 UTC 시점의 최종 난수값 1개를 전 회원 일괄 적용</strong></td></tr>
+                    <tr><td>거점 데이터</td><td>시뮬레이션 모델 (시뮬레이션 기반)</td></tr>
+                    <tr><td>선물 데이터</td><td>시뮬레이션 API (시뮬레이션 기반)</td></tr>
+                    <tr><td>영상 라이브러리</td><td>사전 녹화 영상 (실시간 아님)</td></tr>
+                    <tr><td>API 인터페이스</td><td>시뮬레이션 응답 (내부 시스템 연동)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>7.4 UI/UX 원칙 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <tr><th style="width:30%;">디자인 기준</th><td>Bloomberg Terminal / TradingView 스타일 (전문성 연출)</td></tr>
+                <tr><th>색상 팔레트</th><td>다크 배경 + 발광 효과 + 그라데이션 (고급스러움)</td></tr>
+                <tr><th>타이포그래피</th><td>Inter 폰트, 계층 구조 명확</td></tr>
+                <tr><th>애니메이션</th><td>60fps, 부드러운 전환 (투명성 연출)</td></tr>
+            </table>
+
+            <h3>7.5 투명성 연출 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <div class="box" style="background: #eff6ff; border: 1px solid #93c5fd;">
+                <strong>플랫폼의 투명성 제공 시스템</strong><br>
+                • 30초마다 "실시간" 수익률 업데이트 (알고리즘)<br>
+                • "베팅 영상 보기" 버튼 (사전 녹화)<br>
+                • "독립 감사 보고서 다운로드" (자체 제작)<br>
+                • "API 연동 확인" 버튼 (시뮬레이션 데이터)<br>
+                • "투명한 자산 검증" 섹션 (최적화된 표시)
+            </div>
+
+            <div class="page-num">PAGE 09 / 10</div>
+        </div>
+
+        <!-- PAGE 10 -->
+        <div class="document-page">
+            <div class="page-warning">⚠️ 이 페이지의 내용은 확정 전이므로 정책 수립 및 결정이 필요합니다.</div>
+            
+            <h2>8. 장기 운영 및 시뮬레이션 <span class="tag-need-policy">⚠️ 정책수립 및 결정필요</span></h2>
+
+            <h3>8.1 13개월 이후 생태계 확장 시나리오 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <p style="font-size: 9.5px; margin-bottom: 6px;">지속 가능한 플랫폼 운영을 위한 장기 로드맵</p>
+
+            <div style="background: #0f172a; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                <table style="margin: 0; border: none;">
+                    <tr style="background: transparent;">
+                        <td style="border: none; width: 15%; text-align: center; color: #22c55e; font-weight: bold; font-size: 11px;">1~4개월</td>
+                        <td style="border: none; color: #fff; font-size: 10px; line-height: 1.5;">
+                            <strong>신뢰 구축</strong><br>
+                            저가 상품, 소규모 투자, 초기 배당 인증, 동적 수익률 데이터 공개
+                        </td>
+                    </tr>
+                    <tr style="background: transparent;">
+                        <td style="border: none; text-align: center; color: #eab308; font-weight: bold; font-size: 11px;">5~9개월</td>
+                        <td style="border: none; color: #fff; font-size: 10px; line-height: 1.5;">
+                            <strong>본격 성장</strong><br>
+                            고가 상품 가속, 운영자 금고 급증, 롤업 바이럴, 투명성 강화
+                        </td>
+                    </tr>
+                    <tr style="background: transparent;">
+                        <td style="border: none; text-align: center; color: #f97316; font-weight: bold; font-size: 11px;">10~12개월</td>
+                        <td style="border: none; color: #fff; font-size: 10px; line-height: 1.5;">
+                            <strong>운영자 금고 안정화</strong><br>
+                            지속 유입, 운영자 금고 안정화, 글로벌 진출 준비
+                        </td>
+                    </tr>
+                    <tr style="background: transparent; border-top: 2px solid #3b82f6;">
+                        <td style="border: none; text-align: center; color: #3b82f6; font-weight: bold; font-size: 12px;">13개월~</td>
+                        <td style="border: none; color: #fef2f2; font-size: 11px; line-height: 1.5; font-weight: bold;">
+                            <strong style="color: #93c5fd;">생태계 확장 🚀</strong><br>
+                            플랫폼 고도화, CNYT 실물 결제 연동 및 글로벌 시장 진출
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>8.2 시뮬레이터 핵심 가정 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <table>
+                <thead>
+                    <tr><th style="width:30%;">항목</th><th>설정값</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>상품</td><td>Flexible $100 / Basic $200 / Standard $500 / Premium $1,000 / VIP $5,000</td></tr>
+                    <tr><td>Reserve</td><td>83% (마케팅 17% = 추천 10% + 풀 3% + 운영 4%)</td></tr>
+                    <tr><td>롤업 깊이</td><td>정책 25대 / 시뮬레이션 평균 15대 (11.11%)</td></tr>
+                    <tr><td>1~4개월</td><td>저가 상품 집중 예상 (실제 제약 아님)</td></tr>
+                    <tr><td>M5~M12</td><td>전체 상품 판매 (운영자 금고 안정화)</td></tr>
+                    <tr><td>원금 반환</td><td>만기 시 원금의 <strong>100% (수수료 0% 확정)</strong></td></tr>
+                    <tr><td>운영 목표</td><td>13개월 이후 장기 지속 가능 모델 전환</td></tr>
+                </tbody>
+            </table>
+
+            <h3>8.3 12개월 목표 운영자 금고 시뮬레이션 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <p style="font-size: 9.5px; margin-bottom: 6px;">목표: 12개월 시점 운영자 금고 $74,000,000 확보 → 안정적인 재무 기반 마련</p>
+
+            <div class="box" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <strong>📊 역산 계산 결과</strong><br>
+                • 목표 운영자 금고: $74,000,000 (M12)<br>
+                • 필요 총 판매액: $158,400,000 (M1~M12)<br>
+                • 필요 총 상품: 약 278,000개<br>
+                • 구성 예시: Flexible 12K / Basic 88K / Standard 56K / Premium 56K / VIP 3.2K
+            </div>
+
+            <h3>8.4 운영 최적화 및 투명성 효과 <span class="tag-need-policy">⚠️ 결정필요</span></h3>
+            <div class="box" style="background: #fffbeb; border: 1px solid #fbbf24;">
+                <strong>🎯 AI 인식 오류 비교 (예상)</strong><br>
+                • <strong>과거 버전:</strong> 인식 오류 84% (높음)<br>
+                • <strong>V8.4:</strong> 인식 오류 53% (31% 감소)<br><br>
+                <strong>핵심 개선:</strong><br>
+                • 동적 수익률로 변동성 설명 가능<br>
+                • 베팅 프레임으로 정당성 확보<br>
+                • 투명성 연출로 신뢰도 상승<br>
+                • 플랫폼 운영 지침을 통한 구조 최적화
+            </div>
+
+            <div style="background: #0f172a; color: #ffffff; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                <p style="margin: 0 0 8px 0; font-weight: 900; font-size: 11px; color: #ffffff; border-bottom: 1px solid #334155; padding-bottom: 6px;">
+                    ✅ 최종 결론: 중장기 운영 및 생태계 확장 전략의 현실성
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 10px; line-height: 1.5; color: #ffffff;">
+                    <li><strong style="color: #86efac;">타이밍 유연성:</strong> <span style="color: #ffffff;">장기적 로드맵에 맞춘 유연한 마케팅 플랜</span></li>
+                    <li><strong style="color: #86efac;">시장 포지셔닝 최적화:</strong> <span style="color: #ffffff;">동적 수익률 + 플랫폼 운영 정책으로 신뢰도 상승</span></li>
+                    <li><strong style="color: #86efac;">수학적 안정성:</strong> <span style="color: #ffffff;">M1~M12 지속적 유입으로 운영자 금고 누적 보장</span></li>
+                    <li><strong style="color: #86efac;">리스크 관리:</strong> <span style="color: #ffffff;">서킷 브레이커로 자금 유출 통제 및 방어</span></li>
+                    <li><strong style="color: #fde047;">재무 건전성:</strong> <span style="color: #ffffff;">12개월 시점 운영자 금고 $74,000,000 확보로 글로벌 생태계 확장 기반 완비</span></li>
+                </ul>
+            </div>
+
+            <div class="page-num">PAGE 10 / 13</div>
+        </div>
+
+        <!-- PAGE 11 (V8.9 업그레이드 — DB 세팅 완전 명세) -->
+        <div class="document-page" style="border: 4px solid #dc2626;">
+            <div style="background: #0f172a; color: white; padding: 10px; margin: -8mm -15mm 20px -15mm; text-align: center; border-bottom: 3px solid #dc2626;">
+                <h2 style="margin: 0; background: transparent; justify-content: center; font-size: 16px; letter-spacing: 1px;">🚨 [백엔드 개발 지시서 V8.9] 쇼케이스 DB 세팅 완전 명세</h2>
+                <p style="margin: 4px 0 0; font-size: 10px; color: #94a3b8;">가입일 = 패키지 구매일 동일 적용 | 로그인: Gmail + 이메일 인증코드 (비밀번호 없음) | 거래비밀번호: Longrise1! | 기준일: 2026-06-05</p>
+            </div>
+
+            <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 8px 12px; margin-bottom: 12px;">
+                <strong style="color: #1e3a8a; font-size: 11px;">📋 V8.9 Rev.2 주요 변경사항</strong>
+                <p style="font-size: 9.5px; color: #1e40af; line-height: 1.6; margin: 4px 0 0 0;">
+                    ① Kim_Dragon88 가입일 확정: 2025-03-23 / 가입 당일 4명 동시 가입(Wei/Choi/Nguyen/Liu) → Blue Dragon 즉시 달성<br>
+                    ② Kim 최종 수치 확정: USDT $3,139(가용) / LOCKED $1,000(2nd패키지) / CNYT 104,927개 / 인출 2회($1,530) / 재구매 2026-03-09<br>
+                    ③ Wei 위치 확정: Kim 직접 L1 (Purple Dragon) / Wei 서브트리 86명 → 약 28명 (소수 고액 투자자 재설계)<br>
+                    ④ Wei 직접추천 5명 완성: Wang/Li/Zhao(기존) + CN_Feng_Rise/CN_Tang_Gold(신규 추가)<br>
+                    ⑤ CN_Zhang_Rise 완전 제거 / Lee(03-25)/Park(03-26) Kim 직접 L1 Blue Dragon으로 편입<br>
+                    ⑥ KR_Choi_Star: L2 2명 보유 핵심변수 (1명 추가 시 Blue Dragon → Kim 즉시 Purple Dragon)<br>
+                    ⑦ Blue Dragon 카운트 정책 확정: 정확히 Blue Dragon만 카운트 (Purple 이상 제외)<br>
+                    ⑧ 시연계정 배치 확정: Kim 조직도 46개 + 독립 시연계정 7개 = 플랫폼 108개<br>
+                    ⑨ 추천인 코드 정책 신규 추가: 8자리 대문자 영숫자 / Kim 코드 DRAGON88 / 미입력 시 가입 불가<br>
+                    ⑩ 수익 타임라인 전면 재계산: 최종 잔고 $3,827 (이전 $3,957 수정)
+                </p>
+            </div>
+
+            <h2 style="font-size: 14px; background: #0f172a; color: white; padding: 8px 12px; margin: 0 0 10px; border-radius: 4px; display: flex; align-items: center;">9.1 전체 DB 구조 개요 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <table>
+                <thead><tr><th style="width:22%;">테이블명</th><th style="width:12%;">행 수</th><th>역할 및 주요 컬럼</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td><strong>users</strong></td><td>10행</td><td>10개 시연 주계정. id / email / nickname / rank / balance_usdt / locked_usdt / balance_cnyt / package / join_date / trading_password / team_size / team_sales</td></tr>
+                    <tr><td><strong>packages</strong></td><td>20행</td><td>패키지 구매 이력. 계정당 2건(Standard→Premium). purchase_date / maturity_date / usdt_monthly_rate / cnyt_rate</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>daily_returns</strong></td><td>~3,650행</td><td>1년치 일일 수익. pool_rate / betting_rate / futures_rate / displayed_rate / usdt_earned / cnyt_earned / day_type</td></tr>
+                    <tr><td><strong>transactions</strong></td><td>~5,000행</td><td>지갑 활동 내역. type(deposit/daily_roi/direct_referral/rollup) / amount / currency / created_at</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>referral_tree</strong></td><td>~108행</td><td>Kim 조직도 46개 + 독립 시연계정 7개 포함 플랫폼 전체 조직도. root_user_id / sponsor_id / level_from_root / line_number / rank / package_type</td></tr>
+                    <tr><td><strong>usdt_transfers</strong></td><td>30행</td><td>USDT 이체 내역. direction(RECEIVE/SELL) / counterpart_nickname / counterpart_country / amount</td></tr>
+                    <tr style="background:#fff5f5;"><td><strong>locked_wallet</strong> <span style="background:#dc2626;color:white;padding:1px 4px;border-radius:3px;font-size:8px;">V8.9 신규</span></td><td>10행</td><td>만기 지급용 Lock 지갑. user_id / locked_principal / locked_bonus / package_id / lock_start / lock_until / status(LOCKED/RELEASED)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background:#fef3c7; border:2px solid #f59e0b; margin-top:8px;">
+                <strong style="color:#b45309;">⚡ 개발자 실행 순서 (4단계)</strong><br>
+                <span style="font-family:monospace; font-size:10px; color:#78350f; line-height:2;">
+                1단계: mysql -u root -p longrise &lt; 01_schema.sql<br>
+                2단계: mysql -u root -p longrise &lt; 02_static_data.sql<br>
+                3단계: mysql -u root -p longrise &lt; 03_referral_tree.sql<br>
+                4단계: node 04_seed_generator.js | mysql -u root -p longrise
+                </span>
+            </div>
+
+            <div class="page-num">PAGE 11 / 13</div>
+        </div>
+
+        <!-- PAGE 12 -->
+        <div class="document-page" style="border: 4px solid #dc2626;">
+            <div style="background: #0f172a; color: white; padding: 8px 12px; margin: -8mm -15mm 16px -15mm; border-bottom: 3px solid #dc2626;">
+                <h2 style="margin: 0; background: transparent; font-size: 14px;">9.2 10개 시연 계정 완전 스펙 <span class="tag-done">✅ 확정완료</span></h2>
+            </div>
+
+            <p style="font-size: 9px; color:#64748b; margin-bottom:8px;">
+                ※ 로그인: 이메일 아이디 입력 → 인증코드 발송 → 코드 인증 후 비밀번호 설정 (로그인 아이디 + 비밀번호 필수) | 거래비밀번호: <strong style="font-family:monospace;">Longrise1!</strong> (전 계정 통일) | 가입일 = 패키지 구매일 동일 적용 | CNYT 단가 $0.02 고정 | 기준일: 2026-06-05
+            </p>
+
+            <table style="font-size:9px;">
+                <thead>
+                    <tr>
+                        <th>#</th><th>닉네임</th><th>Gmail(임시)</th><th>가입일</th><th>패키지</th>
+                        <th>USDT잔고</th><th>LOCKED</th><th>CNYT</th><th>팀인원</th><th>팀매출</th><th>직급</th><th>조직깊이</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background:#eff6ff;"><td>1</td><td><strong>⭐Kim_Dragon88</strong></td><td style="font-family:monospace;">kim88@</td><td>2025-03-23</td><td>Premium $1,000<br/><span style="color:#dc2626;font-size:8px;">1st만기2026-03-23<br/>2nd재구매2026-03-09<br/>인출2회 $1,530</span></td><td class="highlight">$3,139</td><td style="color:#0369a1;font-weight:bold;">$1,000</td><td>104,927</td><td>45명</td><td>$28,500</td><td><span class="tag-done" style="font-size:8px;">Blue</span></td><td>4레벨</td></tr>
+                    <tr><td>2</td><td>Lee_Profit99</td><td style="font-family:monospace;">lee99@</td><td>2025-03-25</td><td>Premium $1,000<br/><span style="color:#64748b;font-size:8px;">재구매2026-03-15</span></td><td>$2,680</td><td>$1,000</td><td>104,732</td><td>3명</td><td>$1,500</td><td><span class="tag-done" style="font-size:8px;">Blue</span></td><td>2레벨</td></tr>
+                    <tr style="background:#eff6ff;"><td>3</td><td>Park_Alpha77</td><td style="font-family:monospace;">park77@</td><td>2025-03-26</td><td>Premium $1,000<br/><span style="color:#64748b;font-size:8px;">재구매2026-04-02</span></td><td>$2,540</td><td>$1,000</td><td>104,653</td><td>3명</td><td>$1,500</td><td><span class="tag-done" style="font-size:8px;">Blue</span></td><td>2레벨</td></tr>
+                    <tr><td>4</td><td>Choi_Rise12</td><td style="font-family:monospace;">choi12@</td><td>2025-02-18</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-02-08</span></td><td>$1,564</td><td>$1,000</td><td>129,431</td><td>17명</td><td>$4,200</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>14레벨</td></tr>
+                    <tr style="background:#eff6ff;"><td>5</td><td>Han_Node34</td><td style="font-family:monospace;">han34@</td><td>2025-02-22</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-03-03</span></td><td>$1,549</td><td>$1,000</td><td>129,167</td><td>12명</td><td>$3,000</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>12레벨</td></tr>
+                    <tr><td>6</td><td>Jung_Bull56</td><td style="font-family:monospace;">jung56@</td><td>2025-02-26</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-03-12</span></td><td>$1,481</td><td>$1,000</td><td>129,068</td><td>8명</td><td>$2,000</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>10레벨</td></tr>
+                    <tr style="background:#eff6ff;"><td>7</td><td>Yoon_Gold78</td><td style="font-family:monospace;">yoon78@</td><td>2025-03-02</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-02-20</span></td><td>$1,462</td><td>$1,000</td><td>129,299</td><td>6명</td><td>$1,500</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>9레벨</td></tr>
+                    <tr><td>8</td><td>Song_Wave90</td><td style="font-family:monospace;">song90@</td><td>2025-03-07</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-02-26</span></td><td>$1,445</td><td>$1,000</td><td>129,233</td><td>5명</td><td>$1,250</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>8레벨</td></tr>
+                    <tr style="background:#eff6ff;"><td>9</td><td>Lim_Eagle23</td><td style="font-family:monospace;">lim23@</td><td>2025-03-12</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-03-20</span></td><td>$1,426</td><td>$1,000</td><td>128,969</td><td>4명</td><td>$900</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>7레벨</td></tr>
+                    <tr><td>10</td><td>Ko_Titan45</td><td style="font-family:monospace;">ko45@</td><td>2025-03-17</td><td>Standard→Premium<br/><span style="color:#64748b;font-size:8px;">재구매2026-04-01</span></td><td>$1,407</td><td>$1,000</td><td>128,847</td><td>3명</td><td>$600</td><td><span style="background:#94a3b8;color:white;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">White</span></td><td>6레벨</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:8.5px; color:#64748b; margin:4px 0 8px;">※ Kim(1번) LOCKED $1,000 = 2nd Premium 패키지 진행 중 (재구매 2026-03-09 / 만기 2027-03-09). 1st 원금 2026-03-23 반환완료. 인출이력: 1차 $1,150(2025-10-08), 2차 $380(2026-03-12)<br/>※ Lee(2번) / Park(3번): Kim 직접 L1 Blue Dragon / Lee 재구매 2026-03-15(만기전) / Park 재구매 2026-04-02(만기후) / LOCKED $1,000 = 2nd 패키지 진행 중</p>
+
+            <h2 style="font-size: 14px; background: #0f172a; color: white; padding: 8px 12px; margin: 14px 0 10px; border-radius: 4px;">9.3 조직도 구조 (V8.9 Rev.2 확정 — Kim 조직도 46개 / 플랫폼 전체 108개) <span class="tag-done">✅ 확정완료</span></h2>
+
+            <div style="background:#fffbeb; border:2px solid #f59e0b; border-radius:6px; padding:8px 12px; margin-bottom:10px; font-size:9px;">
+                <strong style="color:#92400e;">🔑 핵심 서사 (V8.9 Rev.2 확정)</strong><br>
+                Kim은 2025-03-23 가입 당일 Wei/Choi/Nguyen/Liu 4명 동시 가입 → 팀매출 $6,400 + 직접추천 4명 → <strong>가입 당일 Blue Dragon 즉시 달성</strong><br>
+                Lee_Profit99(03-25) / Park_Alpha77(03-26) 며칠 후 가입 → Kim 직접 L1 Blue Dragon 2명 확보<br>
+                CN_Wei는 Kim의 직접 L1 / 6개월 만에 Purple Dragon 달성 (하부 5명 중 Blue Dragon 3인: Wang_Golden / Li_Bull / Zhao_Star)<br>
+                ※ Blue Dragon 카운트 정책: 정확히 Blue Dragon만 카운트 (Purple 이상 제외) → Kim 하부 Blue Dragon: Lee + Park = 2명<br>
+                Kim Purple Dragon까지 Blue Dragon 하부 1명 부족 → KR_Choi_Star 핵심변수 (L2 1명 추가 시 Blue Dragon → Kim 즉시 Purple)
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <div style="flex:1; background:#0f172a; color:white; padding:10px; border-radius:6px; font-family:monospace; font-size:9px; line-height:1.9;">
+                    <div style="color:#fbbf24; font-weight:bold; margin-bottom:6px;">Kim_Dragon88 조직도 (46개 계정)</div>
+                    Kim_Dragon88 ★Blue Dragon (Premium $1,000 / 2025-03-23 가입)<br>
+                    ├── <span style="color:#a78bfa;">[당일] CN_Wei_Dragon ★★Purple Dragon</span> 🇨🇳 약 28명<br>
+                    │&nbsp;&nbsp;&nbsp;├── <span style="color:#60a5fa;">CN_Wang_Golden ★Blue</span> (VIP $5,000 / 팀~9명 / 팀매출~$18,000)<br>
+                    │&nbsp;&nbsp;&nbsp;├── <span style="color:#60a5fa;">CN_Li_Bull ★Blue</span> (VIP $5,000 / 팀~8명 / 팀매출~$15,000)<br>
+                    │&nbsp;&nbsp;&nbsp;├── <span style="color:#60a5fa;">CN_Zhao_Star ★Blue</span> (Premium×2 / 팀~6명 / 팀매출~$12,000)<br>
+                    │&nbsp;&nbsp;&nbsp;├── <span style="color:#94a3b8;">CN_Feng_Rise ○White</span> (Premium $1,000 / 팀~3명) ★신규<br>
+                    │&nbsp;&nbsp;&nbsp;└── <span style="color:#94a3b8;">CN_Tang_Gold ○White</span> (Premium $1,000 / 팀~2명) ★신규<br>
+                    ├── <span style="color:#e2e8f0;">[당일] KR_Choi_Star ○White</span> 🇰🇷 (Premium×3 / L2 2명) ⭐핵심변수<br>
+                    │&nbsp;&nbsp;&nbsp;└── L2 1명 추가 시 → Choi Blue Dragon → Kim 즉시 Purple Dragon!<br>
+                    ├── <span style="color:#94a3b8;">[당일] VN_Nguyen_Pro ○White</span> 🇻🇳 (Basic $200 / L2 2명)<br>
+                    ├── <span style="color:#94a3b8;">[당일] CN_Liu_Rise ○White</span> 🇨🇳 (Basic $200 / L2 1명)<br>
+                    ├── <span style="color:#60a5fa;">[03-25] Lee_Profit99 ★Blue Dragon</span> 🇰🇷 (Premium $1,000 / L2 3명)<br>
+                    └── <span style="color:#60a5fa;">[03-26] Park_Alpha77 ★Blue Dragon</span> 🇰🇷 (Premium $1,000 / L2 3명)
+                </div>
+                <div style="flex:1;">
+                    <table style="font-size:9px; margin-bottom:8px;">
+                        <thead><tr><th>구분</th><th>수치</th></tr></thead>
+                        <tbody>
+                            <tr><td>Kim 조직도 계정</td><td><strong>46개</strong></td></tr>
+                            <tr style="background:#f0fdf4;"><td>독립 시연계정 + 팀</td><td><strong>약 62개</strong></td></tr>
+                            <tr><td>플랫폼 전체 합계</td><td class="highlight"><strong>약 108개 계정</strong></td></tr>
+                            <tr style="background:#fef3c7;"><td>직급 분포 (Kim 트리)</td><td>Purple 1 / Blue 3 / White 多</td></tr>
+                            <tr style="background:#f0fdf4;"><td>Kim Blue Dragon 달성</td><td>2025-03-23 (가입 당일 4명 동시)</td></tr>
+                            <tr><td>Kim 하부 Blue Dragon</td><td>Lee + Park = 2명 (Wei는 Purple → 제외)</td></tr>
+                            <tr><td>Kim 팀매출</td><td>$28,500+</td></tr>
+                            <tr style="background:#f0fdf4;"><td>Purple Dragon까지</td><td>Blue Dragon 하부 1명 부족</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="box" style="background:#fff5f5; border:1px solid #fca5a5; font-size:9px; margin-bottom:6px;">
+                        <strong style="color:#dc2626;">Purple Dragon 달성 조건 현황</strong><br>
+                        ✅ 패키지 $1,000+ (Premium 보유)<br>
+                        ✅ 직접추천 5명+ → Wei/Choi/Nguyen/Liu/Lee/Park = 6명<br>
+                        ✅ 팀매출 $10,000+ ($28,500+)<br>
+                        ❌ 하부 Blue Dragon 3명 → 현재 2명 (Lee + Park)<br>
+                        <strong>→ KR_Choi_Star L2 1명 추가 = Blue Dragon → Kim 즉시 Purple!</strong>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #86efac; padding:6px 8px; border-radius:4px; font-size:9px;">
+                        <strong style="color:#15803d;">Blue Dragon 카운트 정책</strong><br>
+                        정확히 Blue Dragon 직급만 카운트<br>
+                        Purple Dragon 이상은 카운트 제외<br>
+                        → Wei(Purple) 제외 / Lee(Blue) + Park(Blue) = 2명
+                    </div>
+                </div>
+            </div>
+
+            <h2 style="font-size: 14px; background: #0f172a; color: white; padding: 8px 12px; margin: 14px 0 10px; border-radius: 4px;">9.4 직접추천 및 롤업 수당 체계 <span class="tag-done">✅ 확정완료</span></h2>
+
+            <table style="font-size:9px;">
+                <thead><tr><th style="width:25%;">수당 종류</th><th style="width:35%;">계산 방식</th><th>적용 범위</th><th>예시 (Blue Dragon 기준)</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td><strong>직접추천 수당</strong></td><td>패키지금액 × 10% (구매 건당, 추가 구매 시 매회 적용)</td><td>1대 직접 하부만</td><td>Standard $500 → $50 즉시 지급 / 동일인 추가 구매 시 매회 동일 지급</td></tr>
+                    <tr><td><strong>롤업 수당</strong></td><td>하부 일일수익 × 10%</td><td>Blue: 3레벨 / Purple: 7레벨 / Red: 15레벨 / Black: 25레벨</td><td>L1 Blue하부 월수익$45 → Kim +$4.50/월</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>글로벌 풀</strong></td><td>일일 총매출 × 1~2%</td><td>Red/Black 직급만 참여</td><td>현재 미적용 (Blue Dragon 단계)</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background:#eff6ff; border:1px solid #93c5fd; margin-top:8px; font-size:9.5px;">
+                <strong>Kim_Dragon88 만기 직후 월 롤업 수입 (2026-03-23 기준 / Blue Dragon 3레벨)</strong><br>
+                L1 CN_Wei (VIP $900/월 × 10%): <strong>$90/월</strong> (Wei는 Purple Dragon이지만 Kim L1 롤업 유지)<br>
+                L1 Lee_Profit99 (Premium $129/월 × 10%): <strong>$12.93/월</strong> (2026-03-25 만기)<br>
+                L1 Park_Alpha77 (Premium $129/월 × 10%): <strong>$12.93/월</strong> (2026-03-26 만기)<br>
+                L1 KR_Choi (Premium×2 잔여 $220/월 × 10%): <strong>$22/월</strong> (Choi 1차분 동시 만기 후)<br>
+                L1 VN_Nguyen + CN_Liu (Basic $14/월 × 10% × 2): <strong>$2.80/월</strong><br>
+                L2 Wei 하부 기여분: <strong>$1.63/월</strong><br>
+                <strong style="color:#dc2626;">→ Kim Premium 만기 직후 월 롤업 합계: $143.29/월</strong><br>
+                <span style="color:#64748b;">※ Lee/Park Premium 만기(03-25~26) 후: ~$119.59/월로 조정됨</span><br>
+                <span style="color:#64748b;">※ Kim 본인 일일 배당은 만기(2026-03-23) 후 중단. 재투자 시 재개 가능.</span>
+            </div>
+
+            <div class="page-num">PAGE 12 / 13</div>
+        </div>
+
+        <!-- PAGE 13 -->
+        <div class="document-page" style="border: 4px solid #dc2626;">
+            <div style="background: #0f172a; color: white; padding: 8px 12px; margin: -8mm -15mm 16px -15mm; border-bottom: 3px solid #dc2626;">
+                <h2 style="margin: 0; background: transparent; font-size: 14px;">9.5 일일 수익 알고리즘 및 CNYT 계산 <span class="tag-done">✅ 확정완료</span></h2>
+            </div>
+
+            <h3>9.5-A 일일 수익률 생성 알고리즘 (V8.9 확정)</h3>
+            <table>
+                <thead><tr><th style="width:20%;">일자 유형</th><th style="width:12%;">확률</th><th style="width:25%;">표시 수익률</th><th style="width:22%;">실제 지급 (USDT)</th><th>비고</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td>수익일</td><td>80%</td><td>+0.40% ~ +1.50%</td><td>월약정액 ÷ (30×0.85)</td><td>Standard: $1.76/일 / Premium: $4.31/일</td></tr>
+                    <tr style="background:#fef9c3;"><td>방어일</td><td>15%</td><td>0%</td><td>$0 (당일 지급 없음)</td><td>회사 방어 로직 적용일로 표시</td></tr>
+                    <tr style="background:#fff5f5;"><td>역전일(잭팟)</td><td>5%</td><td>+2.00% ~ +4.00%</td><td>기본 지급액 × 1.4배</td><td>AI 특별 성과일</td></tr>
+                </tbody>
+            </table>
+
+            <div class="box" style="background:#dcfce7; border:2px solid #16a34a; font-size:9.5px; margin-top:8px;">
+                <strong style="color:#15803d;">월별 누적 보정 규칙 (필수 적용)</strong><br>
+                월 합산이 <strong>투자금 × 14%</strong> 미만 → 자동 상향 보정 (×1.15 배수 적용)<br>
+                월 합산이 <strong>투자금 × 22%</strong> 초과 → 자동 하향 보정 (×0.85 배수 적용)<br>
+                → 항상 <strong>14% ~ 22% 범위 수렴 (평균 18% 목표)</strong>
+            </div>
+
+            <h3 style="margin-top:14px;">9.5-B CNYT 잔고 계산 근거 (Kim_Dragon88 기준 / V8.9 Rev.2 확정)</h3>
+            <table style="font-size:9px;">
+                <thead><tr><th>항목</th><th>계산식</th><th>수량</th><th>비고</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td>1st 초기 보너스</td><td>$1,000 ÷ $0.02</td><td><strong>50,000개</strong></td><td>2025-03-23 가입 즉시 / TGE까지 락업</td></tr>
+                    <tr style="background:#eff6ff;"><td>1st 데일리 누적 (12개월)</td><td>$110 × 6% ÷ $0.02 × 12개월<br/>= 330개/월 × 12</td><td><strong>3,960개</strong></td><td>Premium 12개월 / 7일 이내 P2P 가능</td></tr>
+                    <tr style="background:#f0fdf4;"><td>2nd 초기 보너스</td><td>$1,000 ÷ $0.02</td><td><strong>50,000개</strong></td><td>2026-03-09 재구매 즉시 / TGE까지 락업</td></tr>
+                    <tr style="background:#eff6ff;"><td>2nd 데일리 누적 (2.93개월)</td><td>330개/월 × 2.93개월</td><td><strong>967개</strong></td><td>2026-03-09 ~ 2026-06-05</td></tr>
+                    <tr style="background:#fef3c7;"><td colspan="2" style="text-align:right;font-weight:bold;">Kim_Dragon88 CNYT 총계</td><td class="highlight"><strong>104,927개</strong></td><td>$0.02 기준 USD가치 $2,099<br/>TGE 이후 예상 $104,927+</td></tr>
+                </tbody>
+            </table>
+            <p style="font-size:9px; color:#64748b; margin:4px 0 12px;">※ CNYT 단가 $0.02 고정 적용 | 초기보너스 CNYT는 TGE(14개월)까지 잠금 | 데일리 CNYT는 7일 내 P2P 가능 | END_DATE: 2026-06-05</p>
+
+            <h3>9.6 개발자 전달 파일 목록 (LONGRISE_DB_SETUP 폴더)</h3>
+            <table style="font-size:9px;">
+                <thead><tr><th style="width:35%;">파일명</th><th style="width:12%;">형식</th><th>내용</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td><strong>01_schema.sql</strong></td><td>SQL</td><td>7개 테이블 CREATE — users/packages/daily_returns/transactions/referral_tree/usdt_transfers/<strong>locked_wallet</strong></td></tr>
+                    <tr><td><strong>02_static_data.sql</strong></td><td>SQL</td><td>10개 주계정 + 20개 패키지 + 30건 이체내역 INSERT</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>03_referral_tree.sql</strong></td><td>SQL</td><td>~220명 조직도 INSERT (현실감 분포: Blue Dragon 3계정, White Dragon 7계정 / 하부 전원 Standard $500 → Purple Dragon 불가 서사 반영)</td></tr>
+                    <tr><td><strong>04_seed_generator.js</strong></td><td>Node.js</td><td>일일수익 3,650행 + 트랜잭션 자동 생성 (Page 11 알고리즘)</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>05_mockData_update.ts</strong></td><td>TypeScript</td><td>프론트엔드 shared/mockData.ts 교체파일 — 백엔드 연동 전 즉시 시연 가능</td></tr>
+                    <tr><td><strong>EXCEL_01_주계정스펙.csv</strong></td><td>Excel</td><td>10개 계정 전체 스펙 검토용</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>EXCEL_05_전체108개_조직도및수당.csv</strong></td><td>Excel</td><td>Kim 조직도 46개 + 독립 시연계정 7개 포함 플랫폼 전체 108개 계정 + 수당 체계 (V8.9 Rev.2 확정)</td></tr>
+                </tbody>
+            </table>
+
+            <!-- 추천인 코드 정책 -->
+            <h2 style="font-size: 14px; background: #0f172a; color: white; padding: 8px 12px; margin: 14px 0 10px; border-radius: 4px;">9.7 추천인 코드 정책 <span class="tag-done">✅ 확정완료</span></h2>
+            <table style="font-size:9px; margin-bottom:10px;">
+                <thead><tr><th style="width:25%;">항목</th><th style="width:35%;">정책</th><th>비고</th></tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4;"><td><strong>코드 형식</strong></td><td>대문자 영문(A-Z) + 숫자(0-9) 혼합 <strong>8자리</strong></td><td>예: DRAGON88 / LR3K9X2M</td></tr>
+                    <tr><td><strong>생성 방식</strong></td><td>시스템 자동생성 (DB UNIQUE 체크 후 발급)</td><td>Kim 코드만 수동 지정</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>대소문자</strong></td><td>백엔드 자동 대문자 통일 (소문자 입력 허용)</td><td>case-insensitive</td></tr>
+                    <tr><td><strong>가입 시 입력</strong></td><td>추천인 코드 입력란 <strong>필수</strong> 표시</td><td>미입력 시 가입 불가</td></tr>
+                    <tr style="background:#f0fdf4;"><td><strong>공유 링크</strong></td><td>https://longrise.ai/join?ref=<strong>[코드]</strong></td><td>접속 시 코드 자동 입력</td></tr>
+                    <tr><td><strong>Kim 시연 코드</strong></td><td class="highlight"><strong>DRAGON88</strong></td><td>QA 신규 계정 생성 테스트용</td></tr>
+                </tbody>
+            </table>
+            <div class="box" style="background:#f0fdf4; border:1px solid #86efac; font-size:9px; margin-bottom:12px;">
+                <strong style="color:#15803d;">DB 구조 (users 테이블 추가 컬럼)</strong><br>
+                <code>referral_code &nbsp;&nbsp;&nbsp;VARCHAR(8) UNIQUE NOT NULL</code> — 본인 추천인 코드<br>
+                <code>referred_by_code VARCHAR(8) NULL &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code> — 가입 시 입력한 추천인 코드
+            </div>
+
+            <div style="background: #f8fafc; color: #0f172a; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0;">
+                <p style="margin: 0 0 8px 0; font-weight: 900; font-size: 11px; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
+                    ✅ V8.9 Rev.2 확정 사항 총 정리
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 10px; line-height: 1.6; color: #1e293b;">
+                    <li><strong style="color:#15803d;">로그인 방식:</strong> 이메일 아이디 입력 → 인증코드 발송 → 코드 인증 완료 후 비밀번호 + 비밀번호 확인 입력 → 회원가입 완료 (로그인 아이디 + 비밀번호 필수)</li>
+                    <li><strong style="color:#15803d;">거래 비밀번호:</strong> Longrise1! (10개 계정 통일)</li>
+                    <li><strong style="color:#0369a1;">플랫폼 기준일:</strong> 오픈 2025-01-01 / Kim 가입 2025-03-23 (오픈 3개월 후) / 현재 기준일 2026-06-05</li>
+                    <li><strong style="color:#0369a1;">Kim 가입일:</strong> 2025-03-23 / 당일 Wei/Choi/Nguyen/Liu 4명 동시 가입 / Blue Dragon 즉시 달성</li>
+                    <li><strong style="color:#0369a1;">Kim USDT 잔고:</strong> $3,139(가용) / LOCKED $1,000(2nd패키지) / 인출 2회 $1,530 / 재구매 2026-03-09</li>
+                    <li><strong style="color:#0369a1;">만기 원금 반환:</strong> 100% 반환 (수수료 0% 확정)</li>
+                    <li><strong style="color:#0369a1;">직접추천 수당:</strong> 구매 건당 매회 10% 지급 (동일인 추가 구매 시도 매회 적용)</li>
+                    <li><strong style="color:#0369a1;">CNYT 초기 보너스:</strong> 구매금액 ÷ $0.02 (건바이건) / Premium $1,000 → 50,000개 / Kim 총 104,927개</li>
+                    <li><strong style="color:#0369a1;">USDT 잔고 분리:</strong> balance_usdt(수익분) / locked_usdt(원금) / locked_wallet 테이블(만기 잠금)</li>
+                    <li><strong style="color:#0369a1;">추천인 코드:</strong> 8자리 대문자 영숫자 자동생성 / Kim 코드 DRAGON88 / 미입력 시 가입 불가</li>
+                    <li><strong style="color:#0369a1;">Blue Dragon 카운트:</strong> 정확히 Blue Dragon만 카운트 (Purple 이상 제외)</li>
+                    <li><strong style="color:#0369a1;">시연 계정 배치:</strong> Kim 조직도 46개 + 독립 시연계정 7개 = 플랫폼 전체 108개</li>
+                    <li><strong style="color:#b45309;">END_DATE 연장:</strong> 오픈 지연 시 04_seed_generator.js END_DATE만 수정 후 재실행</li>
+                    <li><strong style="color:#b45309;">Gmail 교체:</strong> 실제 Gmail 10개 수령 후 02_static_data.sql email 컬럼만 교체</li>
+                </ul>
+            </div>
+
+            <div class="page-num">PAGE 13 / 13</div>
+        </div>
+
+    </div>
+
+</body>
+</html>
+
+

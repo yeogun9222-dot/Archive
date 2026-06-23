@@ -1,0 +1,324 @@
+name: Deploy Longrise to Staging EC2
+
+on:
+  push:
+    branches:
+      - stage
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy:
+    name: Deploy to Staging EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Add EC2 to known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.LR_API_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Backup and sync files to EC2
+        run: |
+          echo "📦 Deploying files to server..."
+
+          # Backup and pre-cleanup on server
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }} '
+            echo "🧹 Cleaning up old backups..."
+            find /home/ubuntu/longrise_backup -maxdepth 1 -type d 2>/dev/null | sort -r | tail -n +2 | xargs rm -rf 2>/dev/null || true
+
+            echo "🧹 Aggressive space cleanup..."
+            rm -rf /home/ubuntu/longrise/lr_user-frontend/node_modules 2>/dev/null || true
+            rm -rf /home/ubuntu/longrise/lr_admin-frontend/node_modules 2>/dev/null || true
+            rm -rf /home/ubuntu/longrise/lr_user-frontend/dist 2>/dev/null || true
+            rm -rf /home/ubuntu/longrise/lr_admin-frontend/dist 2>/dev/null || true
+
+            BACKUP_DIR="/home/ubuntu/longrise_backup/$(date +%Y%m%d_%H%M%S)"
+            mkdir -p "$BACKUP_DIR"
+            if [ -d "/home/ubuntu/longrise" ]; then
+              echo "📦 Creating lightweight backup (excluding build artifacts)"
+              rsync -a --exclude="node_modules" --exclude="dist" --exclude=".vite" --exclude="*.log" \
+                /home/ubuntu/longrise/ "$BACKUP_DIR"/ 2>/dev/null || true
+            fi
+            mkdir -p /home/ubuntu/longrise
+          '
+
+          # Sync files — exclude ALL .env.* so secrets are never in git
+          rsync -avz --delete \
+            --exclude="node_modules" \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="*.log" \
+            --exclude=".env" \
+            --exclude=".env.*" \
+            --exclude="lr_fastapi/.venv" \
+            --exclude="**/.venv" \
+            --exclude="**/__pycache__" \
+            -e "ssh" \
+            ./ ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }}:/home/ubuntu/longrise/
+
+      - name: Create .env.staging from secrets
+        run: |
+          printf '%s\n' \
+            'DATABASE_URL=${{ secrets.RDS_URL }}' \
+            'SECRET_KEY=${{ secrets.LR_SECRET_KEY }}' \
+            'ENVIRONMENT=staging' \
+            'DEBUG=false' \
+            'LOG_LEVEL=info' \
+            'SMTP_HOST=${{ secrets.SMTP_HOST }}' \
+            'SMTP_PORT=${{ secrets.SMTP_PORT }}' \
+            'SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}' \
+            'SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}' \
+            'SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}' \
+            'SMTP_USE_TLS=${{ secrets.SMTP_USE_TLS }}' \
+            'BACKEND_CORS_ORIGINS=["http://${{ secrets.LR_API_EC2_HOST }}:5173","http://${{ secrets.LR_API_EC2_HOST }}:5174","http://${{ secrets.LR_API_EC2_HOST }}:8000","http://localhost:3000","http://localhost:5173","http://localhost:5174"]' \
+            > /tmp/.env.staging
+          scp /tmp/.env.staging ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }}:/home/ubuntu/longrise/lr_fastapi/.env.staging
+
+          printf '%s\n' \
+            'VITE_API_BASE_URL=http://${{ secrets.LR_API_EC2_HOST }}:8000/api/v1' \
+            'VITE_WS_URL=ws://${{ secrets.LR_API_EC2_HOST }}:8000/ws' \
+            'VITE_ENVIRONMENT=staging' \
+            'VITE_BUILD_UID=stage-${{ github.sha }}' \
+            'VITE_TOKEN_STORAGE_KEY=longrise_token' \
+            > /tmp/user.env.stage
+          scp /tmp/user.env.stage ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }}:/home/ubuntu/longrise/lr_user-frontend/.env.stage
+
+          printf '%s\n' \
+            'VITE_ADMIN_API_BASE_URL=http://${{ secrets.LR_API_EC2_HOST }}:8000/api/v1' \
+            'VITE_ENVIRONMENT=staging' \
+            'VITE_BUILD_UID=stage-${{ github.sha }}' \
+            'VITE_TOKEN_STORAGE_KEY=longrise_admin_token' \
+            > /tmp/admin.env.stage
+          scp /tmp/admin.env.stage ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }}:/home/ubuntu/longrise/lr_admin-frontend/.env.stage
+
+      - name: Install dependencies and restart services
+        run: |
+          ssh ${{ secrets.EC2_USERNAME }}@${{ secrets.LR_API_EC2_HOST }} '
+            cd /home/ubuntu/longrise || { echo "Project directory not found"; exit 1; }
+
+            # Space monitoring function
+            monitor_space() {
+              local step_name="$1"
+              local current_space=$(df / | tail -1 | awk "{print \$4}")
+              local space_gb=$(echo "$current_space" | awk "{print int(\$1/1024/1024)}")
+              echo "📊 [$step_name] Available space: ${current_space}KB (~${space_gb}GB)"
+
+              if [ "$current_space" -lt 1048576 ]; then
+                echo "🚨 CRITICAL: Less than 1GB available after $step_name"
+                return 1
+              fi
+              return 0
+            }
+
+            # Pre-deployment space check
+            echo "📊 Pre-deployment disk space check:"
+            AVAILABLE_SPACE=$(df / | tail -1 | awk "{print \$4}")
+            echo "Available space: ${AVAILABLE_SPACE}KB"
+
+            if [ "$AVAILABLE_SPACE" -lt 5242880 ]; then  # Less than 5GB
+              echo "🧹 Proactive cleanup: Freeing space before deployment..."
+
+              npm cache clean --force 2>/dev/null || true
+
+              find /home/ubuntu/longrise -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null || true
+              find /home/ubuntu/longrise -name "dist" -type d -exec rm -rf {} + 2>/dev/null || true
+              find /home/ubuntu/longrise -name ".vite" -type d -exec rm -rf {} + 2>/dev/null || true
+
+              rm -rf ~/.npm/_cacache/* 2>/dev/null || true
+              rm -rf /tmp/npm-* 2>/dev/null || true
+            fi
+
+            monitor_space "Pre-deployment cleanup"
+
+            echo "🧹 Cleaning npm cache globally..."
+            npm cache clean --force 2>/dev/null || true
+
+            # Setup Python virtual environment and install dependencies
+            echo "🔧 Setting up FastAPI environment..."
+            cd lr_fastapi
+
+            if [ ! -d ".venv" ]; then
+              echo "Creating new virtual environment..."
+              python3 -m venv .venv
+            fi
+
+            source .venv/bin/activate
+            pip install --upgrade pip
+
+            echo "Installing dependencies from pyproject.toml..."
+            df -h / | tail -1
+
+            if pip install -e ".[dev]"; then
+              echo "✅ pyproject.toml dependencies installed successfully"
+            else
+              echo "⚠️ pyproject.toml install failed, trying requirements.txt..."
+              if [ -f "requirements.txt" ]; then
+                pip install -r requirements.txt || {
+                  echo "❌ Both pyproject.toml and requirements.txt failed"
+                  df -h /
+                  pip list | tail -5
+                  exit 1
+                }
+              else
+                echo "❌ No requirements.txt found and pyproject.toml failed"
+                exit 1
+              fi
+            fi
+
+            echo "🌱 Seeding initial admin account..."
+            ENVIRONMENT=staging python seed_admin.py && echo "✅ Admin seed complete" || echo "⚠️ Admin seed failed (may already exist)"
+
+            echo "🌱 Seeding operational dataset..."
+            ENVIRONMENT=staging python seed_operational_data.py
+
+            cd ..
+
+            monitor_space "After Python setup"
+
+            # Update User Frontend dependencies
+            echo "🔧 Updating User Frontend dependencies..."
+            cd lr_user-frontend
+            df -h / | tail -1
+
+            if npm ci --omit=dev 2>/dev/null; then
+              echo "✅ User frontend dependencies installed with npm ci"
+            else
+              echo "⚠️ npm ci failed, cleaning and retrying with npm install"
+              rm -rf node_modules package-lock.json 2>/dev/null || true
+              if npm install --omit=dev; then
+                echo "✅ User frontend dependencies installed with npm install"
+              else
+                echo "❌ User frontend dependency installation failed completely"
+                df -h /
+                exit 1
+              fi
+            fi
+            cd ..
+
+            monitor_space "After User frontend install"
+
+            # Update Admin Frontend dependencies
+            echo "🔧 Updating Admin Frontend dependencies..."
+            cd lr_admin-frontend
+
+            if npm ci --omit=dev 2>/dev/null; then
+              echo "✅ Admin frontend dependencies installed with npm ci"
+            else
+              echo "⚠️ npm ci failed, cleaning and retrying with npm install"
+              rm -rf node_modules package-lock.json 2>/dev/null || true
+              if npm install --omit=dev; then
+                echo "✅ Admin frontend dependencies installed with npm install"
+              else
+                echo "❌ Admin frontend dependency installation failed completely"
+                df -h /
+                exit 1
+              fi
+            fi
+            cd ..
+
+            monitor_space "After Admin frontend install"
+
+            # Restart all services with PM2
+            echo "🚀 Restarting all services with cache clearing..."
+
+            rm -rf lr_user-frontend/node_modules/.vite 2>/dev/null || true
+            rm -rf lr_admin-frontend/node_modules/.vite 2>/dev/null || true
+            rm -rf lr_user-frontend/node_modules/.cache 2>/dev/null || true
+            rm -rf lr_admin-frontend/node_modules/.cache 2>/dev/null || true
+
+            pm2 delete all 2>/dev/null || true
+            ENVIRONMENT=staging NODE_ENV=staging pm2 start ecosystem.config.cjs
+
+            echo "📊 PM2 Status:"
+            pm2 status
+
+            pm2 flush 2>/dev/null || true
+            find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+            find . -name "*.pyc" -delete 2>/dev/null || true
+
+            echo "📊 Final disk usage:"
+            df -h / | tail -1
+
+            echo "✅ Staging deployment completed successfully!"
+          '
+
+      - name: Health Check
+        run: |
+          sleep 15
+
+          check_url() {
+            local label="$1"
+            local url="$2"
+            local method="${3:-GET}"
+
+            echo "🏥 Checking ${label}..."
+            for attempt in {1..12}; do
+              if [ "$method" = "HEAD" ]; then
+                if curl -fsSI "$url" >/dev/null; then
+                  echo "✅ ${label} is healthy"
+                  return 0
+                fi
+              else
+                if curl -fsS "$url" >/dev/null; then
+                  echo "✅ ${label} is healthy"
+                  return 0
+                fi
+              fi
+
+              echo "⏳ ${label} not ready yet (${attempt}/12)"
+              sleep 5
+            done
+
+            echo "❌ ${label} health check failed: ${url}"
+            return 1
+          }
+
+          echo "🏥 Checking API health..."
+          check_url "API" "http://${{ secrets.LR_API_EC2_HOST }}:8000/health"
+
+          echo "🏥 Checking User Frontend..."
+          check_url "User Frontend" "http://${{ secrets.LR_API_EC2_HOST }}:5173" "HEAD"
+
+          echo "🏥 Checking Admin Frontend..."
+          check_url "Admin Frontend" "http://${{ secrets.LR_API_EC2_HOST }}:5174" "HEAD"
+
+      - name: 🎉 Notify Success - Deploy Complete
+        if: success()
+        run: |
+          COMMITS=$(git log --oneline -3 --pretty=format:"• %s (%h)" | head -3)
+          if [ -z "$COMMITS" ]; then
+            COMMITS="• 최근 변경사항이 배포되었습니다"
+          fi
+          echo "=== 배포된 커밋들 ==="
+          echo "$COMMITS"
+          echo "======================"
+
+          COMMITS_ENCODED=$(echo "$COMMITS" | sed 's/"/\\"/g' | sed 's/&/%26/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="🎉 *[Longrise]* 재배포 완료%0A🚀 승인된 수정사항이 스테이징 서버에 반영되었습니다.%0A🌍 확인 부탁드립니다.%0A%0A📝 **배포된 변경사항**%0A${COMMITS_ENCODED}%0A%0A📍 **서비스 상태**%0A• API: http://${{ secrets.LR_API_EC2_HOST }}:8000%0A• 사용자 UI: http://${{ secrets.LR_API_EC2_HOST }}:5173%0A• 관리자 UI: http://${{ secrets.LR_API_EC2_HOST }}:5174"
+
+      - name: ❌ Notify Failure - Deploy Failed
+        if: failure()
+        run: |
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            COMMITS=$(git log --oneline ${{ github.event.before }}..${{ github.sha }} --pretty=format:"• %s" | sed 's/"/\\"/g' | tr '\n' '%0A')
+          else
+            COMMITS=$(git log --oneline -1 --pretty=format:"• %s" | sed 's/"/\\"/g')
+          fi
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="❌ *[Longrise]* 재배포 실패%0A⚠️ 스테이징 서버 배포 중 오류가 발생했습니다.%0A🔗 [GitHub Actions 로그 확인하기](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})%0A%0A📝 **배포 시도한 변경사항**%0A${COMMITS}%0A%0A📞 즉시 확인이 필요합니다."

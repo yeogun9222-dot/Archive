@@ -1,0 +1,67 @@
+구분,내용,수치
+,총 계정 수 (V8.8 현실감 재설계),
+주계정 (시연용),users 테이블,10개
+조직도 하부,referral_tree 테이블,220명
+전체 합계,,230개 계정
+,,,
+,계정별 하부조직 규모 (V8.8 확정),
+닉네임,직급,팀인원 / 깊이
+Kim_Dragon88,Blue Dragon,108명 / 23레벨 (히어로)
+Lee_Profit99,Blue Dragon,35명 / 5레벨
+Park_Alpha77,Blue Dragon,22명 / 4레벨
+Choi_Rise12,White Dragon,17명 / 3레벨
+Han_Node34,White Dragon,12명 / 3레벨
+Jung_Bull56,White Dragon,8명 / 2레벨
+Yoon_Gold78,White Dragon,6명 / 2레벨
+Song_Wave90,White Dragon,5명 / 2레벨
+Lim_Eagle23,White Dragon,4명 / 1레벨
+Ko_Titan45,White Dragon,3명 / 직추천만
+합계,,220명
+,,,
+,10개 계정 최종 수치 (V8.8 — 인출 없음 기준),
+닉네임,직급,USDT잔고(수익분),CNYT잔고,팀매출,직접추천수
+Kim_Dragon88,Blue Dragon,$2597,4897,$28500,5명
+Lee_Profit99,Blue Dragon,$2157,4824,$10200,5명
+Park_Alpha77,Blue Dragon,$2100,4771,$6400,5명
+Choi_Rise12,White Dragon,$1564,4714,$4200,4명
+Han_Node34,White Dragon,$1549,4664,$3000,4명
+Jung_Bull56,White Dragon,$1481,4611,$2000,3명
+Yoon_Gold78,White Dragon,$1462,4551,$1500,3명
+Song_Wave90,White Dragon,$1445,4498,$1250,3명
+Lim_Eagle23,White Dragon,$1426,4442,$900,3명
+Ko_Titan45,White Dragon,$1407,4386,$600,3명
+,,,
+,USDT 잔고 계산 근거,
+Blue Dragon (Kim/Lee/Park),일일수익 + 직추천수당($160) + 롤업수당($507~924),인출 없음 기준
+White Dragon (Choi~Ko),일일수익 + 직추천수당($60~110) / 롤업 없음,White Dragon은 롤업 0
+Kim 상세,일일수익$1513 + 직추천$160 + 롤업$924 = $2597,
+롤업 구조 (Blue Dragon 3레벨),L1: $212 + L2: $447 + L3: $265 = 연누적 $924,
+,,,
+,V8.8 수정 이력 (5차 수정),
+수정1,USDT 구버전 $1235~$1580 → 정정 $1407~$2597,롤업 수당 $924 미반영 발견
+수정2,조직 인원 639명 → 220명,현실감 방향A 채택
+수정3,직급 전원 Blue Dragon → Blue 3개 + White 7개,균일 분포가 비현실적
+수정4,하부 서사 확립: Standard $500 = Purple Dragon 패키지 조건 미달,논리 일관성
+수정5,Ko_Titan45 데이터 수정 (Blue Dragon/39명/$2302 → White Dragon/3명/$1407),PowerShell regex 실패 수동 수정
+,,,
+,DB 데이터 규모 전체 (최종),
+users 테이블,10행,주계정 10개
+packages 테이블,20행,계정당 2건 (Standard + Premium)
+referral_tree 테이블,~220행,조직도 (V8.8 현실감 재설계)
+daily_returns 테이블,~3650행,10계정 x 약 365일
+transactions 테이블,~5000행,입금+수당+일일ROI
+usdt_transfers 테이블,30행,계정당 3건
+전체 합계,~8930행,
+,,,
+,공통 설정 (확정),
+로그인 방식,Gmail + 이메일 인증코드 (비밀번호 없음),
+거래 비밀번호,Longrise1! (10개 계정 전부 동일),
+가입일 = 패키지구매일,동일 날짜 적용 OK,
+CNYT 단가,$0.02 고정 적용,
+원금 (LOCKED USDT),$1000 별도 표시 (만기 시 환급),
+수익분 (balance_usdt),출금 가능 잔고,
+,,,
+,Gmail 교체 안내,
+교체 위치,02_static_data.sql 파일의 email 컬럼,
+교체 방법,임시 Gmail → 실제 Gmail 10개로 변경 후 재실행,
+주의사항,이메일 변경 시 UNIQUE 제약조건 자동 체크됨,

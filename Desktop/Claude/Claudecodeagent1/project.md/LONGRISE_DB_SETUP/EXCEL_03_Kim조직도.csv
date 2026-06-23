@@ -1,0 +1,84 @@
+ID,닉네임,국가,소속라인,Kim으로부터레벨,직급,패키지,투자금,상위계정ID,가입일,비고
+LR-KIM-001,Kim_Dragon88,KR,본인,0,Blue Dragon,Premium,$1000,,2025-02-05,주계정
+,,,,,,,,,,,
+[LINE 1 - 중국 폭발라인 86명],,,,,,,,,,,
+KIM-L1-B01,CN_Wei_Dragon,CN,Line1,1,Blue Dragon,Standard,$500,LR-KIM-001,2025-02-28,Kim 직접추천
+KIM-L1-W02-1,CN_Fang_Rong,CN,Line1,2,White Dragon,Basic,$200,KIM-L1-B01,2025-03-05,Wei의 Blue Dragon 자격자
+KIM-L1-W02-2,CN_Liu_Mei,CN,Line1,2,White Dragon,Basic,$200,KIM-L1-B01,2025-03-07,Wei의 Blue Dragon 자격자
+KIM-L1-W02-3,CN_Huang_Bo,CN,Line1,2,White Dragon,Basic,$200,KIM-L1-B01,2025-03-10,Wei의 Blue Dragon 자격자
+KIM-L1-B02,CN_Chen_Wei,CN,Line1,2,Blue Dragon,Standard,$500,KIM-L1-B01,2025-03-08,척추 라인 계속
+KIM-L1-X02-1,CN_Wang_Lei,CN,Line1,3,White Dragon,Basic,$200,KIM-L1-W02-1,2025-03-15,추가 멤버
+KIM-L1-X02-2,CN_Xu_Dan,CN,Line1,3,White Dragon,Basic,$200,KIM-L1-W02-1,2025-03-20,추가 멤버
+KIM-L1-W03-1,CN_Sun_Qi,CN,Line1,3,White Dragon,Basic,$200,KIM-L1-B02,2025-03-18,Chen_Wei의 자격자
+KIM-L1-W03-2,CN_Lin_Xia,CN,Line1,3,White Dragon,Basic,$200,KIM-L1-B02,2025-03-20,Chen_Wei의 자격자
+KIM-L1-W03-3,CN_Zhao_Peng,CN,Line1,3,White Dragon,Basic,$200,KIM-L1-B02,2025-03-22,Chen_Wei의 자격자
+KIM-L1-B03,CN_Wu_Hao,CN,Line1,3,Blue Dragon,Standard,$500,KIM-L1-B02,2025-03-19,척추 라인 계속
+KIM-L1-X03-1,CN_Ye_Jun,CN,Line1,4,White Dragon,Basic,$200,KIM-L1-W03-1,2025-03-28,
+KIM-L1-W04-1,CN_Gao_Min,CN,Line1,4,White Dragon,Basic,$200,KIM-L1-B03,2025-04-01,Wu_Hao의 자격자
+KIM-L1-W04-2,CN_Ma_Ling,CN,Line1,4,White Dragon,Basic,$200,KIM-L1-B03,2025-04-03,Wu_Hao의 자격자
+KIM-L1-W04-3,CN_He_Fei,CN,Line1,4,White Dragon,Basic,$200,KIM-L1-B03,2025-04-05,Wu_Hao의 자격자
+KIM-L1-B04,CN_Zheng_Yu,CN,Line1,4,Blue Dragon,Standard,$500,KIM-L1-B03,2025-04-02,척추 라인 계속
+KIM-L1-W05-1,CN_Luo_Tao,CN,Line1,5,White Dragon,Basic,$200,KIM-L1-B04,2025-04-10,
+KIM-L1-W05-2,CN_Song_Hua,CN,Line1,5,White Dragon,Basic,$200,KIM-L1-B04,2025-04-12,
+KIM-L1-W05-3,CN_Tang_Bo,CN,Line1,5,White Dragon,Basic,$200,KIM-L1-B04,2025-04-14,
+KIM-L1-B05,CN_Xiao_Gang,CN,Line1,5,Blue Dragon,Standard,$500,KIM-L1-B04,2025-04-11,척추 라인 계속
+...(L6~L20 동일 패턴 반복: 각 레벨 Blue×1 + White×3 = 4명),,,,,,,,,,,
+KIM-L1-B06,CN_Han_Zhen,CN,Line1,6,Blue Dragon,Standard,$500,KIM-L1-B05,2025-04-19,
+KIM-L1-B07,CN_Meng_Kai,CN,Line1,7,Blue Dragon,Standard,$500,KIM-L1-B06,2025-04-29,
+KIM-L1-B08,CN_Pan_Hao,CN,Line1,8,Blue Dragon,Standard,$500,KIM-L1-B07,2025-05-07,
+KIM-L1-B09,CN_Gu_Zhi,CN,Line1,9,Blue Dragon,Standard,$500,KIM-L1-B08,2025-05-15,
+KIM-L1-B10,CN_Qiu_Gang,CN,Line1,10,Blue Dragon,Standard,$500,KIM-L1-B09,2025-05-23,
+KIM-L1-B11,CN_Di_Long,CN,Line1,11,Blue Dragon,Standard,$500,KIM-L1-B10,2025-06-02,
+KIM-L1-B12,CN_Hi_Nan,CN,Line1,12,Blue Dragon,Standard,$500,KIM-L1-B11,2025-06-11,
+KIM-L1-B13,CN_Li_Sen,CN,Line1,13,Blue Dragon,Standard,$500,KIM-L1-B12,2025-06-19,
+KIM-L1-B14,CN_Pi_Wei,CN,Line1,14,Blue Dragon,Standard,$500,KIM-L1-B13,2025-06-27,
+KIM-L1-B15,CN_Ti_An,CN,Line1,15,Blue Dragon,Standard,$500,KIM-L1-B14,2025-07-05,
+KIM-L1-B16,CN_Xi_En,CN,Line1,16,Blue Dragon,Standard,$500,KIM-L1-B15,2025-07-13,
+KIM-L1-B17,CN_Bb_Jing,CN,Line1,17,Blue Dragon,Standard,$500,KIM-L1-B16,2025-07-21,
+KIM-L1-B18,CN_Ff_Nuo,CN,Line1,18,Blue Dragon,Standard,$500,KIM-L1-B17,2025-07-29,
+KIM-L1-B19,CN_Jj_Ran,CN,Line1,19,Blue Dragon,Standard,$500,KIM-L1-B18,2025-08-06,
+KIM-L1-B20,CN_Nn_Vei,CN,Line1,20,Blue Dragon,Standard,$500,KIM-L1-B19,2025-08-14,마지막 척추 Blue Dragon
+KIM-L1-T21-1,CN_Oo_Wan,CN,Line1,21,White Dragon,Basic,$200,KIM-L1-B20,2025-08-20,꼬리 시작
+KIM-L1-T21-2,CN_Pp_Xian,CN,Line1,21,White Dragon,Basic,$200,KIM-L1-B20,2025-08-22,
+KIM-L1-T21-3,CN_Qq_Yan,CN,Line1,21,White Dragon,Basic,$200,KIM-L1-B20,2025-08-24,
+KIM-L1-T22-1,CN_Rr_Zao,CN,Line1,22,White Dragon,Basic,$200,KIM-L1-T21-1,2025-08-28,
+KIM-L1-T22-2,CN_Ss_Abei,CN,Line1,22,White Dragon,Basic,$200,KIM-L1-T21-2,2025-08-30,
+KIM-L1-T23-1,CN_Tt_Bchu,CN,Line1,23,White Dragon,Basic,$200,KIM-L1-T22-1,2025-09-03,최심부 (23레벨)
+,,,,,,,,,,,
+[LINE 1 소계: Blue Dragon 20명 + White Dragon 66명 = 86명],,,,,,,,,,,
+,,,,,,,,,,,
+[LINE 2 - 일본 라인 (얕은 Blue Dragon) 9명],,,,,,,,,,,
+KIM-L2-B01,JP_Tanaka_Rise,JP,Line2,1,Blue Dragon,Standard,$500,LR-KIM-001,2025-03-02,Kim 직접추천 / 우연히 성장
+KIM-L2-W02-1,JP_Sato_Hiro,JP,Line2,2,White Dragon,Basic,$200,KIM-L2-B01,2025-03-10,Tanaka 자격자
+KIM-L2-W02-2,JP_Ito_Yuki,JP,Line2,2,White Dragon,Basic,$200,KIM-L2-B01,2025-03-12,Tanaka 자격자
+KIM-L2-W02-3,JP_Kato_Nao,JP,Line2,2,White Dragon,Basic,$200,KIM-L2-B01,2025-03-14,Tanaka 자격자
+KIM-L2-W02-4,JP_Suzuki_Ma,JP,Line2,2,White Dragon,Basic,$200,KIM-L2-B01,2025-03-16,팀매출 $1000 충족용
+KIM-L2-W02-5,JP_Yamada_Ke,JP,Line2,2,White Dragon,Basic,$200,KIM-L2-B01,2025-03-18,팀매출 $1000 충족용
+KIM-L2-W03-1,JP_Kobayashi,JP,Line2,3,White Dragon,Basic,$200,KIM-L2-W02-1,2025-03-25,
+KIM-L2-W04-1,JP_Nakamura,JP,Line2,4,White Dragon,Basic,$200,KIM-L2-W03-1,2025-04-02,
+KIM-L2-W05-1,JP_Taniguchi,JP,Line2,5,White Dragon,Basic,$200,KIM-L2-W04-1,2025-04-10,최심부 (5레벨)
+,,,,,,,,,,,
+[LINE 3 - 한국 라인 (White Dragon / Blue Dragon 직전) 8명],,,,,,,,,,,
+KIM-L3-01,KR_Choi_Star,KR,Line3,1,White Dragon,Basic,$200,LR-KIM-001,2025-03-05,Kim 직접추천 ← Blue Dragon 달성하면 Kim Purple 달성
+KIM-L3-W02-1,KR_Park_Hoon,KR,Line3,2,White Dragon,Basic,$200,KIM-L3-01,2025-03-15,Choi_Star 자격자 예비
+KIM-L3-W02-2,KR_Kim_Soo,KR,Line3,2,White Dragon,Basic,$200,KIM-L3-01,2025-03-18,Choi_Star 자격자 예비
+KIM-L3-W02-3,KR_Lee_Jae,KR,Line3,2,White Dragon,Basic,$200,KIM-L3-01,2025-03-21,Choi_Star 자격자 예비
+KIM-L3-W02-4,KR_Yoon_Min,KR,Line3,2,White Dragon,Basic,$200,KIM-L3-01,2025-03-24,추가 멤버
+KIM-L3-W03-1,KR_Jang_Woo,KR,Line3,3,White Dragon,Basic,$200,KIM-L3-W02-1,2025-04-01,
+KIM-L3-W03-2,KR_Shin_Gi,KR,Line3,3,White Dragon,Basic,$200,KIM-L3-W02-2,2025-04-05,
+KIM-L3-W04-1,KR_Kwon_Tae,KR,Line3,4,White Dragon,Basic,$200,KIM-L3-W03-1,2025-04-15,
+,,,,,,,,,,,
+[LINE 4 - 베트남 라인 (거의 비활성) 3명],,,,,,,,,,,
+KIM-L4-01,VN_Nguyen_Pro,VN,Line4,1,White Dragon,Basic,$200,LR-KIM-001,2025-03-08,Kim 직접추천
+KIM-L4-02-1,VN_Tran_Duc,VN,Line4,2,White Dragon,Basic,$200,KIM-L4-01,2025-04-10,
+KIM-L4-02-2,VN_Le_Van,VN,Line4,2,White Dragon,Basic,$200,KIM-L4-01,2025-04-18,
+,,,,,,,,,,,
+[LINE 5 - 중국2 라인 (거의 비활성) 2명],,,,,,,,,,,
+KIM-L5-01,CN_Liu_Rise,CN,Line5,1,White Dragon,Basic,$200,LR-KIM-001,2025-03-12,Kim 직접추천
+KIM-L5-02-1,CN_Chen_Bo,CN,Line5,2,White Dragon,Basic,$200,KIM-L5-01,2025-05-20,
+,,,,,,,,,,,
+[전체 합계],,,,,,,,,,,
+[Kim 하부조직 총합: 108명 (Line1:86 + Line2:9 + Line3:8 + Line4:3 + Line5:2)],,,,,,,,,,,
+[Blue Dragon 직급자 총합: 21명 (척추 20명 + Tanaka 1명)],,,,,,,,,,,
+[White Dragon 직급자 총합: 87명],,,,,,,,,,,
+[팀매출 총합: 약 $28500],,,,,,,,,,,

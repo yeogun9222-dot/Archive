@@ -1,0 +1,12 @@
+{
+  "name": "LONGRISE AI - Master Admin V7.2",
+  "description": "Total control system for LONGRISE AI including dynamic ROI management, 25-level rollup payouts, CNYT token ecosystem, and M13 EXIT protocol monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "Dynamic ROI Control",
+    "Multi-level Marketing (MLM) Payout Engine",
+    "Security Monitoring (FDS)",
+    "Reconciliation Center",
+    "Frontend CMS Control"
+  ]
+}

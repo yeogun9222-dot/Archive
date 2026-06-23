@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold-50: #f8fafc;
+  --color-gold-100: #f1f5f9;
+  --color-gold-200: #e2e8f0;
+  --color-gold-300: #cbd5e1;
+  --color-gold-400: #94a3b8;
+  --color-gold-500: #38bdf8;
+  --color-gold-600: #0ea5e9;
+  --color-gold-700: #0284c7;
+  --color-gold-800: #0369a1;
+  --color-gold-900: #075985;
+  --color-gold-950: #0c4a6e;
+
+  --color-panel: #020617;
+  --color-card: #1e293b;
+  --color-dashboard-bg: #0f172a;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-border-main: #475569;
+  --color-accent-blue: #38bdf8;
+  --color-accent-green: #4ade80;
+  --color-accent-amber: #fbbf24;
+  --color-text-primary: #f8fafc;
+  --color-text-muted: #94a3b8;
+}
+
+@layer base {
+  body {
+    @apply bg-dashboard-bg text-text-primary antialiased overflow-hidden;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-card border border-border-main rounded-lg p-6 hover:border-accent-blue/30 transition-all duration-300;
+  }
+  
+  .btn-gold {
+    @apply bg-accent-blue text-slate-900 font-bold py-2 px-4 rounded hover:bg-accent-blue/80 active:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-outline-gold {
+    @apply border border-border-main text-text-primary font-medium py-2 px-4 rounded hover:bg-white/5 transition-colors;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-6 py-3 text-text-muted hover:text-text-primary hover:bg-white/5 transition-all text-[13px] cursor-pointer border-l-3 border-transparent;
+  }
+
+  .nav-item.active {
+    @apply text-text-primary bg-accent-blue/10 border-accent-blue;
+  }
+
+  .badge-gold {
+    @apply bg-accent-blue/10 border border-accent-blue/50 text-accent-blue text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider;
+  }
+
+  .data-table {
+    @apply w-full text-left text-xs;
+  }
+
+  .data-table th {
+    @apply bg-black/20 text-text-muted font-semibold py-3 px-4 uppercase tracking-wider text-[11px] border-b border-border-main;
+  }
+
+  .data-table td {
+    @apply py-3 px-16 border-b border-border-main transition-colors;
+  }
+
+  .data-table tr:hover td {
+    @apply bg-white/[0.02];
+  }
+}
+
+@layer utilities {
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(1deg); }
+    75% { transform: translateY(10px) rotate(-1deg); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full hover:bg-slate-700;
+}
+
