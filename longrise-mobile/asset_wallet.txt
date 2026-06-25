@@ -1,0 +1,399 @@
+﻿/* LONGRISE Mobile — WALLET screen (balances + deposit / withdraw / send / swap flows) */
+function WalletScreen(props) {
+  const ctx = React.useContext(AppCtx);
+  const D = window.LR_DATA, fmt = window.LR_FMT;
+  const [flow, setFlow] = React.useState(props.initialFlow || null); // deposit|withdraw|send|swap
+  const [step, setStep] = React.useState(0);
+  const [amount, setAmount] = React.useState("");
+  const [address, setAddress] = React.useState("");
+  const [network, setNetwork] = React.useState("TRC-20");
+  const [otp, setOtp] = React.useState(["", "", "", "", "", ""]);
+  const [depositAgreed, setDepositAgreed] = React.useState(false);
+
+  React.useEffect(function () {
+    if (props.initialFlow) open(props.initialFlow);
+  }, [props.initialFlow, props.flowNonce]);
+
+  function open(f) {
+    setFlow(f); setStep(0); setAmount(""); setAddress(""); setOtp(["", "", "", "", "", ""]); setDepositAgreed(false);
+  }
+  function close() { setFlow(null); }
+
+  const amt = parseFloat(amount) || 0;
+  const fee = amt * 0.015;
+  const otpFull = otp.join("").length === 6;
+
+  function copyAddr() {
+    if (navigator.clipboard) navigator.clipboard.writeText(D.depositAddress).catch(function () {});
+    ctx.notify("Deposit address copied");
+  }
+
+  /* ─── Deposit QR code (visual grid based on address) ─── */
+  function DepositQR() {
+    var addr = D.depositAddress || "LONGRISE";
+    var S = 25, cells = [];
+    for (var r = 0; r < S; r++) {
+      for (var c = 0; c < S; c++) {
+        var dark = false;
+        /* top-left finder */ if (r<=6&&c<=6){dark=r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4);}
+        /* top-right finder */ else if (r<=6&&c>=18){var lc=c-18;dark=r===0||r===6||lc===0||lc===6||(r>=2&&r<=4&&lc>=2&&lc<=4);}
+        /* bottom-left finder */ else if (r>=18&&c<=6){var lr=r-18;dark=lr===0||lr===6||c===0||c===6||(lr>=2&&lr<=4&&c>=2&&c<=4);}
+        /* timing strips */ else if (r===6||c===6){dark=(r+c)%2===0;}
+        /* separator rows */ else if (r===7||r===17||c===7||c===17){dark=false;}
+        /* data cells */ else {var idx=(r*7+c*13)%addr.length;dark=((addr.charCodeAt(idx)^(r*3+c))&1)===0;}
+        cells.push(dark);
+      }
+    }
+    return (
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(25,1fr)", width:200, height:200, background:"#ffffff", padding:12, borderRadius:14, boxShadow:"0 0 0 1px rgba(185,154,107,0.25)" }}>
+          {cells.map(function(d,i){return <div key={i} style={{background:d?"#111":"#fff"}}/>;})}
+        </div>
+        <div style={{ fontSize:11, color:"var(--text-secondary)", letterSpacing:"0.05em" }}>Scan with your wallet app</div>
+      </div>
+    );
+  }
+
+  function finishDeposit() {
+    ctx.addHistory({ type: "DEPOSIT", label: "USDT deposit (" + network + ") — pending", amount: amt, dir: 1 });
+    setStep(2);
+  }
+  function finishWithdraw() {
+    ctx.setBal(function (b) { return Object.assign({}, b, { earned: Math.max(0, b.earned - amt) }); });
+    ctx.addHistory({ type: "WITHDRAW", label: "USDT withdrawal (" + network + ")", amount: amt, dir: -1 });
+    setStep(3);
+  }
+  function finishSwap() {
+    const got = amt * 7.08;
+    ctx.setBal(function (b) {
+      return Object.assign({}, b, { earned: Math.max(0, b.earned - amt), cnyt: b.cnyt + got });
+    });
+    ctx.addHistory({ type: "SWAP", label: "Rewards → CNYT swap", amount: amt, dir: -1 });
+    setStep(2);
+  }
+  function finishSend() {
+    ctx.setBal(function (b) { return Object.assign({}, b, { available: b.available - amt }); });
+    ctx.addHistory({ type: "SEND", label: "USDT sent to " + (address.slice(0, 6) || "wallet") + "…", amount: amt, dir: -1 });
+    setStep(2);
+  }
+
+  const total = ctx.bal.available + ctx.bal.earned + ctx.bal.invested;
+
+  return (
+    <div className="lr-screen" data-screen-label="Wallet">
+      <div>
+        <Eyebrow>My wealth</Eyebrow>
+        <div className="display" style={{ fontSize: 21, fontWeight: 700, letterSpacing: "0.04em", marginTop: 2 }}>
+          Wallet
+        </div>
+      </div>
+
+      {/* Balance hero */}
+      <Card hero>
+        <Eyebrow>Total assets</Eyebrow>
+        <div className="" style={{  fontSize: 34, fontWeight: 800, margin: "8px 0 14px", color: "#ffffff" }}>
+          ${fmt(total)}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0, borderTop: "1px solid var(--line-white-soft)" }}>
+          <KV k="Available balance" v={"$" + fmt(ctx.bal.available) + " USDT"} />
+          <KV k="Earned dividends" v={"$" + fmt(ctx.bal.earned) + " USDT"} cls="green" />
+          <KV k="Active Exposure" v={"$" + fmt(ctx.bal.invested) + " USDT"} />
+          <KV k="CNYT rewards" v={fmt(ctx.bal.cnyt) + " CNYT"} />
+        </div>
+        <div className="qa-row" style={{ marginTop: 14 }}>
+          <button className="qa" onClick={function () { open("deposit"); }}><Icon name="arrowDown" size={18} /> Deposit</button>
+          <button className="qa" onClick={function () { open("withdraw"); }}><Icon name="arrowUp" size={18} /> Withdraw</button>
+          <button className="qa" onClick={function () { open("send"); }}><Icon name="send" size={18} /> Send</button>
+          <button className="qa" onClick={function () { open("swap"); }}><Icon name="swap" size={18} /> Swap</button>
+        </div>
+      </Card>
+
+      {/* Recent activity */}
+      <Card void>
+        <SectionHead title="Recent activity" />
+        <div className="rowlist" style={{ marginTop: 4 }}>
+          {ctx.history.slice(0, 7).map(function (h) {
+            const inFlow = h.dir > 0;
+            return (
+              <RowItem key={h.id}
+                lead={
+                  <LeadDisc color={inFlow ? "var(--green-success)" : "var(--color-cream)"}>
+                    <Icon name={
+                      h.type === "DEPOSIT" ? "arrowDown" :
+                      h.type === "ROI" ? "arrowDown" :
+                      h.type === "COMMISSION" ? "team" :
+                      h.type === "WITHDRAW" ? "arrowUp" :
+                      h.type === "SWAP" ? "swap" :
+                      h.type === "SEND" ? "send" :
+                      h.type === "INVEST" ? "invest" :
+                      h.type === "ORDER" ? "market" : "bolt"} size={16} />
+                  </LeadDisc>
+                }
+                title={h.label}
+                sub={h.date}
+                trail={
+                  <span className={"num " + (inFlow ? "green" : "")} style={{ fontSize: 13.5, fontWeight: 700 }}>
+                    {inFlow ? "+" : "−"}${fmt(h.amount)}
+                  </span>
+                } />
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* ---------- DEPOSIT ---------- */}
+      <Sheet open={flow === "deposit"} onClose={close} title="Deposit USDT">
+        {step === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="field">
+              <label>Network</label>
+              <SegTabs options={["TRC-20", "ERC-20"]} value={network} onChange={setNetwork} />
+            </div>
+            <Field label="Amount" inputMode="decimal" value={amount}
+              onChange={function (v) { setAmount(v.replace(/[^0-9.]/g, "")); }}
+              suffix="USDT" hint="Free deposits · network fee applies on-chain" />
+            <Btn block disabled={amt < 10} onClick={function () { setStep(1); }}>Generate address</Btn>
+          </div>
+        )}
+        {step === 1 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="muted" style={{ fontSize: 12.5, textAlign:"center" }}>
+              Send exactly <span className="num" style={{ color: "var(--gold-highlight)", fontWeight: 700 }}>${fmt(amt)} USDT</span> ({network}) to your personal address:
+            </div>
+            <DepositQR />
+            <div style={{
+              border: "1px dashed var(--line-gold-mid)", borderRadius: "var(--radius-md)",
+              padding: "14px", display: "flex", alignItems: "center", gap: 10
+            }}>
+              <span className="mono" style={{ flex: 1, wordBreak: "break-all", color: "var(--gold-highlight)", fontSize:12 }}>{D.depositAddress}</span>
+              <button className="iconbtn" style={{ width: 38, height: 38, flex: "none" }} onClick={copyAddr} aria-label="Copy address">
+                <Icon name="copy" size={17} />
+              </button>
+            </div>
+            <div className="muted" style={{ fontSize: 11.5, display: "flex", gap: 8 }}>
+              <Icon name="shield" size={14} style={{ flex: "none", marginTop: 1, color: "var(--gold-base)" }} />
+              <span>Triple-check the address and network. Wrong-network transfers cannot be recovered.</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", background: depositAgreed ? "rgba(16,185,129,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (depositAgreed ? "rgba(16,185,129,0.35)" : "var(--border-card)"), borderRadius: 13, padding: "13px 14px", transition: "all .15s" }}
+              onClick={function () { setDepositAgreed(!depositAgreed); }}>
+              <div style={{ width: 22, height: 22, borderRadius: 6, flex: "none", marginTop: 1, border: "2px solid " + (depositAgreed ? "var(--green-success)" : "var(--line-gold-mid)"), background: depositAgreed ? "var(--green-success)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s" }}>
+                {depositAgreed && <Icon name="check" size={13} style={{ color: "#041020" }} />}
+              </div>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>
+                I confirm I have sent exactly <span style={{ color: "var(--gold-highlight)", fontWeight: 700 }}>${fmt(amt)} USDT ({network})</span> to the address shown above.
+              </span>
+            </div>
+            <Btn block disabled={!depositAgreed} onClick={finishDeposit}>Confirm deposit submitted</Btn>
+          </div>
+        )}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <SuccessBlock title="Deposit pending">
+              Watching the blockchain for your transaction. Funds credit after 12 network confirmations (~10 min).
+            </SuccessBlock>
+            <Btn block onClick={function () { close(); ctx.notify("Deposit added to ledger"); }}>Done</Btn>
+          </div>
+        )}
+      </Sheet>
+
+      {/* ---------- WITHDRAW ---------- */}
+      <Sheet open={flow === "withdraw"} onClose={close} title="Request withdrawal">
+        {step === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Field label="Amount" inputMode="decimal" value={amount}
+              onChange={function (v) { setAmount(v.replace(/[^0-9.]/g, "")); }}
+              suffix="USDT"
+              onMax={function () { setAmount(String(Math.floor(ctx.bal.earned))); }}
+              hint={"Earned balance $" + fmt(ctx.bal.earned) + " · min $50"} />
+            <Field label={"Destination wallet (" + network + ")"} mono value={address}
+              onChange={setAddress} placeholder="T..." />
+            <Card void style={{ padding: 14 }}>
+              <KV k="Platform fee (1.5%)" v={"−$" + fmt(fee)} />
+              <KV k="You receive" v={"$" + fmt(Math.max(0, amt - fee))} cls="green" />
+              <KV k="Processing" v="Daily batch · 00:00 UTC" />
+            </Card>
+            {amt > ctx.bal.earned && <div className="red" style={{ fontSize: 12 }}>Exceeds earned balance.</div>}
+            <Btn block disabled={amt < 50 || amt > ctx.bal.earned || address.length < 8} onClick={function () { setStep(1); }}>Next</Btn>
+          </div>
+        )}
+        {step === 1 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ textAlign:"center" }}>
+              <Eyebrow>Withdrawal summary</Eyebrow>
+              <div className="muted" style={{ fontSize:12.5, marginTop:6 }}>Please verify all details before proceeding.</div>
+            </div>
+            <div style={{ background:"var(--surface-card)", border:"1px solid var(--border-card)", borderRadius:16, overflow:"hidden" }}>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Amount</span>
+                <span style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)" }}>${fmt(amt)} USDT</span>
+              </div>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Platform fee (1.5%)</span>
+                <span style={{ fontSize:14, fontWeight:700, color:"var(--red-alert)" }}>−${fmt(fee)}</span>
+              </div>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>You will receive</span>
+                <span style={{ fontSize:16, fontWeight:800, color:"var(--green-success)" }}>${fmt(Math.max(0, amt - fee))} USDT</span>
+              </div>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)", flexShrink:0 }}>Destination</span>
+                <span style={{ fontSize:12.5, fontWeight:700, color:"var(--text-primary)", fontFamily:"monospace", wordBreak:"break-all", textAlign:"right" }}>
+                  {address.length > 12 ? address.slice(0,6) + "···" + address.slice(-6) : address}
+                </span>
+              </div>
+              <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Network</span>
+                <span style={{ fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>{network}</span>
+              </div>
+            </div>
+            <div style={{ background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:13, padding:"13px 16px", display:"flex", gap:10, alignItems:"flex-start" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red-alert)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style={{ fontSize:12.5, color:"var(--text-secondary)", lineHeight:1.65 }}>Withdrawals cannot be cancelled once submitted. Please verify the destination address carefully — funds sent to a wrong address cannot be recovered.</span>
+            </div>
+            <Btn block onClick={function(){ setStep(2); }}>Continue to Verification</Btn>
+            <button onClick={function(){ setStep(0); }} style={{ appearance:"none", background:"none", border:"none", color:"var(--text-secondary)", fontSize:13, cursor:"pointer", textAlign:"center", padding:"4px 0" }}>← Go back &amp; edit</button>
+          </div>
+        )}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ textAlign: "center" }}>
+              <Eyebrow>Security requirement</Eyebrow>
+              <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>Enter the 6-digit code from Google Authenticator</div>
+            </div>
+            <OtpInput value={otp} onChange={setOtp} />
+            <Btn block disabled={!otpFull} onClick={finishWithdraw}>Confirm withdrawal</Btn>
+          </div>
+        )}
+        {step === 3 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <SuccessBlock title="Withdrawal submitted">
+              ${fmt(Math.max(0, amt - fee))} USDT enters the next settlement batch (00:00–02:00 UTC). Track it under Recent Activity.
+            </SuccessBlock>
+            <Btn block onClick={function () { close(); ctx.notify("Withdrawal queued"); }}>Done</Btn>
+          </div>
+        )}
+      </Sheet>
+
+      {/* ---------- SEND ---------- */}
+      <Sheet open={flow === "send"} onClose={close} title="Send USDT">
+        {step === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Field label="Recipient wallet" mono value={address} onChange={setAddress} placeholder="Wallet address or LR user ID" />
+            <Field label="Amount" inputMode="decimal" value={amount}
+              onChange={function (v) { setAmount(v.replace(/[^0-9.]/g, "")); }}
+              suffix="USDT"
+              onMax={function () { setAmount(String(Math.floor(ctx.bal.available))); }}
+              hint={"Available $" + fmt(ctx.bal.available) + " · internal transfers are free"} />
+            <Btn block disabled={amt <= 0 || amt > ctx.bal.available || address.length < 4} onClick={function () { setStep(1); }}>Review transfer</Btn>
+          </div>
+        )}
+        {step === 1 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ textAlign:"center" }}>
+              <Eyebrow>Transfer summary</Eyebrow>
+              <div className="muted" style={{ fontSize:12.5, marginTop:6 }}>Please verify the details before confirming.</div>
+            </div>
+            <div style={{ background:"var(--surface-card)", border:"1px solid var(--border-card)", borderRadius:16, overflow:"hidden" }}>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Amount</span>
+                <span style={{ fontSize:15, fontWeight:800, color:"var(--text-primary)" }}>${fmt(amt)} USDT</span>
+              </div>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Transfer fee</span>
+                <span style={{ fontSize:14, fontWeight:700, color:"var(--green-success)" }}>Free</span>
+              </div>
+              <div style={{ padding:"14px 16px", borderBottom:"1px solid var(--border-card)", display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)", flexShrink:0 }}>Recipient</span>
+                <span style={{ fontSize:12.5, fontWeight:700, color:"var(--text-primary)", fontFamily:"monospace", wordBreak:"break-all", textAlign:"right" }}>
+                  {address.length > 12 ? address.slice(0,6) + "···" + address.slice(-6) : address}
+                </span>
+              </div>
+              <div style={{ padding:"14px 16px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ fontSize:13, color:"var(--text-secondary)" }}>Settlement</span>
+                <span style={{ fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>Instant</span>
+              </div>
+            </div>
+            <div style={{ background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:13, padding:"13px 16px", display:"flex", gap:10, alignItems:"flex-start" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red-alert)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:1 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style={{ fontSize:12.5, color:"var(--text-secondary)", lineHeight:1.65 }}>Transfers cannot be cancelled once confirmed. Please double-check the recipient address — funds sent to a wrong address cannot be recovered.</span>
+            </div>
+            <Btn block onClick={finishSend}>Confirm &amp; Send</Btn>
+            <button onClick={function(){ setStep(0); }} style={{ appearance:"none", background:"none", border:"none", color:"var(--text-secondary)", fontSize:13, cursor:"pointer", textAlign:"center", padding:"4px 0" }}>← Go back &amp; edit</button>
+          </div>
+        )}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <SuccessBlock title="Transfer complete">
+              ${fmt(amt)} USDT is on its way. Internal transfers settle instantly.
+            </SuccessBlock>
+            <Btn block onClick={function () { close(); ctx.notify("Transfer recorded"); }}>Done</Btn>
+          </div>
+        )}
+      </Sheet>
+
+      {/* ---------- SWAP ---------- */}
+      <Sheet open={flow === "swap"} onClose={close} title="Swap rewards → CNYT">
+        {step === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Field label="Pay (earned USDT)" inputMode="decimal" value={amount}
+              onChange={function (v) { setAmount(v.replace(/[^0-9.]/g, "")); }}
+              suffix="USDT"
+              onMax={function () { setAmount(String(Math.floor(ctx.bal.earned))); }}
+              hint={"Earned balance $" + fmt(ctx.bal.earned)} />
+            <div style={{ display: "flex", justifyContent: "center", color: "var(--gold-base)" }}>
+              <Icon name="swap" size={20} />
+            </div>
+            <Card void style={{ padding: 14 }}>
+              <KV k="Rate" v="1 USDT = 7.08 CNYT" />
+              <KV k="You receive" v={fmt(amt * 7.08) + " CNYT"} cls="green" />
+            </Card>
+            <Btn block disabled={amt <= 0 || amt > ctx.bal.earned} onClick={function () { setStep(1); }}>Review conversion</Btn>
+          </div>
+        )}
+        {step === 1 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ textAlign: "center" }}>
+              <Eyebrow>Conversion summary</Eyebrow>
+              <div className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>Please verify before confirming.</div>
+            </div>
+            <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-card)", borderRadius: 16, overflow: "hidden" }}>
+              <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>You pay</span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>${fmt(amt)} USDT</span>
+              </div>
+              <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Exchange rate</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>1 USDT = 7.08 CNYT</span>
+              </div>
+              <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Conversion fee</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--green-success)" }}>Free</span>
+              </div>
+              <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>You receive</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--accent)" }}>{fmt(amt * 7.08)} CNYT</span>
+              </div>
+            </div>
+            <div style={{ background: "rgba(185,154,107,0.07)", border: "1px solid rgba(185,154,107,0.25)", borderRadius: 13, padding: "13px 16px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <Icon name="shield" size={16} style={{ color: "var(--gold-base)", flexShrink: 0, marginTop: 1 }} />
+              <span style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.65 }}>CNYT is a reward token. Once converted, USDT earnings cannot be recovered. Swaps are irreversible.</span>
+            </div>
+            <Btn block onClick={finishSwap}>Confirm &amp; Swap</Btn>
+            <button onClick={function () { setStep(0); }} style={{ appearance: "none", background: "none", border: "none", color: "var(--text-secondary)", fontSize: 13, cursor: "pointer", textAlign: "center", padding: "4px 0" }}>← Go back &amp; edit</button>
+          </div>
+        )}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <SuccessBlock title="Swap complete">
+              {fmt(amt * 7.08)} CNYT credited to your rewards balance.
+            </SuccessBlock>
+            <Btn block onClick={function () { close(); ctx.notify("CNYT balance updated"); }}>Done</Btn>
+          </div>
+        )}
+      </Sheet>
+    </div>
+  );
+}
+
+window.WalletScreen = WalletScreen;
+

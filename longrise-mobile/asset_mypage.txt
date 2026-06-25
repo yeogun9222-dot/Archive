@@ -1,0 +1,621 @@
+﻿/* LONGRISE Mobile — MY page (profile, security, support) as overlay */
+function MyPage(props) {
+  const ctx = React.useContext(AppCtx);
+  const D = window.LR_DATA;
+  const [twoFa, setTwoFa] = React.useState(true);
+  const [gaDisableConfirm, setGaDisableConfirm] = React.useState(false);
+  const [signOutConfirm, setSignOutConfirm] = React.useState(false);
+  const [notif, setNotif] = React.useState(true);
+
+  /* ══════════════════════════════════════════════════
+     TRADING PASSWORD — 3 distinct modal states
+     tpModal: null | "status" | "setup" | "change" | "done"
+     tpStage (setup):  "new" | "confirm"
+     tpStage (change): "cur" | "new" | "confirm"
+  ══════════════════════════════════════════════════ */
+  const [tpModal, setTpModal]       = React.useState(null);
+  const [tpStage, setTpStage]       = React.useState("new");
+  const [tpSetupNew, setTpSetupNew] = React.useState("");
+  const [tpSetupCon, setTpSetupCon] = React.useState("");
+  const [tpChgCur,  setTpChgCur]   = React.useState("");
+  const [tpChgNew,  setTpChgNew]   = React.useState("");
+  const [tpChgCon,  setTpChgCon]   = React.useState("");
+  const [tpErr,     setTpErr]       = React.useState(false);
+  const [tpShake,   setTpShake]     = React.useState(false);
+  const [tpShowPin, setTpShowPin]   = React.useState(false);
+
+  /* ── Google Authenticator states ── */
+  const [gaOpen,  setGaOpen]  = React.useState(false);
+  const [gaOtp,   setGaOtp]   = React.useState("");
+  const [gaErr,   setGaErr]   = React.useState(false);
+  const [gaDone,  setGaDone]  = React.useState(false);
+  var GA_KEY = "A2FR7S46OL2UIZRIP2OESIMQBT7AVX06";
+  var gaKeys  = ["1","2","3","4","5","6","7","8","9","","0","DEL"];
+
+  /* ─── open trading password modal ─── */
+  function openTp() {
+    setTpErr(false); setTpShowPin(false);
+    if (ctx.tradingPwd) {
+      setTpModal("status");
+    } else {
+      setTpModal("setup"); setTpStage("new");
+      setTpSetupNew(""); setTpSetupCon("");
+    }
+  }
+  function closeTp() {
+    setTpModal(null); setTpErr(false); setTpShowPin(false);
+    setTpSetupNew(""); setTpSetupCon("");
+    setTpChgCur(""); setTpChgNew(""); setTpChgCon("");
+  }
+  function startChange() {
+    setTpModal("change"); setTpStage("cur");
+    setTpChgCur(""); setTpChgNew(""); setTpChgCon("");
+    setTpErr(false); setTpShowPin(false);
+  }
+
+  /* ─── current pin being typed (for dots display) ─── */
+  function tpCurrent() {
+    if (tpModal === "setup")  return tpStage === "new" ? tpSetupNew : tpSetupCon;
+    if (tpModal === "change") {
+      if (tpStage === "cur")     return tpChgCur;
+      if (tpStage === "new")     return tpChgNew;
+      if (tpStage === "confirm") return tpChgCon;
+    }
+    return "";
+  }
+
+  /* ─── numpad tap handler ─── */
+  function tpTap(k) {
+    var cur = tpCurrent();
+    function setVal(v) {
+      if (tpModal === "setup") {
+        if (tpStage === "new")     setTpSetupNew(v);
+        else                       setTpSetupCon(v);
+      } else {
+        if (tpStage === "cur")     setTpChgCur(v);
+        else if (tpStage === "new")setTpChgNew(v);
+        else                       setTpChgCon(v);
+      }
+    }
+    if (k === "DEL") { setVal(cur.slice(0,-1)); setTpErr(false); return; }
+    /* ── OK: confirm current step ── */
+    if (k === "OK") {
+      if (cur.length < 6) return;
+      /* setup flow */
+      if (tpModal === "setup" && tpStage === "new") {
+        setTpStage("confirm"); setTpShowPin(false); return;
+      }
+      if (tpModal === "setup" && tpStage === "confirm") {
+        if (cur === tpSetupNew) {
+          ctx.setTradingPwd(tpSetupNew); setTpModal("done"); ctx.notify("Trading password set");
+        } else {
+          setTpShake(true); setTpErr(true);
+          setTimeout(function() { setTpShake(false); setTpSetupCon(""); setTpErr(false); }, 700);
+        }
+        return;
+      }
+      /* change flow */
+      if (tpModal === "change" && tpStage === "cur") {
+        if (cur === ctx.tradingPwd) {
+          setTpStage("new"); setTpShowPin(false);
+        } else {
+          setTpShake(true); setTpErr(true);
+          setTimeout(function() { setTpShake(false); setTpChgCur(""); setTpErr(false); }, 700);
+        }
+        return;
+      }
+      if (tpModal === "change" && tpStage === "new") {
+        setTpStage("confirm"); setTpShowPin(false); return;
+      }
+      if (tpModal === "change" && tpStage === "confirm") {
+        if (cur === tpChgNew) {
+          ctx.setTradingPwd(tpChgNew); setTpModal("done"); ctx.notify("Trading password changed");
+        } else {
+          setTpShake(true); setTpErr(true);
+          setTimeout(function() { setTpShake(false); setTpChgCon(""); setTpErr(false); }, 700);
+        }
+        return;
+      }
+    }
+    if (cur.length >= 6) return;
+    setVal(cur + k);
+  }
+
+  /* ─── GA helpers ─── */
+  function openGaSetup() {
+    if (twoFa) { setGaDisableConfirm(true); }
+    else { setGaOpen(true); setGaOtp(""); setGaErr(false); setGaDone(false); }
+  }
+  function confirmGaDisable() {
+    setGaDisableConfirm(false);
+    setTwoFa(false);
+    ctx.notify("Google Authenticator disabled");
+  }
+  function closeGa() { setGaOpen(false); setGaOtp(""); setGaErr(false); setGaDone(false); }
+  function gaTap(k) {
+    if (k === "DEL") { setGaOtp(function(p) { return p.slice(0,-1); }); setGaErr(false); return; }
+    if (gaOtp.length >= 6) return;
+    setGaOtp(gaOtp + k); setGaErr(false);
+  }
+  function verifyGa() {
+    if (gaOtp.length < 6) { setGaErr(true); return; }
+    setGaDone(true);
+    setTimeout(function() { setTwoFa(true); closeGa(); ctx.notify("Google Authenticator enabled"); }, 1400);
+  }
+  function copyGaKey() {
+    if (navigator.clipboard) navigator.clipboard.writeText(GA_KEY).catch(function(){});
+    ctx.notify("Authentication key copied");
+  }
+
+  /* ─── GA QR mock ─── */
+  function GaQRCode() {
+    var code = D.user.id || "LONGRISE2FA";
+    var S = 21, cells = [];
+    for (var r = 0; r < S; r++) {
+      for (var c = 0; c < S; c++) {
+        var dark = false;
+        if (r<=6&&c<=6) { dark=r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4); }
+        else if (r<=6&&c>=14) { var lc=c-14; dark=r===0||r===6||lc===0||lc===6||(r>=2&&r<=4&&lc>=2&&lc<=4); }
+        else if (r>=14&&c<=6) { var lr=r-14; dark=lr===0||lr===6||c===0||c===6||(lr>=2&&lr<=4&&c>=2&&c<=4); }
+        else if (r===6||c===6) { dark=(r+c)%2===0; }
+        else { var seed=r*31+c*17; var ch=code.charCodeAt((r*3+c)%code.length); dark=((seed^ch)&1)===0; }
+        cells.push(dark);
+      }
+    }
+    return (
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(21,1fr)", width:176, height:176, background:"#ffffff", padding:10, borderRadius:12, margin:"0 auto" }}>
+        {cells.map(function(d,i) { return <div key={i} style={{ background: d?"#111":"#fff" }} />; })}
+      </div>
+    );
+  }
+
+  /* ─── Toggle component ─── */
+  function Toggle(p) {
+    return (
+      <button onClick={p.onChange} aria-label={p.label}
+        style={{ appearance:"none", border:"1px solid "+(p.on?"var(--line-gold-mid)":"var(--line-white-soft)"), background: p.on ? "linear-gradient(125deg,var(--gold-highlight),var(--gold-base))" : "var(--surface-void)", width:46, height:27, borderRadius:999, position:"relative", cursor:"pointer", transition:"background .18s ease", flex:"none" }}>
+        <span style={{ position:"absolute", top:2.5, left:p.on?21:3, width:19, height:19, borderRadius:"50%", background:p.on?"var(--color-ink)":"var(--color-muted)", transition:"left .18s ease" }}></span>
+      </button>
+    );
+  }
+
+  /* ─── Numpad helper (shared) ─── */
+  /* Layout: 1 2 3 / 4 5 6 / 7 8 9 / ⌫ 0 OK */
+  function PinNumpad(p) {
+    var onTap = p.onTap, shake = p.shake, err = p.err, pin = p.pin;
+    var keys = ["1","2","3","4","5","6","7","8","9","DEL","0","OK"];
+    var okReady = pin && pin.length === 6;
+    return (
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 80px)", gap:12 }}>
+        {keys.map(function(k, i) {
+          var isOk = k === "OK";
+          var isDel = k === "DEL";
+          var disabled = isOk && !okReady;
+          return (
+            <button key={i} onClick={function() { if (!disabled) onTap(k); }}
+              style={{
+                height:76, borderRadius:18,
+                background: isOk
+                  ? (okReady ? "linear-gradient(135deg,var(--accent),#2563eb)" : "rgba(255,255,255,0.04)")
+                  : (shake&&err ? "rgba(239,68,68,0.10)" : "var(--surface-card)"),
+                border: isOk
+                  ? "1.5px solid "+(okReady ? "var(--accent)" : "rgba(255,255,255,0.10)")
+                  : "1.5px solid "+(shake&&err ? "var(--red-alert)" : "var(--border-card)"),
+                color: isOk
+                  ? (okReady ? "#ffffff" : "rgba(255,255,255,0.20)")
+                  : "var(--text-primary)",
+                fontSize: isDel ? 20 : isOk ? 15 : 26,
+                fontWeight: isOk ? 800 : 600,
+                letterSpacing: isOk ? "0.08em" : 0,
+                cursor: disabled ? "not-allowed" : "pointer",
+                transition:"background .15s, border-color .15s, color .15s",
+                opacity: disabled ? 0.4 : 1
+              }}>
+              {isDel ? "⌫" : k}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ─── PIN box row with eye toggle ─── */
+  function PinDots(p) {
+    var pin = p.pin, showPin = p.showPin, err = p.err, onEye = p.onEye;
+    var borderClr = err ? "var(--red-alert)" : "var(--border-card)";
+    return (
+      <div style={{ width:"100%", maxWidth:320, background:"var(--surface-void)", border:"1.5px solid "+borderClr, borderRadius:16, padding:"16px 16px", display:"flex", alignItems:"center", gap:8, marginBottom:12, transition:"border-color .15s" }}>
+        <div style={{ display:"flex", gap:8, flex:1, justifyContent:"center" }}>
+          {[0,1,2,3,4,5].map(function(i) {
+            var filled = pin.length > i;
+            var boxBorder = "1.5px solid "+(err?"var(--red-alert)":filled?"var(--accent)":"rgba(255,255,255,0.15)");
+            var boxBg = filled ? (err?"rgba(239,68,68,0.08)":"rgba(56,189,248,0.08)") : "rgba(255,255,255,0.03)";
+            return (
+              <div key={i} style={{ width:38, height:52, borderRadius:10, background:boxBg, border:boxBorder, display:"flex", alignItems:"center", justifyContent:"center", transition:"background .15s, border-color .15s" }}>
+                {showPin && filled
+                  ? <span style={{ fontSize:26, fontWeight:800, color:err?"var(--red-alert)":"var(--text-primary)", fontFamily:"monospace", lineHeight:1 }}>{pin[i]}</span>
+                  : filled
+                    ? <div style={{ width:14, height:14, borderRadius:"50%", background:err?"var(--red-alert)":"var(--accent)", transition:"background .15s" }} />
+                    : null
+                }
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={onEye} style={{ background:"none", border:"none", color:showPin?"var(--accent)":"var(--text-secondary)", cursor:"pointer", padding:"4px 2px 4px 8px", flexShrink:0, transition:"color .15s" }}>
+          {showPin
+            ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          }
+        </button>
+      </div>
+    );
+  }
+
+  /* ════════════════════ RENDER ════════════════════ */
+  return (
+    <div className="page-over" data-screen-label="My Profile">
+      <div className="lr-header">
+        <button className="iconbtn" onClick={props.onClose} aria-label="Back">
+          <Icon name="chevL" size={20} />
+        </button>
+        <span className="eyebrow" style={{ color:"var(--color-cream)" }}>My Profile</span>
+        <span style={{ width:44 }}></span>
+      </div>
+
+      <div className="lr-screen">
+        {/* Profile card */}
+        <Card hero style={{ display:"flex", alignItems:"center", gap:14 }}>
+          <div className="avatar" style={{ width:54, height:54, fontSize:18, cursor:"default" }}>{D.user.initials}</div>
+          <div style={{ flex:1 }}>
+            <div className="display" style={{ fontSize:18, fontWeight:700 }}>{D.user.name}</div>
+            <div className="muted mono" style={{ fontSize:11, marginTop:2 }}>{D.user.id} · since {D.user.memberSince}</div>
+          </div>
+          <Pill><Icon name="crown" size={11} /> {D.user.rank}</Pill>
+        </Card>
+
+        {/* Security */}
+        <Card void>
+          <SectionHead title="Security center" />
+          <div className="rowlist" style={{ marginTop:4 }}>
+            {/* Google Authenticator */}
+            <div className="rowitem" style={{ alignItems:"center" }}>
+              <LeadDisc><Icon name="shield" size={16} /></LeadDisc>
+              <div className="grow" style={{ flex:1 }}>
+                <div className="ttl">Google Authenticator</div>
+                <div className="sub">{twoFa ? "2FA enabled · required at login" : "2FA disabled · at risk"}</div>
+              </div>
+              {twoFa
+                ? <Toggle on={twoFa} label="Toggle 2FA" onChange={openGaSetup} />
+                : <button onClick={openGaSetup} style={{ background:"linear-gradient(135deg,var(--gold-base),var(--gold-deep))", color:"#ffffff", border:"none", borderRadius:10, padding:"8px 16px", fontSize:12, fontWeight:800, letterSpacing:"0.06em", cursor:"pointer" }}>SETUP</button>
+              }
+            </div>
+            {/* Trading Password */}
+            <RowItem lead={<LeadDisc><Icon name="lock" size={16} /></LeadDisc>}
+              title="Trading password"
+              sub={ctx.tradingPwd ? "Active · required to access Network" : "Not set · tap to configure"}
+              chev onClick={openTp} />
+            {/* Withdrawal PIN */}
+            <RowItem lead={<LeadDisc><Icon name="scan" size={16} /></LeadDisc>}
+              title="Withdrawal PIN" sub="4-digit settlement PIN" chev
+              onClick={function () { ctx.openSheet("credential", { title:"Withdrawal PIN", kind:"pin" }); }} />
+          </div>
+        </Card>
+
+        {/* Platform */}
+        <Card void>
+          <SectionHead title="Platform" />
+          <div className="rowlist" style={{ marginTop:4 }}>
+            <RowItem lead={<LeadDisc><Icon name="bell" size={16} /></LeadDisc>}
+              title="Notifications" sub="Dividends, settlements, announcements"
+              trail={<Toggle on={notif} label="Toggle notifications" onChange={function () { setNotif(!notif); }} />} />
+            <RowItem lead={<LeadDisc><Icon name="support" size={16} /></LeadDisc>}
+              title="Support tickets" sub="Live operational queue" chev
+              onClick={function () { ctx.openSheet("support"); }} />
+            <RowItem lead={<LeadDisc><Icon name="doc" size={16} /></LeadDisc>}
+              title="Documentation" sub="Guides · whitepaper · roadmap" chev
+              onClick={ctx.openStartHere} />
+            <RowItem lead={<LeadDisc><Icon name="gear" size={16} /></LeadDisc>}
+              title="Platform settings" sub="Language · currency display" chev
+              onClick={function () { ctx.openSheet("settings"); }} />
+          </div>
+        </Card>
+
+<Btn variant="ghost" block onClick={function () { setSignOutConfirm(true); }}>Sign out</Btn>
+      </div>
+
+      {/* ════════════════════════════════════════════
+          TRADING PASSWORD MODALS  (zIndex 300)
+          STATE 1: status  — password is set
+          STATE 2: setup   — first-time setup
+          STATE 3: change  — change existing password
+          STATE 4: done    — success
+      ════════════════════════════════════════════ */}
+      {(tpModal === "status" || tpModal === "setup" || tpModal === "change" || tpModal === "done") && (
+        <div style={{ position:"fixed", inset:0, background:"var(--bg-page)", zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 32px" }}>
+          {/* Close */}
+          <button onClick={closeTp} style={{ position:"absolute", top:20, right:16, background:"none", border:"none", color:"var(--text-secondary)", cursor:"pointer", padding:8 }}>
+            <Icon name="x" size={20} />
+          </button>
+
+          {/* ── STATUS: password already set ── */}
+          {tpModal === "status" && (
+            <React.Fragment>
+              <div style={{ width:64, height:64, borderRadius:"50%", background:"rgba(16,185,129,0.12)", border:"2px solid var(--green-success)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+                <Icon name="lock" size={28} style={{ color:"var(--green-success)" }} />
+              </div>
+              <div className="display" style={{ fontSize:20, fontWeight:800, letterSpacing:"0.06em", color:"var(--text-primary)", marginBottom:6, textAlign:"center" }}>
+                TRADING <span style={{ color:"var(--accent)" }}>PASSWORD</span>
+              </div>
+              <div style={{ display:"inline-flex", alignItems:"center", gap:6, background:"rgba(16,185,129,0.10)", border:"1px solid rgba(16,185,129,0.30)", borderRadius:20, padding:"5px 14px", marginBottom:28 }}>
+                <div style={{ width:7, height:7, borderRadius:"50%", background:"var(--green-success)" }} />
+                <span style={{ fontSize:12, fontWeight:700, color:"var(--green-success)", letterSpacing:"0.06em" }}>ACTIVE</span>
+              </div>
+              <Card void style={{ width:"100%", maxWidth:320, padding:"16px 18px", marginBottom:28 }}>
+                <div style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+                  <Icon name="shield" size={18} style={{ color:"var(--accent)", flexShrink:0, marginTop:2 }} />
+                  <div className="muted" style={{ fontSize:13, lineHeight:1.7 }}>
+                    Your trading password is set and active.<br />
+                    Required each time you access the Network tab.
+                  </div>
+                </div>
+              </Card>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", maxWidth:320 }}>
+                <Btn variant="ghost" onClick={closeTp}>Close</Btn>
+                <Btn onClick={startChange}>Change Password</Btn>
+              </div>
+            </React.Fragment>
+          )}
+
+          {/* ── SETUP: first-time setup ── */}
+          {tpModal === "setup" && (
+            <React.Fragment>
+              <div style={{ width:56, height:56, borderRadius:16, background:"var(--surface-card)", border:"1px solid var(--border-card)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
+                <Icon name="lock" size={26} style={{ color:"var(--accent)" }} />
+              </div>
+              <div className="display" style={{ fontSize:22, fontWeight:800, letterSpacing:"0.06em", color:"var(--text-primary)", marginBottom:24, textAlign:"center" }}>
+                TRADING <span style={{ color:"var(--accent)" }}>PASSWORD</span>
+              </div>
+              {/* Section label */}
+              <div style={{ width:"100%", maxWidth:320, marginBottom:8 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                  <div style={{ width:3, height:16, borderRadius:2, background: tpStage==="new"?"var(--accent)":"var(--green-success)" }} />
+                  <span style={{ fontSize:10, fontWeight:800, letterSpacing:"0.12em", color: tpStage==="new"?"var(--accent)":"var(--green-success)" }}>
+                    {tpStage === "new" ? "NEW TRADING PASSWORD" : "CONFIRM NEW PASSWORD"}
+                  </span>
+                </div>
+                <div className="muted" style={{ fontSize:12, paddingLeft:11, lineHeight:1.5 }}>
+                  {tpStage === "new" ? "Enter a 6-digit password" : "Re-enter to confirm"}
+                </div>
+              </div>
+              <PinDots pin={tpCurrent()} showPin={tpShowPin} err={tpErr} onEye={function() { setTpShowPin(!tpShowPin); }} />
+              <div style={{ height:20, marginBottom:14, fontSize:12, color:"var(--red-alert)", textAlign:"center", width:"100%", maxWidth:320 }}>
+                {tpErr ? "Passwords do not match — try again" : " "}
+              </div>
+              <PinNumpad onTap={tpTap} shake={tpShake} err={tpErr} pin={tpCurrent()} />
+            </React.Fragment>
+          )}
+
+          {/* ── CHANGE: change existing password ── */}
+          {tpModal === "change" && (
+            <React.Fragment>
+              <div style={{ width:56, height:56, borderRadius:16, background:"var(--surface-card)", border:"1px solid var(--border-card)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
+                <Icon name="lock" size={26} style={{ color:"var(--accent)" }} />
+              </div>
+              <div className="display" style={{ fontSize:22, fontWeight:800, letterSpacing:"0.06em", color:"var(--text-primary)", marginBottom:18, textAlign:"center" }}>
+                TRADING <span style={{ color:"var(--accent)" }}>PASSWORD</span>
+              </div>
+              {/* Step progress — 3 steps with labels */}
+              <div style={{ display:"flex", alignItems:"flex-end", gap:4, marginBottom:22, width:"100%", maxWidth:320 }}>
+                {[{s:"cur",label:"CURRENT"},{s:"new",label:"NEW"},{s:"confirm",label:"CONFIRM"}].map(function(item,i) {
+                  var stages = ["cur","new","confirm"];
+                  var curIdx = stages.indexOf(tpStage);
+                  var done = curIdx > i;
+                  var active = tpStage === item.s;
+                  return (
+                    <React.Fragment key={i}>
+                      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
+                        <div style={{ width:"100%", height:4, borderRadius:4, background: done?"var(--green-success)":active?"var(--accent)":"rgba(255,255,255,0.12)", transition:"background .3s" }} />
+                        <span style={{ fontSize:9, fontWeight:800, letterSpacing:"0.1em", color: done?"var(--green-success)":active?"var(--accent)":"var(--text-secondary)", transition:"color .3s" }}>{item.label}</span>
+                      </div>
+                      {i < 2 && <div style={{ width:10, height:4, flexShrink:0 }} />}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+              {/* Section label */}
+              <div style={{ width:"100%", maxWidth:320, marginBottom:8 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                  <div style={{ width:3, height:16, borderRadius:2, background: tpStage==="cur"?"var(--gold-base)":"var(--accent)" }} />
+                  <span style={{ fontSize:10, fontWeight:800, letterSpacing:"0.12em", color: tpStage==="cur"?"var(--gold-base)":"var(--accent)" }}>
+                    {tpStage === "cur" ? "CURRENT TRADING PASSWORD" : tpStage === "new" ? "NEW TRADING PASSWORD" : "CONFIRM NEW PASSWORD"}
+                  </span>
+                </div>
+                <div className="muted" style={{ fontSize:12, paddingLeft:11, lineHeight:1.5 }}>
+                  {tpStage === "cur" ? "Enter your existing 6-digit password" : tpStage === "new" ? "Enter a new 6-digit password" : "Re-enter new password to confirm"}
+                </div>
+              </div>
+              <PinDots pin={tpCurrent()} showPin={tpShowPin} err={tpErr} onEye={function() { setTpShowPin(!tpShowPin); }} />
+              <div style={{ height:20, marginBottom:14, fontSize:12, color:"var(--red-alert)", textAlign:"center", width:"100%", maxWidth:320 }}>
+                {tpErr ? (tpStage==="cur" ? "Incorrect password — try again" : "Passwords do not match — try again") : " "}
+              </div>
+              <PinNumpad onTap={tpTap} shake={tpShake} err={tpErr} pin={tpCurrent()} />
+            </React.Fragment>
+          )}
+
+          {/* ── DONE ── */}
+          {tpModal === "done" && (
+            <React.Fragment>
+              <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(16,185,129,0.15)", border:"2px solid var(--green-success)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:24 }}>
+                <Icon name="check" size={32} style={{ color:"var(--green-success)" }} />
+              </div>
+              <div className="display" style={{ fontSize:20, fontWeight:800, color:"var(--text-primary)", marginBottom:8, textAlign:"center" }}>Password Saved</div>
+              <div className="muted" style={{ fontSize:13, textAlign:"center", marginBottom:32, lineHeight:1.7 }}>
+                Network access is now protected.<br />You will be asked for this password each time you visit the Network tab.
+              </div>
+              <Btn onClick={closeTp}>Done</Btn>
+            </React.Fragment>
+          )}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          GOOGLE AUTHENTICATOR DISABLE CONFIRMATION
+      ════════════════════════════════════════════ */}
+      {gaDisableConfirm && (
+        <div style={{ position:"fixed", inset:0, background:"var(--bg-page)", zIndex:310, display:"flex", flexDirection:"column" }}>
+          {/* Header */}
+          <div style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px 14px", borderBottom:"1px solid var(--border-card)" }}>
+            <div style={{ fontSize:10.5, fontWeight:800, letterSpacing:"0.13em", color:"var(--red-alert)", textTransform:"uppercase" }}>Security Warning</div>
+            <button onClick={function(){ setGaDisableConfirm(false); }}
+              style={{ appearance:"none", background:"rgba(255,255,255,0.06)", border:"1px solid var(--border-card)", borderRadius:"50%", width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--text-primary)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          {/* Body */}
+          <div style={{ flex:1, overflowY:"auto", padding:"28px 24px 32px", display:"flex", flexDirection:"column", gap:24, WebkitOverflowScrolling:"touch" }}>
+            {/* Warning icon */}
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
+              <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(239,68,68,0.12)", border:"2px solid var(--red-alert)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--red-alert)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:20, fontWeight:800, color:"var(--text-primary)", lineHeight:1.3, marginBottom:8 }}>Disable Google Authenticator?</div>
+                <div style={{ fontSize:14, color:"var(--text-secondary)", lineHeight:1.6 }}>Your current 2FA protection will be removed.<br />Please read the following carefully.</div>
+              </div>
+            </div>
+            {/* Warning points */}
+            <div style={{ background:"rgba(239,68,68,0.07)", border:"1px solid rgba(239,68,68,0.25)", borderRadius:16, padding:"18px 20px", display:"flex", flexDirection:"column", gap:14 }}>
+              {[
+                { icon:"🔑", text:"Your existing secret key will be permanently invalidated. You will not be able to recover it." },
+                { icon:"📱", text:"A new secret key will be issued on re-setup. You must re-scan the QR code in your Google Authenticator app." },
+                { icon:"🔓", text:"Your account will have no 2FA protection during the period between disabling and re-enabling." },
+                { icon:"💸", text:"Withdrawals and sensitive operations require 2FA. Disabling will restrict these actions until 2FA is restored." }
+              ].map(function(item, i) {
+                return (
+                  <div key={i} style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+                    <span style={{ fontSize:18, flexShrink:0, marginTop:1 }}>{item.icon}</span>
+                    <span style={{ fontSize:13.5, color:"var(--text-secondary)", lineHeight:1.62 }}>{item.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Confirm text */}
+            <div style={{ background:"rgba(185,154,107,0.07)", border:"1px solid rgba(185,154,107,0.2)", borderRadius:12, padding:"13px 16px" }}>
+              <div style={{ fontSize:12.5, color:"var(--gold-highlight)", lineHeight:1.65, textAlign:"center" }}>
+                Once disabled, your previous key is gone forever.<br />A new key will be issued when you re-enable 2FA.
+              </div>
+            </div>
+            {/* Buttons */}
+            <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:4 }}>
+              <button onClick={confirmGaDisable}
+                style={{ appearance:"none", background:"var(--red-alert)", border:"none", borderRadius:14, padding:"15px", fontSize:15, fontWeight:800, letterSpacing:"0.05em", color:"#fff", cursor:"pointer" }}>
+                Yes, Disable 2FA
+              </button>
+              <button onClick={function(){ setGaDisableConfirm(false); }}
+                style={{ appearance:"none", background:"rgba(255,255,255,0.05)", border:"1.5px solid var(--border-card)", borderRadius:14, padding:"15px", fontSize:15, fontWeight:700, color:"var(--text-primary)", cursor:"pointer" }}>
+                Cancel — Keep 2FA Active
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          SIGN OUT CONFIRMATION
+      ════════════════════════════════════════════ */}
+      {signOutConfirm && (
+        <div className="pop-backdrop" style={{ zIndex:400 }} onClick={function(e){ if(e.target===e.currentTarget) setSignOutConfirm(false); }}>
+          <div className="pop-card" role="dialog" aria-modal="true">
+            <div className="pop-icon" style={{ color:"var(--text-secondary)", background:"rgba(255,255,255,0.06)", border:"1px solid var(--border-card)" }}>
+              <Icon name="logout" size={22} weight={2} />
+            </div>
+            <div className="pop-tag">Sign Out</div>
+            <div className="pop-title">Are you sure?</div>
+            <div className="pop-body">You will be signed out of your LONGRISE account. You can sign back in at any time.</div>
+            <button className="btn block" style={{ background:"none", border:"1.5px solid rgba(239,68,68,0.40)", color:"var(--red-alert)", borderRadius:14, padding:"14px", fontSize:14, fontWeight:800, cursor:"pointer", marginBottom:10 }} onClick={function(){ props.onClose(); ctx.signOut(); }}>Yes, Sign Out</button>
+            <button className="btn ghost block" onClick={function(){ setSignOutConfirm(false); }}>Cancel — Stay Signed In</button>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          GOOGLE AUTHENTICATOR SETUP MODAL
+      ════════════════════════════════════════════ */}
+      {gaOpen && (
+        <div style={{ position:"fixed", inset:0, background:"var(--bg-page)", zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", overflowY:"auto" }}>
+          <button onClick={closeGa} style={{ position:"absolute", top:20, right:16, background:"none", border:"none", color:"var(--text-secondary)", cursor:"pointer", padding:8 }}>
+            <Icon name="x" size={22} />
+          </button>
+          <div style={{ width:"100%", maxWidth:360, padding:"60px 28px 40px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+            <div style={{ width:56, height:56, borderRadius:16, background:"var(--surface-card)", border:"1px solid var(--border-card)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18 }}>
+              <Icon name="scan" size={28} style={{ color:"var(--accent)" }} />
+            </div>
+            <div className="display" style={{ fontSize:20, fontWeight:800, letterSpacing:"0.06em", color:"var(--text-primary)", textAlign:"center", marginBottom:4 }}>
+              GOOGLE <span style={{ color:"var(--accent)" }}>AUTHENTICATOR</span>
+            </div>
+            <div className="muted" style={{ fontSize:11, letterSpacing:"0.1em", textAlign:"center", marginBottom:28, lineHeight:1.6 }}>
+              ENABLE TWO-FACTOR AUTHENTICATION<br />FOR ENHANCED SECURITY
+            </div>
+            {!gaDone ? (
+              <React.Fragment>
+                <GaQRCode />
+                <div style={{ width:"100%", marginTop:20, marginBottom:20 }}>
+                  <div style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", color:"var(--accent)", marginBottom:8, textAlign:"center" }}>MANUAL AUTHENTICATION KEY</div>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, background:"var(--surface-void)", border:"1px solid var(--border-card)", borderRadius:12, padding:"12px 14px" }}>
+                    <span className="mono" style={{ flex:1, fontSize:12, fontWeight:700, color:"var(--text-primary)", letterSpacing:"0.08em", wordBreak:"break-all" }}>{GA_KEY}</span>
+                    <button onClick={copyGaKey} style={{ background:"none", border:"none", color:"var(--text-secondary)", cursor:"pointer", flexShrink:0, padding:4 }}>
+                      <Icon name="copy" size={18} />
+                    </button>
+                  </div>
+                </div>
+                <div style={{ width:"100%", marginBottom:14 }}>
+                  <div style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", color:"var(--accent)", marginBottom:12, textAlign:"center" }}>VERIFY 6-DIGIT CODE</div>
+                  <div style={{ display:"flex", gap:10, justifyContent:"center", marginBottom:4 }}>
+                    {[0,1,2,3,4,5].map(function(i) {
+                      var filled = gaOtp.length > i;
+                      return (
+                        <div key={i} style={{ width:40, height:52, borderRadius:12, background: filled?"rgba(56,189,248,0.08)":"var(--surface-void)", border:"1.5px solid "+(gaErr?"var(--red-alert)":filled?"var(--accent)":"var(--border-card)"), display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, fontWeight:800, color:gaErr?"var(--red-alert)":"var(--text-primary)", fontFamily:"monospace", transition:"border-color .15s" }}>
+                          {gaOtp[i] || ""}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ height:18, fontSize:11, color:"var(--text-secondary)", textAlign:"center", marginBottom:4 }}>
+                    {gaErr ? <span style={{ color:"var(--red-alert)" }}>Please enter a valid 6-digit code</span> : "From your Google Authenticator app"}
+                  </div>
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 76px)", gap:10, marginBottom:24 }}>
+                  {gaKeys.map(function(k, i) {
+                    if (k === "") return <div key={i} />;
+                    return (
+                      <button key={i} onClick={function() { gaTap(k); }}
+                        style={{ height:72, borderRadius:16, background:"var(--surface-card)", border:"1.5px solid var(--border-card)", color:"var(--text-primary)", fontSize:k==="DEL"?20:24, fontWeight:600, cursor:"pointer", transition:"background .12s" }}>
+                        {k === "DEL" ? "⌫" : k}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%" }}>
+                  <Btn variant="ghost" onClick={closeGa}>Cancel</Btn>
+                  <Btn disabled={gaOtp.length < 6} onClick={verifyGa}>Verify &amp; Enable</Btn>
+                </div>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(16,185,129,0.15)", border:"2px solid var(--green-success)", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+                  <Icon name="check" size={32} style={{ color:"var(--green-success)" }} />
+                </div>
+                <div className="display" style={{ fontSize:18, fontWeight:700, color:"var(--text-primary)", marginBottom:8, textAlign:"center" }}>2FA Enabled</div>
+                <div className="muted" style={{ fontSize:13, textAlign:"center", lineHeight:1.7 }}>Your account is now protected with<br />Google Authenticator.</div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+window.MyPage = MyPage;
+

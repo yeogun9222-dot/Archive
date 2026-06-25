@@ -1,0 +1,188 @@
+﻿/* LONGRISE Mobile — login overlays + ALL (전체) menu page
+   - ConsentGate: shown every login. Risk Notice + Terms, each consented separately.
+   - ImportantNoticePopup: optional second popup, only when D.importantNotice is set.
+   - StartHereNudge: shown to new / no-purchase users after notices.
+   - AllScreen: the "전체" tab — a full hotlink hub (replaces any sidebar/drawer). */
+
+/* ---------- Consent gate (Risk Notice + Terms) ---------- */
+function ConsentGate(props) {
+  const D = window.LR_DATA;
+  const [riskOk, setRiskOk] = React.useState(false);
+  const [termsOk, setTermsOk] = React.useState(false);
+  const both = riskOk && termsOk;
+
+  function Box(p) {
+    return (
+      <div className="consent-box">
+        <div className="consent-box-label">{p.label}</div>
+        <div className="consent-text">{p.text}</div>
+        <button className={"consent-check" + (p.on ? " on" : "")} onClick={p.onToggle}>
+          <span className="cbox">{p.on && <Icon name="check" size={13} weight={2.4} />}</span>
+          {p.agree}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="consent-gate" role="dialog" aria-modal="true" aria-label="Risk notice and terms">
+      <div className="consent-card">
+        <div className="consent-head">
+          <div className="lr-brandmark">
+            <img src={window.LR_IMG("iconGold")} alt="LONGRISE" />
+            <span className="lr-wordmark">LONG<em>RISE</em></span>
+          </div>
+          <div className="consent-title">Before you continue</div>
+          <div className="consent-sub">Please review and agree to each item to access your account.</div>
+        </div>
+
+        <div className="consent-boxes">
+          <Box label="1 · Risk Notice" text={D.riskNotice} on={riskOk}
+            agree="I have read and agree to the Risk Notice"
+            onToggle={function () { setRiskOk(!riskOk); }} />
+          <Box label="2 · Terms of Service" text={D.terms} on={termsOk}
+            agree="I have read and agree to the Terms of Service"
+            onToggle={function () { setTermsOk(!termsOk); }} />
+        </div>
+
+        <button className={"btn gold block consent-confirm" + (both ? "" : " is-disabled")}
+          disabled={!both} onClick={props.onAgree}>
+          Agree &amp; continue
+        </button>
+        <div className="consent-foot">You must agree each time you sign in.</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Important notice (second popup) ---------- */
+function ImportantNoticePopup(props) {
+  const n = props.notice;
+  return (
+    <div className="pop-backdrop" onClick={function (e) { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="pop-card" role="dialog" aria-modal="true">
+        <div className="pop-icon alert"><Icon name="alert" size={22} weight={2} /></div>
+        <div className="pop-tag">{n.tag}</div>
+        <div className="pop-title">{n.title}</div>
+        <div className="pop-body">{n.body}</div>
+        <button className="btn gold block" onClick={props.onClose}>Got it</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Start Here nudge (new users) ---------- */
+function StartHereNudge(props) {
+  const ctx = React.useContext(AppCtx);
+  return (
+    <div className="pop-backdrop" onClick={function (e) { if (e.target === e.currentTarget) props.onClose(); }}>
+      <div className="pop-card" role="dialog" aria-modal="true">
+        <div className="pop-icon gold"><Icon name="bolt" size={22} weight={2} /></div>
+        <div className="pop-tag" style={{ color: "var(--gold-glow)" }}>New here?</div>
+        <div className="pop-title">Master LongRise in 3 minutes</div>
+        <div className="pop-body">Follow the Start Here guide — buy a package, watch it earn, and grow. We'll walk you through every step.</div>
+        <button className="btn gold block" onClick={function () { props.onClose(); ctx.openStartHere(); }}>Open Start Here</button>
+        <button className="btn ghost block" style={{ marginTop: 8 }} onClick={props.onClose}>Maybe later</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- ALL (전체) menu page ---------- */
+function AllScreen(props) {
+  const ctx = React.useContext(AppCtx);
+  const D = window.LR_DATA;
+  const [signOutConfirm, setSignOutConfirm] = React.useState(false);
+
+  function Tile(p) {
+    var icBg  = p.icBg  || "rgba(185,154,107,0.18)";
+    var icClr = p.icClr || "var(--gold-highlight)";
+    return (
+      <button className={"all-tile" + (p.soon ? " soon" : "")} onClick={p.onClick}>
+        <span className="all-ic" style={{ background:icBg, color:icClr }}>
+          <Icon name={p.icon} size={26} />
+        </span>
+        <span className="all-name">{p.name}</span>
+        {p.soon && <span className="all-soon">Soon</span>}
+      </button>
+    );
+  }
+
+  return (
+    <div className="lr-screen" data-screen-label="All">
+      <div>
+        <Eyebrow>All</Eyebrow>
+        <div className="display" style={{ fontSize: 21, fontWeight: 700, letterSpacing: "0.04em", marginTop: 2 }}>
+          Everything in one place
+        </div>
+      </div>
+
+      {/* Start Here highlight */}
+      <button className="all-starthere" onClick={ctx.openStartHere}>
+        <span className="all-ic gold"><Icon name="bolt" size={20} /></span>
+        <span className="grow">
+          <span className="all-sh-title">Start Here</span>
+          <span className="all-sh-sub">New? Master LongRise in 3 minutes</span>
+        </span>
+        <Icon name="chevR" size={16} style={{ color: "var(--gold-base)" }} />
+      </button>
+
+      <Card void>
+        <SectionHead title="Main" />
+        <div className="all-grid">
+          <Tile icon="invest" name="Plans"   icBg="rgba(185,154,107,0.22)" icClr="var(--gold-highlight)" onClick={function () { ctx.goTab("PLANS"); }} />
+          <Tile icon="team"   name="Network" icBg="rgba(185,154,107,0.22)" icClr="var(--gold-highlight)" onClick={function () { ctx.goTab("NETWORK"); }} />
+          <Tile icon="home"   name="Earn"    icBg="rgba(185,154,107,0.22)" icClr="var(--gold-highlight)" onClick={function () { ctx.goTab("EARN"); }} />
+          <Tile icon="wallet" name="Wallet"  icBg="rgba(185,154,107,0.22)" icClr="var(--gold-highlight)" onClick={function () { ctx.goTab("WALLET"); }} />
+          <Tile icon="user"   name="Profile" icBg="rgba(185,154,107,0.22)" icClr="var(--gold-highlight)" onClick={props.onOpenMy} />
+        </div>
+      </Card>
+
+      <Card void>
+        <SectionHead title="Trade & Markets" />
+        <div className="all-grid">
+          <Tile icon="market"    name="Market"   soon icBg="rgba(56,189,248,0.14)" icClr="#38bdf8" onClick={function () { ctx.notify("Market opens in a future update"); }} />
+          <Tile icon="swap"      name="Swap"          icBg="rgba(56,189,248,0.14)" icClr="#38bdf8" onClick={function () { ctx.goTab("WALLET", { open: "swap" }); }} />
+          <Tile icon="arrowDown" name="Deposit"        icBg="rgba(56,189,248,0.14)" icClr="#38bdf8" onClick={function () { ctx.goTab("WALLET", { open: "deposit" }); }} />
+          <Tile icon="arrowUp"   name="Withdraw"       icBg="rgba(56,189,248,0.14)" icClr="#38bdf8" onClick={function () { ctx.goTab("WALLET", { open: "withdraw" }); }} />
+        </div>
+      </Card>
+
+      <Card void>
+        <SectionHead title="Account" />
+        <div className="all-grid">
+          <Tile icon="alert"   name="News"     icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={function () { ctx.openSheet("news"); }} />
+          <Tile icon="shield"  name="Security" icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={props.onOpenMy} />
+          <Tile icon="bell"    name="Alerts"   icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={function () { ctx.openSheet("alerts"); }} />
+          <Tile icon="doc"     name="Docs"     icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={ctx.openStartHere} />
+          <Tile icon="gear"    name="Settings" icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={function () { ctx.openSheet("settings"); }} />
+          <Tile icon="support" name="Support"  icBg="rgba(167,139,250,0.15)" icClr="#a78bfa" onClick={function () { ctx.openSheet("support"); }} />
+        </div>
+      </Card>
+
+      <button className="all-signout" onClick={function(){ setSignOutConfirm(true); }}>
+        <Icon name="logout" size={18} /> Sign out
+      </button>
+
+      {signOutConfirm && (
+        <div className="pop-backdrop" style={{ zIndex:400 }} onClick={function(e){ if(e.target===e.currentTarget) setSignOutConfirm(false); }}>
+          <div className="pop-card" role="dialog" aria-modal="true">
+            <div className="pop-icon" style={{ color:"var(--text-secondary)", background:"rgba(255,255,255,0.06)", border:"1px solid var(--border-card)" }}>
+              <Icon name="logout" size={22} weight={2} />
+            </div>
+            <div className="pop-tag">Sign Out</div>
+            <div className="pop-title">Are you sure?</div>
+            <div className="pop-body">You will be signed out of your LONGRISE account. You can sign back in at any time.</div>
+            <button className="btn block" style={{ background:"none", border:"1.5px solid rgba(239,68,68,0.40)", color:"var(--red-alert)", borderRadius:14, padding:"14px", fontSize:14, fontWeight:800, cursor:"pointer", marginBottom:10 }} onClick={ctx.signOut}>Yes, Sign Out</button>
+            <button className="btn ghost block" onClick={function(){ setSignOutConfirm(false); }}>Cancel — Stay Signed In</button>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+Object.assign(window, { ConsentGate, ImportantNoticePopup, StartHereNudge, AllScreen });
+
+
