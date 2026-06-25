@@ -8,12 +8,13 @@ from .db import create_task, log_conversation
 from .personas import detect_persona, get_system_prompt, PERSONAS
 from .monitor import log_token_usage
 from .notion_tools import get_all_tools
+from .web_tools import get_all_web_tools
 
 load_dotenv()
 
 TEAM_MEMBERS = list(PERSONAS.keys())
-NOTION_TOOLS = get_all_tools()
-TOOL_MAP = {t.name: t for t in NOTION_TOOLS}
+ALL_TOOLS = get_all_tools() + get_all_web_tools()
+TOOL_MAP = {t.name: t for t in ALL_TOOLS}
 
 
 class JakeState(TypedDict):
@@ -30,7 +31,7 @@ def _build_llm():
         model="claude-sonnet-4-6",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=4096
-    ).bind_tools(NOTION_TOOLS)
+    ).bind_tools(ALL_TOOLS)
 
 
 def agent_node(state: JakeState) -> JakeState:
