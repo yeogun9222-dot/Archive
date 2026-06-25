@@ -1,0 +1,288 @@
+﻿/* LONGRISE Mobile — HOME screen */
+
+/* Animated futures candlestick chart (compact) — wraps the vanilla LRChart
+   engine. Respects the Live-feed / motion toggle; reports live price + the
+   engine signal/latency stats back up via callbacks. */
+function FuturesChart(props) {
+  const ctx = React.useContext(AppCtx);
+  const ref = React.useRef(null);
+  const lastTs = React.useRef(0);
+  const [px, setPx] = React.useState({ last: 67200, open: 67200 });
+
+  React.useEffect(function () {
+    if (!ref.current || !window.LRChart) return;
+    const chart = window.LRChart(ref.current, {
+      compact: true, start: 67213.5, decimals: 1, ai: true,
+      onPrice: function (last, firstOpen) {
+        const now = Date.now();
+        if (now - lastTs.current < 550) return;
+        lastTs.current = now;
+        setPx({ last: last, open: firstOpen });
+      },
+      onStats: props.onStats
+    });
+    /* Paint one frame synchronously so the chart shows immediately even where
+       requestAnimationFrame is paused (PDF export, backgrounded tab). */
+    if (chart && chart.render) chart.render();
+    if (!ctx.motionOn) { chart.stop(); chart.render(); }
+    // liveOn과 별도: 모션 off여도 AI 신호는 유지 (차트만 정지)
+    return function () { chart.stop(); };
+  }, [ctx.motionOn]);
+
+  const chg = px.open ? ((px.last - px.open) / px.open) * 100 : 0;
+  const up = chg >= 0;
+  return (
+    <div className="fchart">
+      <div className="fchart-head">
+        <div className="fchart-pair">
+          <span className="fchart-sym">BTC/USDT</span>
+          <span className="fchart-perp">PERP</span>
+          {ctx.motionOn && <Pill live style={{ marginLeft: 2 }}>AI</Pill>}
+        </div>
+        <div className="fchart-px num">
+          {window.LR_FMT(px.last, 1)}
+          <span className={"num " + (up ? "green" : "red")} style={{ fontSize: 11, marginLeft: 6, fontWeight: 700 }}>
+            {up ? "+" : ""}{chg.toFixed(2)}%
+          </span>
+        </div>
+      </div>
+      <div className="fchart-canvas"><canvas ref={ref}></canvas></div>
+    </div>
+  );
+}
+
+function HomeScreen() {
+  const ctx = React.useContext(AppCtx);
+  const D = window.LR_DATA, fmt = window.LR_FMT;
+  const [trades, setTrades] = React.useState(D.trades);
+  const [eng, setEng] = React.useState({ signals: D.engine.signals, latency: D.engine.latency });
+
+  React.useEffect(function () {
+    if (!ctx.liveOn) return;
+    const t = setInterval(function () {
+      setTrades(function (prev) { return [D.genTrade()].concat(prev).slice(0, 6); });
+    }, 3200);
+    return function () { clearInterval(t); };
+  }, [ctx.liveOn]);
+
+  const total = ctx.bal.available + ctx.bal.earned + ctx.bal.invested;
+  const weekMax = Math.max.apply(null, D.weekEarnings);
+  const weekTotal = D.weekEarnings.reduce(function (a, b) { return a + b; }, 0);
+
+  return (
+    <div className="lr-screen" data-screen-label="Home">
+      {/* TOP BANNER — Start Here (신규) / MARKET (White Dragon 이상) */}
+      {D.user.rank === "WHITE"
+        ? (
+          <button className="sh-banner" onClick={ctx.openStartHere}>
+            <span className="sh-ic"><Icon name="bolt" size={18} weight={2} /></span>
+            <span className="sh-copy">
+              <span className="sh-title">Start Here · New here?</span>
+              <span className="sh-sub">Master LongRise in 3 minutes →</span>
+            </span>
+            <Icon name="chevR" size={16} style={{ color: "var(--gold-base)" }} />
+          </button>
+        ) : (
+          <button className="sh-banner" onClick={function () { ctx.notify("Market opens in a future update"); }}>
+            <span className="sh-ic" style={{ background: "linear-gradient(140deg,#60a5fa,#3b82f6)" }}>
+              <Icon name="market" size={18} weight={2} />
+            </span>
+            <span className="sh-copy">
+              <span className="sh-title">MARKET — P2P Trading Floor</span>
+              <span className="sh-sub" style={{ color: "#60a5fa" }}>Buy · Sell · Swap USDT &amp; CNYT →</span>
+            </span>
+            <Icon name="chevR" size={16} style={{ color: "var(--gold-base)" }} />
+          </button>
+        )
+      }
+
+      {/* Greeting */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div>
+          <Eyebrow>{total === 0 ? "Welcome" : "Welcome back"}</Eyebrow>
+          <div className="display" style={{ fontSize: 21, fontWeight: 700, letterSpacing: "0.04em", marginTop: 2 }}>
+            {D.user.name}
+          </div>
+        </div>
+        <Pill dot dotColor="var(--gold-glow)"><Icon name="crown" size={12} /> {D.user.rank + " DRAGON"}</Pill>
+      </div>
+
+      {/* Total assets hero */}
+      <Card hero>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <Eyebrow>Total assets</Eyebrow>
+          <Pill live>Live</Pill>
+        </div>
+        <div className="" style={{  fontSize: 42, fontWeight: 700, letterSpacing: "-0.01em", margin: "8px 0 2px", fontFamily: "'Inter', sans-serif", fontVariantNumeric: "tabular-nums", color: "#ffffff" }}>
+          ${fmt(total)}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+          <span className="green num" style={{ fontSize: 13, fontWeight: 700 }}>+${fmt(D.todayPnl)}</span>
+          <span className="muted" style={{ fontSize: 11.5 }}>today · USDT</span>
+        </div>
+        <div style={{ margin: "12px -4px 4px" }}>
+          <Sparkline points={D.spark} height={56} />
+        </div>
+        {total === 0
+          ? (
+            <button className="btn gold block" style={{ marginTop: 14 }} onClick={function () { ctx.goTab("WALLET", { open: "deposit" }); }}>
+              <Icon name="arrowDown" size={16} weight={2} /> Deposit USDT to get started
+            </button>
+          ) : (
+            <button className="btn gold block" style={{ marginTop: 14 }} onClick={function () { ctx.goTab("PLANS"); }}>
+              <Icon name="invest" size={16} weight={2} /> Get more Profit
+            </button>
+          )
+        }
+      </Card>
+
+      {/* My packages — held positions with profit & rate (Wallet handles deposit/withdraw/send/swap) */}
+      <Card>
+        <SectionHead title="My packages" action="View plans" onAction={function () { ctx.goTab("PLANS"); }} />
+        {ctx.portfolio.length === 0
+          ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "28px 0 12px", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(185,154,107,0.10)", border: "1px solid rgba(185,154,107,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon name="invest" size={26} style={{ color: "var(--gold-base)" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 5 }}>No active packages yet</div>
+                <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.65 }}>Select a plan and start earning daily dividends from the AI engine.</div>
+              </div>
+              <button className="btn gold block" style={{ width: "100%" }} onClick={function () { ctx.goTab("PLANS"); }}>
+                <Icon name="invest" size={15} weight={2} /> Browse Plans
+              </button>
+            </div>
+          ) : (
+            <div style={{ marginTop: 6 }}>
+              {ctx.portfolio.map(function (p) {
+                return (
+                  <div key={p.id} className="pkg-row">
+                    <div className="pkg-top">
+                      <span className="pkg-name display">{p.pkg}</span>
+                      <span className="num green" style={{ fontSize: 14, fontWeight: 700 }}>+${fmt(p.earned)}</span>
+                    </div>
+                    <div className="pkg-meta">
+                      <span className="num">${fmt(p.amount, 0)} principal</span>
+                      <span className="" style={{ fontWeight: 700, color: "#ffffff" }}>{p.dailyRoi}%/day</span>
+                    </div>
+                    <Bar value={p.progress} />
+                    <div className="pkg-foot muted">
+                      <span>{p.start}</span><span>{Math.round(p.progress * 100)}% · ends {p.end}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
+      </Card>
+
+      {/* AI engine */}
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <img src={window.LR_IMG("iconGold")} alt="" style={{ width: 26, height: "auto" }} />
+            <div>
+              <div className="display" style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: "0.1em" }}>{D.engine.name}</div>
+              <div className="muted" style={{ fontSize: 10.5 }}>AI execution engine</div>
+            </div>
+          </div>
+          <Pill live>Active</Pill>
+        </div>
+        <FuturesChart onStats={function (s) { setEng(s); }} />
+        <div className="stat-grid" style={{ marginTop: 12 }}>
+          <StatTile value={D.engine.winRate} unit="%" label="Win rate" />
+          <StatTile value={D.engine.dailyRoi} unit="%" label="Daily ROI" />
+          <StatTile value={fmt(eng.signals, 0)} unit="/s" label="Signals" />
+          <StatTile value={eng.latency} unit="ms" label="Latency" />
+        </div>
+        <div className="terminal" style={{ marginTop: 12 }}>
+          <div><span className="g">▸</span> neural.core.v6 — session synced · 3 exchanges</div>
+          <div><span className="a">▸</span> pattern.match BTC/USDT conf 0.94 → <span className="g">executed</span></div>
+          <div><span className="g">▸</span> pnl.stream +{fmt(D.todayPnl)} USDT realized today</div>
+        </div>
+      </Card>
+
+      {/* Live trades */}
+      <Card void>
+        <SectionHead title="Live trades" />
+        <div className="rowlist" style={{ marginTop: 4 }}>
+          {trades.map(function (t, i) {
+            const win = t.pnl >= 0;
+            return (
+              <RowItem key={t.time + t.pair + i}
+                lead={
+                  <LeadDisc color={win ? "var(--green-success)" : "var(--red-alert)"}>
+                    <Icon name={win ? "arrowUp" : "arrowDown"} size={16} />
+                  </LeadDisc>
+                }
+                title={t.pair}
+                sub={t.side + " · " + t.time}
+                trail={
+                  <span className={"num " + (win ? "green" : "red")} style={{ fontSize: 13.5, fontWeight: 700 }}>
+                    {win ? "+" : "−"}${fmt(Math.abs(t.pnl))}
+                  </span>
+                } />
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* 7-day earnings */}
+      <Card>
+        <SectionHead title="Last 7 days" />
+        {weekTotal === 0
+          ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "24px 0 8px", textAlign: "center" }}>
+              <div className="muted" style={{ fontSize: 13, lineHeight: 1.65 }}>Dividend history will appear here once your first package is active.</div>
+              <button className="btn ghost block" style={{ width: "100%", marginTop: 4 }} onClick={function () { ctx.goTab("PLANS"); }}>
+                Browse Plans <Icon name="chevR" size={14} />
+              </button>
+            </div>
+          ) : (
+            <React.Fragment>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "8px 0 12px" }}>
+                <span className="" style={{ fontSize: 24, fontWeight: 800, color: "#ffffff" }}>+${fmt(weekTotal)}</span>
+                <span className="muted" style={{ fontSize: 11.5 }}>dividends credited</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 7, alignItems: "end", height: 64 }}>
+                {D.weekEarnings.map(function (v, i) {
+                  return (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, height: "100%", justifyContent: "flex-end" }}>
+                      <div style={{
+                        width: "100%", borderRadius: 4,
+                        height: Math.round((v / weekMax) * 48) + "px",
+                        background: i === 6
+                          ? "linear-gradient(180deg, var(--gold-glow), var(--gold-base))"
+                          : "rgba(37,99,235,0.28)"
+                      }}></div>
+                      <span className="muted" style={{ fontSize: 8.5, letterSpacing: "0.1em" }}>{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][i]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </React.Fragment>
+          )
+        }
+      </Card>
+
+      {/* News */}
+      <Card void>
+        <SectionHead title="News & updates" />
+        <div className="rowlist" style={{ marginTop: 4 }}>
+          {D.news.map(function (n, i) {
+            return (
+              <RowItem key={i}
+                lead={<LeadDisc><Icon name="news" size={16} /></LeadDisc>}
+                title={n.title} sub={n.tag + " · " + n.date} chev
+                onClick={function () { ctx.openSheet("news", n); }} />
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+window.HomeScreen = HomeScreen;

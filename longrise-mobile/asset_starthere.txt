@@ -1,0 +1,133 @@
+﻿/* LONGRISE Mobile — START HERE in-app guide (full-page overlay).
+   Mobile-native version of START HERE.html: Buy → Earn → Grow → Repeat loop.
+   All CTAs route into the app (no external navigation), so the standalone
+   export stays fully self-contained. */
+function StartHerePage(props) {
+  const ctx = React.useContext(AppCtx);
+
+  /* go(): close the guide, then route into the app tab/flow. */
+  function go(tab, opts) {
+    return function () { props.onClose(); ctx.goTab(tab, opts); };
+  }
+
+  const LOOP = [
+    { n: "1", label: "Start" },
+    { n: "2", label: "Earn" },
+    { n: "3", label: "Grow" },
+    { n: "4", label: "Repeat" }
+  ];
+
+  function StepCard(p) {
+    return (
+      <Card hero={p.feature}>
+        <div className="sh2-step-head">
+          <div className="sh2-idx">{p.idx}</div>
+          <div>
+            <Eyebrow>{p.eyebrow}</Eyebrow>
+            <div className="sh2-title">{p.title}</div>
+          </div>
+        </div>
+        <p className="sh2-desc">{p.desc}</p>
+        {p.children}
+        <div className="sh2-ctas">{p.ctas}</div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="page-over" data-screen-label="Start Here">
+      <div className="lr-header">
+        <button className="iconbtn" onClick={props.onClose} aria-label="Back">
+          <Icon name="chevL" size={20} />
+        </button>
+        <span className="eyebrow" style={{ color: "var(--color-cream)" }}>Start Here</span>
+        <span style={{ width: 44 }}></span>
+      </div>
+
+      <div className="lr-screen">
+        {/* Hero */}
+        <div className="sh2-hero">
+          <Eyebrow style={{ color: "var(--gold-glow)" }}>New here?</Eyebrow>
+          <div className="sh2-h1">
+            Master LongRise in <span style={{ color: "#ffffff" }}>3 minutes</span>
+          </div>
+          <p className="sh2-lead">
+            Follow the steps below, top to bottom — and keep repeating the loop to grow your earnings.
+          </p>
+        </div>
+
+        {/* Loop indicator */}
+        <div className="sh2-loop">
+          {LOOP.map(function (s, i) {
+            return (
+              <React.Fragment key={s.n}>
+                <div className="sh2-node">
+                  <div className="sh2-dot">{s.n}</div>
+                  <span>{s.label}</span>
+                </div>
+                {i < LOOP.length - 1 && <span className="sh2-link"></span>}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* STEP 1 */}
+        <StepCard idx="1" feature eyebrow="Understand & Start" title="Buy a Package"
+          desc="The AI auto-trading engine earns you daily dividends. But it doesn't stop there — you also earn by helping LongRise grow."
+          ctas={
+            <React.Fragment>
+              <Btn block onClick={go("PLANS")}>Buy a Package <Icon name="chevR" size={15} weight={2.2} /></Btn>
+              <Btn variant="ghost" block onClick={go("EARN")}>See how ROI works <Icon name="chevR" size={15} weight={2.2} /></Btn>
+            </React.Fragment>
+          }>
+          <div className="sh2-bonuses">
+            <div className="sh2-bonus"><div className="bt">Winning Dividend</div><div className="bd">Daily ROI from the AI engine — every day, automatically.</div></div>
+            <div className="sh2-bonus"><div className="bt">Referral + Roll-up</div><div className="bd">Invite others &amp; earn from your team's activity.</div></div>
+            <div className="sh2-bonus"><div className="bt">Rank Bonus</div><div className="bd">As your org grows, your rank unlocks bigger bonuses.</div></div>
+          </div>
+        </StepCard>
+
+        {/* STEP 2 */}
+        <StepCard idx="2" eyebrow="Stay motivated" title="Check Your Earnings"
+          desc="Watch your daily dividends and bonuses stack up. Seeing the numbers grow every day is what keeps you going."
+          ctas={<Btn block onClick={go("EARN")}>View Earnings <Icon name="chevR" size={15} weight={2.2} /></Btn>} />
+
+        {/* STEP 3 */}
+        <StepCard idx="3" eyebrow="Multiply rewards" title="Grow Your Organization"
+          desc="Refer others and build your team. Roll-up grows your bonuses as your network expands — and pushes you toward the next rank."
+          ctas={
+            <React.Fragment>
+              <Btn block onClick={go("NETWORK")}>Refer Now <Icon name="chevR" size={15} weight={2.2} /></Btn>
+              <Btn variant="ghost" block onClick={go("NETWORK")}>My Team &amp; Tree <Icon name="chevR" size={15} weight={2.2} /></Btn>
+            </React.Fragment>
+          } />
+
+        {/* STEP 4 */}
+        <StepCard idx="4" eyebrow="Keep the loop going" title="Deposit & Withdraw"
+          desc="Add funds to grow your position, and withdraw what you've earned anytime. Then start again from Step 1 — every loop compounds."
+          ctas={
+            <React.Fragment>
+              <Btn block onClick={go("WALLET", { open: "deposit" })}>Deposit <Icon name="chevR" size={15} weight={2.2} /></Btn>
+              <Btn variant="ghost" block onClick={go("WALLET", { open: "withdraw" })}>Withdraw <Icon name="chevR" size={15} weight={2.2} /></Btn>
+            </React.Fragment>
+          } />
+
+        {/* Loop footer */}
+        <div className="sh2-loopfoot">
+          <div className="sh2-lf-ic"><Icon name="swap" size={20} /></div>
+          <div>
+            <div className="sh2-lf-title">The more you repeat the loop, the more you earn.</div>
+            <div className="sh2-lf-sub">Buy → Earn → Grow → Reinvest. Stuck on any step? Our team will walk you through it.</div>
+          </div>
+        </div>
+
+        <Btn variant="ghost" block onClick={function () { ctx.openSheet("support"); }}>
+          <Icon name="support" size={16} /> Talk to Support
+        </Btn>
+
+      </div>
+    </div>
+  );
+}
+
+window.StartHerePage = StartHerePage;
