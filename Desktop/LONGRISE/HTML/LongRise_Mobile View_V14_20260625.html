@@ -137,6 +137,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // preserve ordering (React before ReactDOM before Babel before text/babel).
     const doc = new DOMParser().parseFromString(template, 'text/html');
     document.documentElement.replaceWith(doc.documentElement);
+    // Dynamic viewport: scale 390px layout to fill actual device screen
+    (function(){
+      var pw=screen.width<screen.height?screen.width:screen.height;
+      if(pw>0&&pw<768){
+        var sc=(pw/390).toFixed(4);
+        var vm=document.querySelector('meta[name="viewport"]');
+        if(vm)vm.content='width=390,initial-scale='+sc+',viewport-fit=cover';
+      }
+    })();
     const dead = Array.from(document.scripts);
     for (const old of dead) {
       const s = document.createElement('script');
