@@ -10,6 +10,7 @@ from .telegram import send_message
 from .db import get_conn
 
 CHECK_INTERVAL = 300  # 5분마다 체크
+OPENWEBUI_ENABLED = os.getenv("OPENWEBUI_ENABLED", "false").lower() == "true"
 
 # 이전 상태 저장 (변화가 생길 때만 알림)
 _prev_status = {}
@@ -107,15 +108,16 @@ def run_health_check():
     global _prev_status
     alerts = []
 
-    # 1. OpenWebUI 체크
-    ok, msg = check_openwebui()
-    key = "openwebui"
-    if _prev_status.get(key) != ok:
-        if not ok:
-            alerts.append(f"🔴 *OpenWebUI 접속 불가*\n원인: {msg}\n→ http://localhost:3000 확인 필요")
-        elif key in _prev_status:
-            alerts.append(f"🟢 *OpenWebUI 복구됨*\n→ http://localhost:3000 정상 접속 가능")
-        _prev_status[key] = ok
+    # 1. OpenWebUI 체크 (OPENWEBUI_ENABLED=true 일 때만)
+    if OPENWEBUI_ENABLED:
+        ok, msg = check_openwebui()
+        key = "openwebui"
+        if _prev_status.get(key) != ok:
+            if not ok:
+                alerts.append(f"🔴 *OpenWebUI 접속 불가*\n원인: {msg}\n→ open-webui 컨테이너 확인 필요")
+            elif key in _prev_status:
+                alerts.append(f"🟢 *OpenWebUI 복구됨*")
+            _prev_status[key] = ok
 
     # 2. Jake API 체크
     ok, msg = check_jake_api()
@@ -159,7 +161,7 @@ def start_monitor_thread():
     ensure_token_table()
 
     def loop():
-        time.sleep(30)  # 시작 후 30초 뒤 첫 체크
+        time.sleep(90)  # 컨테이너 네트워크 DNS 준비 대기 (30→90초)
         while True:
             try:
                 run_health_check()
