@@ -204,6 +204,12 @@ def start_polling():
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         title = _get_title(sender)
+
+                        # 느린 작업 키워드 감지 시 즉시 선응답
+                        _SLOW_KEYWORDS = ["항공권", "비행기", "항공편", "flight", "환율", "환전", "달러", "엔화", "유로", "날씨", "검색"]
+                        if any(kw in text for kw in _SLOW_KEYWORDS):
+                            send_group_message(chat_id, "네, 잠시만요! 바로 검색해드릴게요.")
+
                         group_context = (
                             f"[그룹 채팅 응답]\n"
                             f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
