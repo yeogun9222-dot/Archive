@@ -194,9 +194,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=20) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-            print(f"[search_flights DEBUG] searchAirport({query}) 키: {list(data.keys())}")
-            places = data.get("places", data.get("data", []))
-            print(f"[search_flights DEBUG] places 개수: {len(places)}, 첫번째: {places[0] if places else 'EMPTY'}")
+                places = data.get("places", data.get("data", []))
             for p in places:
                 if p.get("skyId", "").upper() == query.upper() or p.get("iataCode", "").upper() == query.upper():
                     return p.get("skyId"), p.get("entityId")
@@ -206,10 +204,8 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
 
         origin_sky, origin_entity = get_entity_id(from_iata)
         dest_sky, dest_entity = get_entity_id(to_iata)
-        print(f"[search_flights DEBUG] origin=({origin_sky},{origin_entity}) dest=({dest_sky},{dest_entity})")
 
         if not origin_entity or not dest_entity:
-            print(f"[search_flights DEBUG] entityId 없음 → 폴백")
             return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
 
         # 2단계: 항공편 검색
@@ -230,24 +226,10 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
         with urllib.request.urlopen(req, timeout=45) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
-        print(f"[search_flights DEBUG] 응답 최상위 키: {list(data.keys())}")
-        inner = data.get("data", {})
-        if isinstance(inner, dict):
-            print(f"[search_flights DEBUG] data 내부 키: {list(inner.keys())}")
-
         itineraries = (
             data.get("data", {}).get("itineraries") or
             data.get("itineraries") or []
         )
-        print(f"[search_flights DEBUG] itineraries 개수: {len(itineraries)}")
-        if itineraries:
-            first = itineraries[0]
-            print(f"[search_flights DEBUG] 첫번째 키: {list(first.keys())}")
-            print(f"[search_flights DEBUG] price: {first.get('price')}")
-            legs = first.get("legs", [])
-            print(f"[search_flights DEBUG] legs 개수: {len(legs)}")
-            if legs:
-                print(f"[search_flights DEBUG] leg[0] 키: {list(legs[0].keys())}")
 
         sc_date = date_iso.replace("-", "")[2:]
         skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
@@ -299,8 +281,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
                     f"    가격: {price}"
                     + (f"\n    예약: {booking_url}" if booking_url else "")
                 )
-            except Exception as e:
-                print(f"[search_flights DEBUG] item {i} 파싱 오류: {e}")
+            except Exception:
                 continue
 
         lines.append(
