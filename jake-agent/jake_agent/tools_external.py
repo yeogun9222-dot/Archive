@@ -179,24 +179,24 @@ def _search_kiwi(from_iata, to_iata, date, adults, direct_only, api_key):
 
 
 def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date, adults, direct_only, api_key):
-    """Sky Scrapper API (RapidAPI) 실시간 항공권 검색"""
+    """Skyscanner Flights & Travel API (RapidAPI) 실시간 항공권 검색"""
     try:
         date_iso = _parse_date_iso(date)
         headers = {
-            "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
+            "x-rapidapi-host": "skyscanner-flights-travel-api.p.rapidapi.com",
             "x-rapidapi-key": api_key,
         }
 
         # 1단계: 출발지/도착지 entityId 조회
         def get_entity_id(query):
-            params = urllib.parse.urlencode({"query": query, "locale": "en-US"})
-            url = f"https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchAirport?{params}"
+            params = urllib.parse.urlencode({"market": "KR", "query": query, "locale": "en-US"})
+            url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchAirport?{params}"
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
-            places = data.get("data", [])
+            places = data.get("places", data.get("data", []))
             for p in places:
-                if p.get("iataCode") == query or query.upper() in p.get("iataCode", ""):
+                if p.get("skyId", "").upper() == query.upper() or p.get("iataCode", "").upper() == query.upper():
                     return p.get("skyId"), p.get("entityId")
             if places:
                 return places[0].get("skyId"), places[0].get("entityId")
@@ -221,7 +221,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             "locale": "ko-KR",
             "cabinClass": "economy",
         })
-        url = f"https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights?{params}"
+        url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=20) as resp:
             data = json.loads(resp.read().decode("utf-8"))
