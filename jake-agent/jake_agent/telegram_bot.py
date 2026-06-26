@@ -4,7 +4,6 @@ import threading
 import urllib.request
 import time
 import re
-import random
 from collections import defaultdict
 from dotenv import load_dotenv
 
@@ -46,16 +45,6 @@ _group_buffers = defaultdict(list)  # {group_id: [(time_str, sender, text), ...]
 _group_names = {}                    # {group_id: group_title}
 _BUFFER_MAX = 100
 _URGENT_KEYWORDS = ["긴급", "급함", "urgent", "즉시", "!!"]
-
-# CEO 승인 대기 요청 {approval_id: {group_chat_id, group_title, sender, title, text, ts}}
-_pending_approvals = {}
-
-# 이 키워드가 포함된 요청은 CEO 승인 후 처리
-_APPROVAL_KEYWORDS = [
-    "이메일 보내", "이메일 전송", "이메일 써줘", "메일 보내", "메일 써줘",
-    "캘린더 등록", "캘린더에 추가", "일정 추가", "일정 등록",
-    "일정 잡아", "회의 잡아", "회의 예약", "미팅 잡아",
-]
 
 
 def get_updates():
@@ -215,40 +204,15 @@ def start_polling():
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         title = _get_title(sender)
-
-                        # CEO 승인이 필요한 작업인지 확인
-                        if any(kw in text for kw in _APPROVAL_KEYWORDS):
-                            aid = str(random.randint(1000, 9999))
-                            _pending_approvals[aid] = {
-                                "group_chat_id": chat_id,
-                                "group_title": group_title,
-                                "sender": sender,
-                                "title": title,
-                                "text": text,
-                                "ts": time.time(),
-                            }
-                            send_group_message(
-                                chat_id,
-                                f"{title}, 잠시만 기다려 주시겠습니까? 대표님 확인 후 즉시 처리해드리겠습니다."
-                            )
-                            send_message(
-                                f"[승인 요청 #{aid}]\n"
-                                f"그룹: {group_title}\n"
-                                f"요청자: {title} ({sender})\n"
-                                f"요청 내용: {text}\n\n"
-                                f"처리: 승인 {aid}\n"
-                                f"취소: 거절 {aid}"
-                            )
-                        else:
-                            group_context = (
-                                f"[그룹 채팅 응답]\n"
-                                f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
-                                f"반드시 격식체(존댓말)로 정중하게 답변하세요. "
-                                f"질문자 호칭은 '{title}'입니다. 첫 문장에 자연스럽게 포함하세요.\n\n"
-                                f"{title} 질문: {text}"
-                            )
-                            response = process_message(group_context)
-                            send_group_message(chat_id, response)
+                        group_context = (
+                            f"[그룹 채팅 응답]\n"
+                            f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
+                            f"반드시 격식체(존댓말)로 정중하게 답변하세요. "
+                            f"질문자 호칭은 '{title}'입니다. 첫 문장에 자연스럽게 포함하세요.\n\n"
+                            f"{title} 질문: {text}"
+                        )
+                        response = process_message(group_context)
+                        send_group_message(chat_id, response)
 
                 # 모니터링 그룹: 조용히 버퍼링
                 if chat_id in MONITOR_GROUP_IDS:
@@ -265,36 +229,6 @@ def start_polling():
                 continue
 
             print(f"[Telegram 수신] {text}")
-
-            # 승인/거절 처리
-            approval_match = re.match(r'^(승인|거절)\s+(\d+)', text.strip())
-            if approval_match:
-                action = approval_match.group(1)
-                aid = approval_match.group(2)
-                if aid in _pending_approvals:
-                    req = _pending_approvals.pop(aid)
-                    if action == "승인":
-                        send_message(f"[#{aid}] 처리 중입니다...")
-                        title = req["title"]
-                        group_context = (
-                            f"[그룹 채팅 응답 — CEO 승인 처리]\n"
-                            f"그룹: {req['group_title']}\n"
-                            f"이 그룹에는 연장자 임원진이 계십니다. 반드시 격식체(존댓말)로 정중하게 답변하세요.\n"
-                            f"질문자 호칭: '{title}'. 첫 문장에 자연스럽게 포함하세요.\n\n"
-                            f"{title} 요청: {req['text']}"
-                        )
-                        response = process_message(group_context)
-                        send_group_message(req["group_chat_id"], response)
-                        send_message(f"[#{aid}] 완료 — {title}에게 그룹에서 전달했습니다.")
-                    else:
-                        send_group_message(
-                            req["group_chat_id"],
-                            f"{req['title']}, 죄송합니다. 해당 요청은 현재 처리가 어렵습니다."
-                        )
-                        send_message(f"[#{aid}] 취소했습니다.")
-                else:
-                    send_message(f"승인 요청 #{aid}를 찾을 수 없습니다. 이미 처리되었거나 만료된 요청입니다.")
-                continue
 
             # 그룹 요약 명령
             if text in ("/그룹요약", "그룹요약", "/group_summary"):
