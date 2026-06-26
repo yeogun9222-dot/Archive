@@ -3,10 +3,31 @@ import subprocess
 import requests
 from langchain_core.tools import tool
 
-# ── 웹 검색 ──
-@tool
-def web_search(query: str) -> str:
-    """인터넷에서 정보를 검색해요. 날씨, 뉴스, 일반 정보 검색에 사용해요."""
+
+def _brave_search(query: str, api_key: str) -> str:
+    try:
+        resp = requests.get(
+            "https://api.search.brave.com/res/v1/web/search",
+            headers={
+                "X-Subscription-Token": api_key,
+                "Accept": "application/json",
+            },
+            params={"q": query, "count": 5, "country": "KR", "search_lang": "ko", "ui_lang": "ko-KR"},
+            timeout=10,
+        )
+        data = resp.json()
+        results = data.get("web", {}).get("results", [])
+        if not results:
+            return "검색 결과가 없어요."
+        lines = []
+        for r in results[:5]:
+            lines.append(f"[{r.get('title','')}]\n{r.get('description','')}\n출처: {r.get('url','')}")
+        return "\n\n".join(lines)
+    except Exception as e:
+        return f"Brave 검색 오류: {e}"
+
+
+def _duckduckgo_search(query: str) -> str:
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
@@ -19,6 +40,16 @@ def web_search(query: str) -> str:
         return "\n\n".join(lines)
     except Exception as e:
         return f"검색 오류: {e}"
+
+
+# ── 웹 검색 (Brave Search 우선, 없으면 DuckDuckGo 폴백) ──
+@tool
+def web_search(query: str) -> str:
+    """인터넷에서 정보를 검색해요. 날씨, 뉴스, 일반 정보 검색에 사용해요."""
+    brave_key = os.getenv("BRAVE_API_KEY", "")
+    if brave_key:
+        return _brave_search(query, brave_key)
+    return _duckduckgo_search(query)
 
 
 # ── WMO 날씨 코드 변환 ──
