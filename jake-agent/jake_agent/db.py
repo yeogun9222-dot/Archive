@@ -57,3 +57,25 @@ def get_pending_tasks():
     cur.close()
     conn.close()
     return rows
+
+def get_recent_conversation_history(persona: str, limit: int = 20) -> list:
+    """최근 대화를 messages 형식으로 반환. 새 세션 시작 시 컨텍스트 복원용."""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT message FROM conversation_log WHERE agent = %s ORDER BY timestamp DESC LIMIT %s",
+        (persona, limit * 2)
+    )
+    rows = [r[0] for r in cur.fetchall()]
+    cur.close()
+    conn.close()
+
+    messages = []
+    for message in reversed(rows):
+        if message.startswith("대표님:"):
+            content = message[len("대표님:"):].strip()
+            messages.append({"role": "user", "content": content})
+        elif ":" in message:
+            content = message.split(":", 1)[1].strip()
+            messages.append({"role": "assistant", "content": content})
+    return messages

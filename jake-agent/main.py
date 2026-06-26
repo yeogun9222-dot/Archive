@@ -9,7 +9,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system
@@ -34,8 +34,6 @@ app.add_middleware(
 
 jake_graph = build_jake_graph()
 
-conversation_history = []
-
 # ── 기존 API ──────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -50,19 +48,15 @@ class ChatResponse(BaseModel):
 @app.post("/chat", response_model=ChatResponse)
 async def chat_with_jake(req: ChatRequest):
     persona = detect_persona(req.message)
+    history = get_recent_conversation_history(persona, limit=20)
 
     result = jake_graph.invoke({
-        "messages": conversation_history,
+        "messages": history,
         "user_input": req.message,
         "jake_response": "",
         "tasks_created": [],
         "persona": persona
     })
-
-    conversation_history.extend([
-        {"role": "user", "content": req.message},
-        {"role": "assistant", "content": result["jake_response"]}
-    ])
 
     # 텔레그램 발신 시 알림 중복 방지
     if req.source != "telegram":
