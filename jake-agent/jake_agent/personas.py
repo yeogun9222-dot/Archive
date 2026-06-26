@@ -161,5 +161,13 @@ def detect_persona(message: str) -> str:
                 return name
     return "제이크"
 
+def detect_persona_from_system(system_message: str) -> str | None:
+    """Open WebUI 모델 시스템 프롬프트에서 페르소나 감지. __PERSONA__:이름 형식."""
+    if "__PERSONA__:" in system_message:
+        name = system_message.split("__PERSONA__:")[1].strip().split()[0]
+        if name in PERSONAS:
+            return name
+    return None
+
 def get_system_prompt(persona_name: str) -> str:
     return PERSONAS.get(persona_name, PERSONAS["제이크"])["system"]

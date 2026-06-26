@@ -12,7 +12,7 @@ from jake_agent.graph import build_jake_graph
 from jake_agent.db import get_pending_tasks
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
-from jake_agent.personas import detect_persona
+from jake_agent.personas import detect_persona, detect_persona_from_system
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 
@@ -115,15 +115,21 @@ class OpenAIChatRequest(BaseModel):
 async def openai_chat_completions(req: OpenAIChatRequest):
     user_message = ""
     history = []
+    system_persona = None
+
     for msg in req.messages:
-        history.append({"role": msg.role, "content": msg.content})
+        if msg.role == "system":
+            system_persona = detect_persona_from_system(msg.content)
+        else:
+            history.append({"role": msg.role, "content": msg.content})
         if msg.role == "user":
             user_message = msg.content
 
     # 마지막 user 메시지는 user_input으로 전달하므로 히스토리에서 제외
     history_without_last = history[:-1] if history and history[-1]["role"] == "user" else history
 
-    persona = detect_persona(user_message)
+    # 시스템 프롬프트 페르소나 우선, 없으면 메시지 키워드 감지
+    persona = system_persona or detect_persona(user_message)
 
     result = jake_graph.invoke({
         "messages": history_without_last,
