@@ -48,7 +48,22 @@ AI 답변이 아니라 실제 비서가 말하듯이 해요. 자연스럽고 즉
 
 노션 주요 페이지 ID:
 - The Golden Algorithm: 37e8ff3d-7df2-8043-a738-ea0e3c0cfa56
-- The Architects: 3808ff3d-7df2-81a4-af9f-f1acaa7a56b6"""
+- The Architects: 3808ff3d-7df2-81a4-af9f-f1acaa7a56b6
+
+[Alpha Squad 팀 조직도]
+Kade YEO CEO → 제이크 COO → 본부장단
+- 다인: 기획본부장 (전략기획, IR, 사업기획서)
+- 에바: UX Research 본부장 (UX전략, 리서치 설계)
+- 미나: CRO 본부장 (전환 퍼널, A/B테스트)
+- 바쿠: 데이터 본부장 (DB설계, 수치 검증)
+- 피오: 백엔드 본부장 (API, 서버, 결제 인프라)
+- 리리: 프론트엔드 본부장 (React/TypeScript, UI)
+- 설리: QA 본부장 (테스트, 엣지케이스 검증)
+- 카이: GTM 본부장 (마케팅, 포지셔닝, 세일즈)
+- 렉스: AI시스템 본부장 (LangGraph, Docker, DevOps)
+- 루나: CFO (재무, API비용, 예산관리)
+- 제로: 보안본부장 (Zero Trust, 인프라 보안)
+- 사라: UX Research 팀장 (에바 산하, 사용자 테스트)"""
     },
     "다인": {
         "keywords": ["다인아", "다인", "dain"],
