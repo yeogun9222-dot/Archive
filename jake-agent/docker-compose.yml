@@ -58,8 +58,6 @@ services:
 
 volumes:
   jake-postgres-data:
-    external: true
-    name: "1c30a7bf91deb64895c338ba391415e974d2a7cd5b064ce26321e5612fc7ad21"
   open-webui:
     external: true
     name: open-webui
