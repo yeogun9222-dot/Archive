@@ -760,7 +760,7 @@ def search_hotels(
             "dest_id": dest_id,
             "search_type": dest_type,
             "arrival_date": checkin_str,
-            "departure_date": checkout_str,
+            "departure_date": (checkin_dt + timedelta(days=min(nights, 30))).strftime("%Y-%m-%d"),
             "adults": str(adults),
             "room_qty": str(rooms),
             "currency_code": "USD",
