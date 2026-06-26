@@ -83,6 +83,16 @@ def agent_node(state: JakeState) -> JakeState:
         has_date = any(kw in user_input for kw in _DATE_KEYWORDS)
         if has_flight and has_date:
             forced_tool = "search_flights"
+        elif has_flight and not has_date:
+            # 날짜 없는 항공 질문 → 시스템 지시 직접 주입
+            system_prompt += (
+                "\n\n[현재 요청 처리 지시 — 최우선 적용]"
+                "\n사용자가 항공권을 문의했지만 날짜를 명시하지 않았습니다."
+                "\n반드시 아래만 하세요:"
+                "\n1. 날짜와 인원수만 짧게 물어보세요."
+                "\n2. 수치, 항공사명, 가격, 링크를 절대 생성하지 마세요."
+                "\n3. search_flights 도구를 호출하지 마세요."
+            )
         elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
             forced_tool = "get_exchange_rate"
         elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS + _HOTEL_KEYWORDS):
