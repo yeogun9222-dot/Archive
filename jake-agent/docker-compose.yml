@@ -13,6 +13,7 @@ services:
       - jake-network
 
   jake-agent:
+    build: .
     image: jake-agent
     container_name: jake-agent
     restart: always
@@ -33,6 +34,14 @@ services:
       - jake-postgres
     networks:
       - jake-network
+    develop:
+      watch:
+        - action: rebuild
+          path: ./main.py
+        - action: rebuild
+          path: ./jake_agent
+        - action: rebuild
+          path: ./requirements.txt
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
