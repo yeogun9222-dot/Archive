@@ -21,25 +21,88 @@ def web_search(query: str) -> str:
         return f"검색 오류: {e}"
 
 
-# ── 날씨 조회 (wttr.in 무료 API, 키 불필요) ──
+# ── WMO 날씨 코드 변환 ──
+def _wmo_description(code: int) -> str:
+    wmo_map = {
+        0: "맑음", 1: "대체로 맑음", 2: "구름 조금", 3: "흐림",
+        45: "안개", 48: "안개",
+        51: "가벼운 이슬비", 53: "이슬비", 55: "짙은 이슬비",
+        61: "약한 비", 63: "비", 65: "강한 비",
+        71: "약한 눈", 73: "눈", 75: "강한 눈", 77: "눈발",
+        80: "소나기", 81: "소나기", 82: "강한 소나기",
+        85: "눈소나기", 86: "강한 눈소나기",
+        95: "뇌우", 96: "뇌우(우박)", 99: "강한 뇌우(우박)",
+    }
+    return wmo_map.get(code, f"날씨코드{code}")
+
+
+# ── 날씨 조회 (Open-Meteo, API 키 불필요, 글로벌) ──
 @tool
 def get_weather(location: str) -> str:
-    """특정 지역의 현재 날씨를 확인해요. 예) 서울, 원흥동, Seoul"""
+    """특정 지역의 현재 날씨 및 3일 예보를 확인해요. 예) 서울, 고양시 원흥동, Tokyo, New York"""
     try:
-        url = f"https://wttr.in/{requests.utils.quote(location)}?format=j1&lang=ko"
-        resp = requests.get(url, timeout=8)
-        data = resp.json()
-        current = data["current_condition"][0]
-        desc = current["lang_ko"][0]["value"] if current.get("lang_ko") else current["weatherDesc"][0]["value"]
-        temp_c = current["temp_C"]
-        feels_like = current["FeelsLikeC"]
-        humidity = current["humidity"]
-        wind_kmph = current["windspeedKmph"]
-        return (
-            f"{location} 현재 날씨: {desc}\n"
-            f"기온: {temp_c}°C (체감 {feels_like}°C)\n"
-            f"습도: {humidity}%  바람: {wind_kmph}km/h"
+        # 1. 지오코딩: 주소 → 좌표
+        geo_url = (
+            f"https://geocoding-api.open-meteo.com/v1/search"
+            f"?name={requests.utils.quote(location)}&count=1&language=ko&format=json"
         )
+        geo_resp = requests.get(geo_url, timeout=10)
+        geo_data = geo_resp.json()
+        places = geo_data.get("results", [])
+        if not places:
+            return f"'{location}' 위치를 찾을 수 없어요."
+
+        place = places[0]
+        lat, lon = place["latitude"], place["longitude"]
+        place_name = place.get("name", location)
+        admin1 = place.get("admin1", "")
+        country = place.get("country", "")
+        location_str = place_name
+        if admin1:
+            location_str += f", {admin1}"
+        if country:
+            location_str += f", {country}"
+
+        # 2. 날씨 조회 (현재 + 3일 예보)
+        weather_url = (
+            f"https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            f"&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m"
+            f"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum"
+            f"&timezone=Asia%2FSeoul&forecast_days=4"
+        )
+        w_resp = requests.get(weather_url, timeout=10)
+        w_data = w_resp.json()
+
+        cur = w_data.get("current", {})
+        temp = cur.get("temperature_2m", "?")
+        feels = cur.get("apparent_temperature", "?")
+        humidity = cur.get("relative_humidity_2m", "?")
+        wind = cur.get("wind_speed_10m", "?")
+        desc = _wmo_description(cur.get("weather_code", 0))
+
+        result = (
+            f"{location_str} 현재 날씨: {desc}\n"
+            f"기온: {temp}°C (체감 {feels}°C)\n"
+            f"습도: {humidity}%  바람: {wind}km/h\n\n"
+            f"3일 예보:\n"
+        )
+
+        daily = w_data.get("daily", {})
+        dates = daily.get("time", [])
+        max_t = daily.get("temperature_2m_max", [])
+        min_t = daily.get("temperature_2m_min", [])
+        precip = daily.get("precipitation_sum", [])
+        d_codes = daily.get("weather_code", [])
+
+        for i, date in enumerate(dates[:4]):
+            d_desc = _wmo_description(d_codes[i]) if i < len(d_codes) else ""
+            d_max = max_t[i] if i < len(max_t) else "?"
+            d_min = min_t[i] if i < len(min_t) else "?"
+            d_precip = precip[i] if i < len(precip) else 0
+            result += f"{date}: {d_desc} {d_min}~{d_max}°C 강수 {d_precip}mm\n"
+
+        return result.strip()
     except Exception as e:
         return f"날씨 조회 오류: {e}"
 
