@@ -598,7 +598,12 @@ def search_accommodation(
         print(f"[search_accommodation 오류] {type(e).__name__}: {e}")
         return f"숙소 검색 오류: {e}"
 
-    results = data.get("data", {}).get("list", data.get("results", []))
+    print(f"[search_accommodation 응답 키] {list(data.keys())}")
+    top = data.get("data", {})
+    if isinstance(top, dict):
+        print(f"[search_accommodation data 키] {list(top.keys())}")
+    results = top.get("list", data.get("results", data.get("data", []))) if isinstance(top, dict) else (top if isinstance(top, list) else [])
+    print(f"[search_accommodation 결과 수] {len(results)}")
     if not results:
         return (
             f"'{location}' 숙소 검색 결과가 없습니다.\n"
