@@ -13,6 +13,10 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 MONITOR_GROUP_IDS = set(
     g.strip() for g in os.getenv("TELEGRAM_GROUP_IDS", "").split(",") if g.strip()
 )
+RESPONSE_GROUP_IDS = set(
+    g.strip() for g in os.getenv("TELEGRAM_RESPONSE_GROUP_IDS", "").split(",") if g.strip()
+)
+RESPONSE_TRIGGERS = ["제이크", "jake"]
 
 _offset = 0
 _group_buffers = defaultdict(list)  # {group_id: [(time_str, sender, text), ...]}
@@ -63,6 +67,25 @@ def send_message(text: str):
         except Exception as e:
             if parse_mode is None:
                 print(f"Telegram send error: {e}")
+
+
+def send_group_message(chat_id: str, text: str):
+    """그룹 채팅으로 메시지 전송"""
+    if not BOT_TOKEN:
+        return
+    for parse_mode in ["Markdown", None]:
+        try:
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            body = {"chat_id": chat_id, "text": text[:4000]}
+            if parse_mode:
+                body["parse_mode"] = parse_mode
+            payload = json.dumps(body).encode("utf-8")
+            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=10)
+            return
+        except Exception as e:
+            if parse_mode is None:
+                print(f"Telegram send_group_message error: {e}")
 
 
 def send_document(file_path: str, caption: str = ""):
@@ -149,15 +172,27 @@ def start_polling():
             if not text:
                 continue
 
-            # 그룹 메시지 모니터링
+            # 그룹 메시지 처리
             if chat_type in ("group", "supergroup"):
+                sender = msg.get("from", {}).get("first_name", "알 수 없음")
+                group_title = chat.get("title", chat_id)
+
+                # 응답 그룹: "제이크"/"jake" 호출 시 그룹에서 직접 응답
+                if chat_id in RESPONSE_GROUP_IDS:
+                    if any(t in text.lower() for t in RESPONSE_TRIGGERS):
+                        print(f"[그룹 응답] {group_title} | {sender}: {text}")
+                        send_group_message(chat_id, "처리 중입니다...")
+                        response = process_message(f"[그룹: {group_title}] {sender}: {text}")
+                        send_group_message(chat_id, response)
+
+                # 모니터링 그룹: 조용히 버퍼링
                 if chat_id in MONITOR_GROUP_IDS:
-                    sender = msg.get("from", {}).get("first_name", "알 수 없음")
-                    group_title = chat.get("title", chat_id)
                     _buffer_group_message(chat_id, group_title, sender, text)
-                else:
-                    # 미등록 그룹 ID를 로그로 출력 (등록 도움용)
-                    print(f"[그룹 미등록] chat_id={chat_id} title={chat.get('title', '')}")
+
+                # 미등록 그룹 ID 로그 출력 (등록 도움용)
+                if chat_id not in MONITOR_GROUP_IDS and chat_id not in RESPONSE_GROUP_IDS:
+                    print(f"[그룹 미등록] chat_id={chat_id} title={group_title}")
+
                 continue
 
             # 대표님 개인 채팅만 처리

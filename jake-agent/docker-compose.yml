@@ -31,6 +31,7 @@ services:
       NOTION_API_KEY: ${NOTION_API_KEY}
       NOTION_ARCHITECTS_KEY: ${NOTION_ARCHITECTS_KEY}
       TELEGRAM_GROUP_IDS: ${TELEGRAM_GROUP_IDS:-}
+      TELEGRAM_RESPONSE_GROUP_IDS: ${TELEGRAM_RESPONSE_GROUP_IDS:-}
     depends_on:
       - jake-postgres
     networks:
