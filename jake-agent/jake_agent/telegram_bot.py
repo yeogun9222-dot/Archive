@@ -235,8 +235,6 @@ def start_polling():
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         title = _get_title(sender)
-
-                        # 모든 메시지에 즉시 선응답
                         send_group_message(chat_id, "네, 잠시만요!")
 
                         group_context = (
@@ -246,8 +244,12 @@ def start_polling():
                             f"질문자 호칭은 '{title}'입니다. 첫 문장에 자연스럽게 포함하세요.\n\n"
                             f"{title} 질문: {text}"
                         )
-                        response = process_message(group_context, image_base64, image_mime)
-                        send_group_message(chat_id, response)
+
+                        def _reply(cid=chat_id, ctx=group_context, img=image_base64, mime=image_mime):
+                            response = process_message(ctx, img, mime)
+                            send_group_message(cid, response)
+
+                        threading.Thread(target=_reply, daemon=True).start()
 
                 # 모니터링 그룹: 조용히 버퍼링
                 if chat_id in MONITOR_GROUP_IDS:
@@ -272,8 +274,12 @@ def start_polling():
                 continue
 
             send_message("처리 중입니다...")
-            response = process_message(text, image_base64, image_mime)
-            send_message(response)
+
+            def _reply_dm(t=text, img=image_base64, mime=image_mime):
+                response = process_message(t, img, mime)
+                send_message(response)
+
+            threading.Thread(target=_reply_dm, daemon=True).start()
 
 
 def start_bot_thread():

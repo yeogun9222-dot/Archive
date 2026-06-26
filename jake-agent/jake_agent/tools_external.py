@@ -192,7 +192,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             params = urllib.parse.urlencode({"market": "KR", "query": query, "locale": "en-US"})
             url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchAirport?{params}"
             req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=20) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 places = data.get("places", data.get("data", []))
             for p in places:
@@ -224,7 +224,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
         })
         url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=45) as resp:
+        with urllib.request.urlopen(req, timeout=25) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         itineraries = (
@@ -738,7 +738,7 @@ def search_hotels(
         dest_params = urllib.parse.urlencode({"query": location, "languagecode": "en-us"})
         dest_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?{dest_params}"
         req = urllib.request.Request(dest_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:
             dest_data = json.loads(resp.read().decode("utf-8"))
         print(f"[search_hotels 목적지] dest_id={dest_data.get('data', [{}])[0].get('dest_id') if dest_data.get('data') else 'none'}")
 
@@ -770,7 +770,7 @@ def search_hotels(
         })
         hotel_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?{hotel_params}"
         req = urllib.request.Request(hotel_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=40) as resp:
+        with urllib.request.urlopen(req, timeout=25) as resp:
             hotel_data = json.loads(resp.read().decode("utf-8"))
         print(f"[search_hotels 결과] hotels={len(hotel_data.get('data', {}).get('hotels', []))}")
     except Exception as e:

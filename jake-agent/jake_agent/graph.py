@@ -44,9 +44,19 @@ _ACCOMMODATION_KEYWORDS = ["숙소", "호텔", "아파트", "오피스텔", "에
 _HOTEL_KEYWORDS = ["호텔 찾아", "호텔 검색", "호텔 예약"]
 
 
-def _build_llm(forced_tool: str = ""):
+_COMPLEX_KEYWORDS = [
+    "검색", "찾아", "조회", "분석", "정리", "보고", "요약", "작성", "만들어",
+    "항공", "비행", "flight", "호텔", "숙소", "렌트", "임대",
+    "뉴스", "날씨", "환율", "주가", "코인", "비트코인",
+    "노션", "일정", "캘린더", "github", "깃허브",
+]
+
+
+def _build_llm(forced_tool: str = "", user_input: str = ""):
+    is_complex = bool(forced_tool) or any(kw in user_input for kw in _COMPLEX_KEYWORDS)
+    model = "claude-sonnet-4-6" if is_complex else "claude-haiku-4-5-20251001"
     base = ChatAnthropic(
-        model="claude-sonnet-4-6",
+        model=model,
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=4096
     )
