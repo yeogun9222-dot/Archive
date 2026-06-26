@@ -1,0 +1,59 @@
+services:
+  jake-postgres:
+    image: postgres:16-alpine
+    container_name: jake-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: jakedb
+      POSTGRES_USER: jake
+      POSTGRES_PASSWORD: jake1234
+    volumes:
+      - jake-postgres-data:/var/lib/postgresql/data
+    networks:
+      - jake-network
+
+  jake-agent:
+    image: jake-agent
+    container_name: jake-agent
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: jake-postgres
+      DB_PORT: "5432"
+      DB_NAME: jakedb
+      DB_USER: jake
+      DB_PASSWORD: jake1234
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      NOTION_API_KEY: ${NOTION_API_KEY}
+      NOTION_ARCHITECTS_KEY: ${NOTION_ARCHITECTS_KEY}
+    depends_on:
+      - jake-postgres
+    networks:
+      - jake-network
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    networks:
+      - jake-network
+
+volumes:
+  jake-postgres-data:
+    external: true
+    name: "1c30a7bf91deb64895c338ba391415e974d2a7cd5b064ce26321e5612fc7ad21"
+  open-webui:
+    external: true
+    name: open-webui
+
+networks:
+  jake-network:
+    external: true
+    name: jake-network
