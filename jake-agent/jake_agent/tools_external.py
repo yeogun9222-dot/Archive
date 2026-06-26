@@ -98,11 +98,14 @@ def search_flights(departure: str, destination: str, date: str, adults: int = 1,
     adults: 성인 인원수 (기본값 1)
     direct_only: True이면 직항만 (기본값 True)
     """
+    rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
     kiwi_key = os.getenv("KIWI_API_KEY", "")
     from_iata = _to_iata(departure)
     to_iata = _to_iata(destination)
 
-    if kiwi_key:
+    if rapidapi_key:
+        return _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date, adults, direct_only, rapidapi_key)
+    elif kiwi_key:
         return _search_kiwi(from_iata, to_iata, date, adults, direct_only, kiwi_key)
     else:
         return _search_fallback(departure, destination, date, adults, direct_only, from_iata, to_iata)
@@ -175,35 +178,132 @@ def _search_kiwi(from_iata, to_iata, date, adults, direct_only, api_key):
         return f"Kiwi API 오류: {e}\n직접 확인: skyscanner.co.kr / kr.trip.com"
 
 
-def _search_fallback(departure, destination, date, adults, direct_only, from_iata, to_iata):
-    """API 키 없을 때 DuckDuckGo 기반 검색 + 직접 링크"""
+def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date, adults, direct_only, api_key):
+    """Skyscanner Flights & Travel API (RapidAPI) 실시간 항공권 검색"""
     try:
-        from duckduckgo_search import DDGS
-        direct_str = "직항" if direct_only else ""
-        query = f"{departure} {destination} {date} 항공권 {direct_str} {adults}인 최저가"
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, region="kr-kr", max_results=5))
-
-        # Skyscanner 직접 링크 생성
         date_iso = _parse_date_iso(date)
-        sc_date = date_iso.replace("-", "")[2:]  # YYMMDD
+        headers = {
+            "x-rapidapi-host": "skyscanner-flights-travel-api.p.rapidapi.com",
+            "x-rapidapi-key": api_key,
+            "Content-Type": "application/json",
+        }
+
+        # 1단계: 출발지/도착지 entityId 조회
+        def get_entity_id(query):
+            params = urllib.parse.urlencode({"market": "KR", "query": query, "locale": "ko-KR"})
+            url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchAirport?{params}"
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            places = data.get("data", [])
+            for p in places:
+                if p.get("iataCode") == query or query.upper() in p.get("iataCode", ""):
+                    return p.get("skyId"), p.get("entityId")
+            if places:
+                return places[0].get("skyId"), places[0].get("entityId")
+            return query, None
+
+        origin_sky, origin_entity = get_entity_id(from_iata)
+        dest_sky, dest_entity = get_entity_id(to_iata)
+
+        if not origin_entity or not dest_entity:
+            return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
+
+        # 2단계: 항공편 검색
+        params = urllib.parse.urlencode({
+            "originSkyId": origin_sky,
+            "destinationSkyId": dest_sky,
+            "originEntityId": origin_entity,
+            "destinationEntityId": dest_entity,
+            "date": date_iso,
+            "adults": str(adults),
+            "currency": "KRW",
+            "market": "KR",
+            "locale": "ko-KR",
+            "cabinClass": "economy",
+        })
+        url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        itineraries = (
+            data.get("data", {}).get("itineraries") or
+            data.get("itineraries") or []
+        )
+
+        sc_date = date_iso.replace("-", "")[2:]
         skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
         tripdotcom_url = f"https://kr.trip.com/flights/showfare?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&adult={adults}&cabin=Economy"
 
-        lines = [f"항공권 검색: {departure}({from_iata}) → {destination}({to_iata}) | {date} | 성인 {adults}명\n"]
-        lines.append(f"실시간 최저가 직접 확인 링크:")
-        lines.append(f"  스카이스캐너: {skyscanner_url}")
-        lines.append(f"  트립닷컴: {tripdotcom_url}\n")
+        if not itineraries:
+            return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
 
-        if results:
-            lines.append("관련 정보:")
-            for r in results[:3]:
-                lines.append(f"- {r.get('title', '')}\n  {r.get('body', '')[:200]}")
+        airline_map = {
+            "KE": "대한항공", "OZ": "아시아나항공", "7C": "제주항공",
+            "LJ": "진에어", "TW": "티웨이항공", "BX": "에어부산",
+            "RS": "에어서울", "ZE": "이스타항공", "VN": "베트남항공",
+            "VJ": "비엣젯항공", "BL": "퍼시픽항공", "QH": "밤부항공",
+            "SQ": "싱가포르항공", "TG": "타이항공", "MH": "말레이시아항공",
+        }
 
-        lines.append("\n※ 정확한 실시간 가격은 위 링크에서 확인 후 결제하세요.")
-        return "\n".join(lines)
+        lines = [f"항공권 검색 결과 ({departure} → {destination}) | {date_iso} | 성인 {adults}명\n"]
+
+        for i, item in enumerate(itineraries[:5], 1):
+            try:
+                price = item.get("price", {}).get("formatted", "가격 미정")
+                legs = item.get("legs", [])
+                if not legs:
+                    continue
+                leg = legs[0]
+                dep_time = leg.get("departure", "")[:16].replace("T", " ")
+                arr_time = leg.get("arrival", "")[:16].replace("T", " ")
+                duration_mins = leg.get("durationInMinutes", 0)
+                duration_str = f"{duration_mins // 60}시간 {duration_mins % 60}분" if duration_mins else "-"
+                stop_count = leg.get("stopCount", 0)
+                route_type = "직항" if stop_count == 0 else f"경유 {stop_count}회"
+                carriers = leg.get("carriers", {}).get("marketing", [])
+                airline_names = [airline_map.get(c.get("alternateId", ""), c.get("name", "항공사 미정")) for c in carriers]
+                airlines_str = " + ".join(airline_names) if airline_names else "항공사 미정"
+
+                lines.append(
+                    f"[{i}] {airlines_str} | {route_type}\n"
+                    f"    출발: {dep_time} → 도착: {arr_time}\n"
+                    f"    비행시간: {duration_str}\n"
+                    f"    가격: {price}"
+                )
+            except Exception:
+                continue
+
+        lines.append(
+            f"\n예약 및 결제:\n"
+            f"  스카이스캐너: {skyscanner_url}\n"
+            f"  트립닷컴: {tripdotcom_url}"
+        )
+        return "\n\n".join(lines)
+
     except Exception as e:
-        return f"항공권 검색 오류: {e}"
+        return _search_links_only(from_iata, to_iata, departure, destination, _parse_date_iso(date), adults)
+
+
+def _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults):
+    """링크만 제공하는 폴백"""
+    sc_date = date_iso.replace("-", "")[2:]
+    skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
+    tripdotcom_url = f"https://kr.trip.com/flights/showfare?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&adult={adults}&cabin=Economy"
+    return (
+        f"항공권 검색: {departure}({from_iata}) → {destination}({to_iata}) | {date_iso} | 성인 {adults}명\n\n"
+        f"실시간 최저가 확인:\n"
+        f"  스카이스캐너: {skyscanner_url}\n"
+        f"  트립닷컴: {tripdotcom_url}\n\n"
+        f"※ 위 링크에서 직접 확인 후 결제해주세요."
+    )
+
+
+def _search_fallback(departure, destination, date, adults, direct_only, from_iata, to_iata):
+    """API 키 없을 때 링크 방식"""
+    date_iso = _parse_date_iso(date)
+    return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
 
 
 # ── 환율 조회 ──
