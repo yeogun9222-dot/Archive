@@ -735,11 +735,12 @@ def search_hotels(
     print(f"[search_hotels 호출] location={location}, {checkin_str}~{checkout_str}, adults={adults}, rooms={rooms}, max_usd={max_price_usd}")
     # 1단계: 목적지 ID 조회
     try:
-        dest_params = urllib.parse.urlencode({"query": location, "languagecode": "ko"})
+        dest_params = urllib.parse.urlencode({"query": location, "languagecode": "en-us"})
         dest_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?{dest_params}"
         req = urllib.request.Request(dest_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             dest_data = json.loads(resp.read().decode("utf-8"))
+        print(f"[search_hotels 목적지] dest_id={dest_data.get('data', [{}])[0].get('dest_id') if dest_data.get('data') else 'none'}")
 
         dest_list = dest_data.get("data", [])
         if not dest_list:
@@ -763,14 +764,15 @@ def search_hotels(
             "adults": str(adults),
             "room_qty": str(rooms),
             "currency_code": "USD",
-            "languagecode": "ko",
-            "sort_by": "popularity",
+            "languagecode": "en-us",
+            "units": "metric",
             "page_number": "1",
         })
         hotel_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?{hotel_params}"
         req = urllib.request.Request(hotel_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=40) as resp:
             hotel_data = json.loads(resp.read().decode("utf-8"))
+        print(f"[search_hotels 결과] hotels={len(hotel_data.get('data', {}).get('hotels', []))}")
     except Exception as e:
         print(f"[search_hotels 검색 오류] {e}")
         return f"호텔 검색 오류: {e}"
