@@ -47,6 +47,8 @@ _DATE_KEYWORDS = [
     "일", "오늘", "내일", "모레", "이번주", "다음주",
     "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
 ]
+# "가장 저렴한 날짜가 언제?" 류 — 특정 날짜가 아닌 범위 검색 → web_search
+_CHEAPEST_FLIGHT_KEYWORDS = ["가장 저렴", "제일 저렴", "최저가", "언제 가면", "언제 가는게", "싸게", "저렴하게 언제", "저렴한 날"]
 
 
 _COMPLEX_KEYWORDS = [
@@ -80,7 +82,11 @@ def agent_node(state: JakeState) -> JakeState:
     if not loop_msgs:
         has_flight = any(kw in user_input for kw in _FLIGHT_KEYWORDS)
         has_date = any(kw in user_input for kw in _DATE_KEYWORDS)
-        if has_flight and has_date:
+        has_cheapest = any(kw in user_input for kw in _CHEAPEST_FLIGHT_KEYWORDS)
+        if has_flight and has_cheapest:
+            # "가장 저렴한 날짜 언제?" → web_search로 검색
+            forced_tool = "web_search"
+        elif has_flight and has_date:
             forced_tool = "search_flights"
         elif has_flight and not has_date:
             # 날짜 없는 항공 질문 → 시스템 지시 직접 주입
