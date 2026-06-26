@@ -56,6 +56,11 @@ def send_message(text: str):
 
 def start_polling():
     global _offset
+    # 재시작 시 기존 미처리 메시지 건너뜀 (중복 처리 방지)
+    pending = get_updates()
+    if pending:
+        _offset = pending[-1]["update_id"] + 1
+
     print("Telegram bot polling started...")
 
     while True:
