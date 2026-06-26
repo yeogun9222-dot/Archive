@@ -42,6 +42,12 @@ _FLIGHT_KEYWORDS = ["항공권", "비행기", "항공편", "직항", "편도", "
 _EXCHANGE_KEYWORDS = ["환율", "환전", "달러", "엔화", "유로", "원화", "USD", "JPY", "EUR", "VND", "THB"]
 _ACCOMMODATION_KEYWORDS = ["숙소", "호텔", "아파트", "오피스텔", "에어비앤비", "airbnb", "렌트", "임대", "숙박", "방 찾아", "룸 찾아", "거주할"]
 _HOTEL_KEYWORDS = ["호텔 찾아", "호텔 검색", "호텔 예약"]
+# 날짜 명시 여부 판단 (이 키워드가 없으면 날짜 불명확 → search_flights 강제 호출 안 함)
+_DATE_KEYWORDS = [
+    "월", "일", "오늘", "내일", "모레", "이번주", "다음주",
+    "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
+    "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월",
+]
 
 
 _COMPLEX_KEYWORDS = [
@@ -75,7 +81,9 @@ def agent_node(state: JakeState) -> JakeState:
     # 첫 진입 시 강제 도구 선택 여부 결정
     forced_tool = ""
     if not loop_msgs:
-        if any(kw in user_input for kw in _FLIGHT_KEYWORDS):
+        has_flight = any(kw in user_input for kw in _FLIGHT_KEYWORDS)
+        has_date = any(kw in user_input for kw in _DATE_KEYWORDS)
+        if has_flight and has_date:
             forced_tool = "search_flights"
         elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
             forced_tool = "get_exchange_rate"
