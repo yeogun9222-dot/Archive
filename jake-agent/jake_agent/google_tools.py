@@ -294,6 +294,71 @@ def create_calendar_event(title: str, start_datetime: str, end_datetime: str, de
         return f"오류: {e}"
 
 
+@tool
+def search_calendar_events(keyword: str, date: str = "") -> str:
+    """Google Calendar에서 특정 키워드와 날짜로 일정을 검색합니다.
+    keyword: 검색할 일정 제목 키워드
+    date: 검색 날짜 (예: 2026-07-03, 7월3일). 비우면 향후 30일 전체 검색.
+    반환값에 event_id가 포함되어 있어 삭제 시 사용 가능.
+    """
+    try:
+        from datetime import timezone, timedelta
+        svc = _calendar()
+
+        if date:
+            # 날짜 파싱
+            import re
+            m = re.match(r'(\d{1,2})월\s*(\d{1,2})일?', date)
+            if m:
+                month, day = int(m.group(1)), int(m.group(2))
+                year = datetime.now().year
+                date_iso = f"{year}-{month:02d}-{day:02d}"
+            else:
+                date_iso = date[:10]
+            time_min = f"{date_iso}T00:00:00+09:00"
+            time_max = f"{date_iso}T23:59:59+09:00"
+        else:
+            now = datetime.now(timezone(timedelta(hours=9)))
+            time_min = now.isoformat()
+            time_max = (now + timedelta(days=30)).isoformat()
+
+        events = svc.events().list(
+            calendarId="primary",
+            timeMin=time_min,
+            timeMax=time_max,
+            q=keyword,
+            maxResults=10,
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+
+        items = events.get("items", [])
+        if not items:
+            return f"'{keyword}' 관련 일정을 찾을 수 없습니다."
+
+        lines = [f"['{keyword}' 검색 결과]"]
+        for e in items:
+            start = e["start"].get("dateTime", e["start"].get("date", ""))[:16].replace("T", " ")
+            lines.append(f"  {start} — {e.get('summary', '(제목 없음)')} [ID: {e['id']}]")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"오류: {e}"
+
+
+@tool
+def delete_calendar_event(event_id: str) -> str:
+    """Google Calendar 일정을 삭제합니다.
+    event_id: search_calendar_events로 조회한 이벤트 ID
+    반복 일정의 경우 해당 날짜 1건만 삭제됩니다.
+    """
+    try:
+        svc = _calendar()
+        svc.events().delete(calendarId="primary", eventId=event_id).execute()
+        return "✅ 일정 삭제 완료"
+    except Exception as e:
+        return f"오류: {e}"
+
+
 def get_all_google_tools():
     return [
         create_google_doc,
@@ -305,4 +370,6 @@ def get_all_google_tools():
         send_gmail,
         list_calendar_events,
         create_calendar_event,
+        search_calendar_events,
+        delete_calendar_event,
     ]
