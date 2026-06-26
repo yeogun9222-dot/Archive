@@ -35,20 +35,37 @@ class JakeState(TypedDict):
     loop_msgs: list      # 현재 턴 ReAct 루프용 LangChain 메시지 객체
 
 
-def _build_llm():
-    return ChatAnthropic(
+_FLIGHT_KEYWORDS = ["항공권", "비행기", "항공편", "직항", "편도", "왕복", "flight", "비행편"]
+_EXCHANGE_KEYWORDS = ["환율", "환전", "달러", "엔화", "유로", "원화", "USD", "JPY", "EUR", "VND", "THB"]
+
+
+def _build_llm(forced_tool: str = ""):
+    base = ChatAnthropic(
         model="claude-sonnet-4-6",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=4096
-    ).bind_tools(ALL_TOOLS)
+    )
+    if forced_tool:
+        return base.bind_tools(ALL_TOOLS, tool_choice={"type": "tool", "name": forced_tool})
+    return base.bind_tools(ALL_TOOLS)
 
 
 def agent_node(state: JakeState) -> JakeState:
     persona = state.get("persona", "제이크")
     system_prompt = get_system_prompt(persona)
-    llm = _build_llm()
 
     loop_msgs = state.get("loop_msgs") or []
+    user_input = state.get("user_input", "")
+
+    # 첫 진입 시 강제 도구 선택 여부 결정
+    forced_tool = ""
+    if not loop_msgs:
+        if any(kw in user_input for kw in _FLIGHT_KEYWORDS):
+            forced_tool = "search_flights"
+        elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
+            forced_tool = "get_exchange_rate"
+
+    llm = _build_llm(forced_tool)
 
     if not loop_msgs:
         # 첫 진입: 히스토리 + 현재 입력으로 메시지 구성
@@ -61,7 +78,7 @@ def agent_node(state: JakeState) -> JakeState:
                     msgs.append(AIMessage(content=msg["content"]))
             else:
                 msgs.append(msg)
-        msgs.append(HumanMessage(content=state["user_input"]))
+        msgs.append(HumanMessage(content=user_input))
         loop_msgs = msgs
 
     response = llm.invoke(loop_msgs)
