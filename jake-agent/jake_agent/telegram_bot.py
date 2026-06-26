@@ -25,7 +25,7 @@ def get_updates():
 def process_message(text: str) -> str:
     """Jake API에 메시지 전달하고 응답 받기"""
     try:
-        payload = json.dumps({"message": text}).encode("utf-8")
+        payload = json.dumps({"message": text, "source": "telegram"}).encode("utf-8")
         req = urllib.request.Request(
             "http://localhost:8000/chat",
             data=payload,

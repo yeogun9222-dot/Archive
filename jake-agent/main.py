@@ -40,6 +40,7 @@ conversation_history = []
 
 class ChatRequest(BaseModel):
     message: str
+    source: str = "api"  # "telegram" 이면 알림 중복 방지
 
 class ChatResponse(BaseModel):
     response: str
@@ -63,7 +64,9 @@ async def chat_with_jake(req: ChatRequest):
         {"role": "assistant", "content": result["jake_response"]}
     ])
 
-    notify_jake_response(req.message, result["jake_response"], result["tasks_created"])
+    # 텔레그램 발신 시 알림 중복 방지
+    if req.source != "telegram":
+        notify_jake_response(req.message, result["jake_response"], result["tasks_created"])
 
     count = get_total_conversation_count()
     check_and_analyze(count)
