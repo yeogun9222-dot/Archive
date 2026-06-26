@@ -576,7 +576,7 @@ def search_accommodation(
     checkout_str = checkout_dt.strftime("%Y-%m-%d")
 
     headers = {
-        "x-rapidapi-host": "airbnb13.p.rapidapi.com",
+        "x-rapidapi-host": "airbnb19.p.rapidapi.com",
         "x-rapidapi-key": rapidapi_key,
     }
     params = urllib.parse.urlencode({
@@ -585,9 +585,9 @@ def search_accommodation(
         "checkout": checkout_str,
         "adults": str(adults),
         "currency": "USD",
-        "page": "1",
+        "totalRecords": "20",
     })
-    url = f"https://airbnb13.p.rapidapi.com/search-location?{params}"
+    url = f"https://airbnb19.p.rapidapi.com/api/v1/searchPropertyByLocationV2?{params}"
 
     try:
         req = urllib.request.Request(url, headers=headers)
@@ -597,7 +597,7 @@ def search_accommodation(
         print(f"[search_accommodation 오류] {type(e).__name__}: {e}")
         return f"숙소 검색 오류: {e}"
 
-    results = data.get("results", [])
+    results = data.get("data", {}).get("list", data.get("results", []))
     if not results:
         return (
             f"'{location}' 숙소 검색 결과가 없습니다.\n"
@@ -606,21 +606,30 @@ def search_accommodation(
 
     filtered = []
     for r in results:
-        bedrooms = r.get("bedrooms") or 0
+        listing = r.get("listing", r)
+        pricing = r.get("pricingQuote", {})
+
+        bedrooms = listing.get("bedrooms") or 0
         if bedrooms < min_bedrooms:
             continue
-        price_info = r.get("price", {})
-        total_str = (price_info.get("total") or "").replace(",", "")
-        total_usd = 0.0
-        m = re.search(r"[\d]+\.?\d*", total_str)
+
+        # 가격 추출
+        price_per_night = 0.0
+        structured = pricing.get("structuredStayDisplayPrice", {})
+        primary = structured.get("primaryLine", {})
+        price_str = primary.get("price", "") or primary.get("discountedPrice", "")
+        m = re.search(r"[\d,]+\.?\d*", price_str.replace(",", ""))
         if m:
             try:
-                total_usd = float(m.group())
+                price_per_night = float(m.group())
             except Exception:
                 pass
+
+        total_usd = price_per_night * duration_days
         if max_price_usd > 0 and total_usd > max_price_usd and total_usd > 0:
             continue
-        filtered.append((r, total_usd))
+
+        filtered.append((listing, pricing, price_per_night, total_usd))
 
     if not filtered:
         airbnb_url = (
@@ -633,31 +642,29 @@ def search_accommodation(
             + f" 조건의 숙소가 없습니다.\n직접 검색: {airbnb_url}"
         )
 
-    filtered.sort(key=lambda x: x[1] if x[1] > 0 else float("inf"))
+    filtered.sort(key=lambda x: x[2] if x[2] > 0 else float("inf"))
 
     lines = [
         f"숙소 검색: {location}\n"
         f"기간: {checkin_str} ~ {checkout_str} ({duration_days}일) | 성인 {adults}명 | 침실 {min_bedrooms}개 이상\n"
     ]
 
-    for i, (r, total_usd) in enumerate(filtered[:5], 1):
-        name = r.get("name", "이름 없음")
-        room_type = r.get("roomType", "")
-        beds = r.get("beds") or 0
-        bedrooms = r.get("bedrooms") or 0
-        bathrooms = r.get("bathrooms") or 0
-        rating = r.get("rating") or 0
-        reviews = r.get("reviewsCount") or 0
-        price_info = r.get("price", {})
-        rate_str = price_info.get("rate", "가격 미정")
-        total_disp = price_info.get("total", "합계 미정")
-        listing_url = r.get("url", "")
-        rating_str = f"★{rating:.1f} ({reviews}개 리뷰)" if rating else "평점 없음"
+    for i, (listing, pricing, ppn, total_usd) in enumerate(filtered[:5], 1):
+        name = listing.get("name", "이름 없음")
+        room_type = listing.get("roomTypeCategory", listing.get("roomType", ""))
+        bedrooms = listing.get("bedrooms") or 0
+        beds = listing.get("beds") or 0
+        bathrooms = listing.get("bathrooms") or 0
+        rating = listing.get("avgRating") or listing.get("star") or 0
+        reviews = listing.get("reviewsCount") or 0
+        listing_url = f"https://www.airbnb.com/rooms/{listing.get('id', '')}"
+        rating_str = f"★{float(rating):.1f} ({reviews}개 리뷰)" if rating else "평점 없음"
+        price_str = f"${ppn:.0f}/박 (총 ${total_usd:.0f}, {duration_days}일)" if ppn else "가격 미정"
 
         lines.append(
             f"[{i}] {name}\n"
             f"    타입: {room_type} | 침실 {bedrooms}개 | 침대 {beds}개 | 욕실 {bathrooms}개\n"
-            f"    가격: {rate_str}/박  총액: {total_disp} ({duration_days}일)\n"
+            f"    가격: {price_str}\n"
             f"    평점: {rating_str}\n"
             f"    링크: {listing_url}"
         )
