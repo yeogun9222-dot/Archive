@@ -192,7 +192,6 @@ def start_polling():
                 if chat_id in RESPONSE_GROUP_IDS:
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
-                        send_group_message(chat_id, "처리 중입니다...")
                         title = MEMBER_TITLES.get(sender, f"{sender}님")
                         group_context = (
                             f"[그룹 채팅 응답]\n"
