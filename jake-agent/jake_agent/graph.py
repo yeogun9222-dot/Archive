@@ -44,9 +44,8 @@ _ACCOMMODATION_KEYWORDS = ["숙소", "호텔", "아파트", "오피스텔", "에
 _HOTEL_KEYWORDS = ["호텔 찾아", "호텔 검색", "호텔 예약"]
 # 날짜 명시 여부 판단 (이 키워드가 없으면 날짜 불명확 → search_flights 강제 호출 안 함)
 _DATE_KEYWORDS = [
-    "월", "일", "오늘", "내일", "모레", "이번주", "다음주",
+    "일", "오늘", "내일", "모레", "이번주", "다음주",
     "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일",
-    "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월",
 ]
 
 
@@ -175,7 +174,11 @@ def tool_exec_node(state: JakeState) -> JakeState:
                 result = TOOL_MAP[tool_name].invoke(tool_args)
                 result_str = str(result)
             except Exception as e:
-                result_str = f"도구 실행 오류: {e}"
+                result_str = (
+                    f"[도구 실패] {tool_name} 오류: {e}\n"
+                    f"[지시] 이 오류를 솔직하게 알리고, 수치·가격·항공사명을 절대 지어내지 마세요. "
+                    f"검색 실패 사실을 짧게 말하고 직접 확인 링크만 제공하세요."
+                )
         else:
             result_str = f"알 수 없는 도구: {tool_name}"
 
