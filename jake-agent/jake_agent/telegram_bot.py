@@ -208,10 +208,12 @@ def start_polling():
                         # 느린 작업 선응답
                         _SLOW_TOPICS = ["항공권", "비행기", "항공편", "flight", "환율", "환전", "달러", "엔화", "유로", "날씨"]
                         _ACTION_KEYWORDS = ["찾아줘", "검색해줘", "검색해주", "알려줘", "조회해줘", "확인해줘"]
-                        _CONSULT_KEYWORDS = ["전략", "방법", "어떻게", "접근", "좋을까", "할까", "추천", "의견", "조언", "방향", "계획"]
+                        _CONSULT_KEYWORDS = ["전략", "방법", "어떻게", "접근", "추천", "조언", "방향"]
+                        _QUESTION_ENDINGS = ["까?", "나요?", "할까", "좋을까", "될까", "어때", "어떨까", "?"]
+                        is_question = any(text.endswith(q) or q in text[-20:] for q in _QUESTION_ENDINGS)
                         if any(t in text for t in _SLOW_TOPICS) and any(a in text for a in _ACTION_KEYWORDS):
                             send_group_message(chat_id, "네, 잠시만요! 바로 검색해드릴게요.")
-                        elif any(c in text for c in _CONSULT_KEYWORDS):
+                        elif any(c in text for c in _CONSULT_KEYWORDS) and is_question:
                             send_group_message(chat_id, "좋은 질문이에요! 잠시만요, 팀원들에게 의견 종합해볼게요.")
 
                         group_context = (
