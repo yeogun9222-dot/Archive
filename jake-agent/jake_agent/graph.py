@@ -72,7 +72,7 @@ def agent_node(state: JakeState) -> JakeState:
     # 도구 호출이 없으면 최종 응답
     if not response.tool_calls:
         jake_response = response.content
-        log_conversation(persona, f"이사님: {state['user_input']}", None)
+        log_conversation(persona, f"대표님: {state['user_input']}", None)
         log_conversation(persona, f"{persona}: {jake_response}", None)
 
         if persona == "제이크":

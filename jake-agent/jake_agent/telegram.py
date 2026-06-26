@@ -31,7 +31,7 @@ def notify_jake_response(user_input: str, jake_reply: str, tasks: list):
 
     message = (
         f"🤖 *제이크 보고*\n\n"
-        f"📌 *이사님 지시:*\n{user_input[:200]}\n\n"
+        f"📌 *대표님 지시:*\n{user_input[:200]}\n\n"
         f"💬 *제이크 응답:*\n{jake_reply[:500]}{'...' if len(jake_reply) > 500 else ''}"
         f"{tasks_text}"
     )
