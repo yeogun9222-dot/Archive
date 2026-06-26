@@ -18,6 +18,17 @@ RESPONSE_GROUP_IDS = set(
 )
 RESPONSE_TRIGGERS = ["제이크", "jake"]
 
+# 그룹 멤버 호칭 매핑 (first_name 기준)
+MEMBER_TITLES = {
+    "lskim": "김과장님",
+    "Lskim": "김과장님",
+    "LEE HYUNG HEE": "형희이사님",
+    "Lee Hyung Hee": "형희이사님",
+    "임철재": "임의장님",
+    "Kade Yeo": "대표님",
+    "Kade": "대표님",
+}
+
 _offset = 0
 _group_buffers = defaultdict(list)  # {group_id: [(time_str, sender, text), ...]}
 _group_names = {}                    # {group_id: group_title}
@@ -182,12 +193,13 @@ def start_polling():
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         send_group_message(chat_id, "처리 중입니다...")
+                        title = MEMBER_TITLES.get(sender, f"{sender}님")
                         group_context = (
                             f"[그룹 채팅 응답]\n"
                             f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
                             f"반드시 격식체(존댓말)로 정중하게 답변하세요. "
-                            f"질문자 이름을 첫 문장에 자연스럽게 포함하세요.\n\n"
-                            f"{sender}님 질문: {text}"
+                            f"질문자 호칭은 '{title}'입니다. 첫 문장에 자연스럽게 포함하세요.\n\n"
+                            f"{title} 질문: {text}"
                         )
                         response = process_message(group_context)
                         send_group_message(chat_id, response)
