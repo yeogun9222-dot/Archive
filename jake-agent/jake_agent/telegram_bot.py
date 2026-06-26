@@ -4,6 +4,7 @@ import threading
 import urllib.request
 import time
 import re
+import base64
 from collections import defaultdict
 from dotenv import load_dotenv
 
@@ -58,9 +59,13 @@ def get_updates():
         return []
 
 
-def process_message(text: str) -> str:
+def process_message(text: str, image_base64: str = "", image_mime: str = "image/jpeg") -> str:
     try:
-        payload = json.dumps({"message": text, "source": "telegram"}).encode("utf-8")
+        payload_dict = {"message": text, "source": "telegram"}
+        if image_base64:
+            payload_dict["image_base64"] = image_base64
+            payload_dict["image_mime"] = image_mime
+        payload = json.dumps(payload_dict).encode("utf-8")
         req = urllib.request.Request(
             "http://localhost:8000/chat",
             data=payload,
@@ -71,6 +76,24 @@ def process_message(text: str) -> str:
             return result.get("response", "응답 없음")
     except Exception as e:
         return f"오류 발생: {e}"
+
+
+def _download_photo(file_id: str) -> tuple[str, str]:
+    """텔레그램 사진 다운로드 → (base64, mime_type)"""
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}"
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        file_path = data["result"]["file_path"]
+        ext = file_path.split(".")[-1].lower()
+        mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext}"
+        download_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        with urllib.request.urlopen(download_url, timeout=30) as resp:
+            image_bytes = resp.read()
+        return base64.b64encode(image_bytes).decode("utf-8"), mime
+    except Exception as e:
+        print(f"[사진 다운로드 오류] {e}")
+        return "", "image/jpeg"
 
 
 def send_message(text: str):
@@ -191,6 +214,14 @@ def start_polling():
             chat_type = chat.get("type", "")
             text = msg.get("text", "").strip()
 
+            # 사진 메시지 처리
+            photo = msg.get("photo", [])
+            caption = msg.get("caption", "").strip()
+            image_base64, image_mime = "", "image/jpeg"
+            if photo:
+                text = caption or "이 사진을 분석해줘."
+                image_base64, image_mime = _download_photo(photo[-1]["file_id"])
+
             if not text:
                 continue
 
@@ -215,7 +246,7 @@ def start_polling():
                             f"질문자 호칭은 '{title}'입니다. 첫 문장에 자연스럽게 포함하세요.\n\n"
                             f"{title} 질문: {text}"
                         )
-                        response = process_message(group_context)
+                        response = process_message(group_context, image_base64, image_mime)
                         send_group_message(chat_id, response)
 
                 # 모니터링 그룹: 조용히 버퍼링
@@ -241,7 +272,7 @@ def start_polling():
                 continue
 
             send_message("처리 중입니다...")
-            response = process_message(text)
+            response = process_message(text, image_base64, image_mime)
             send_message(response)
 
 

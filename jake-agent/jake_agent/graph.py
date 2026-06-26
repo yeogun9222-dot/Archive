@@ -34,6 +34,8 @@ class JakeState(TypedDict):
     tasks_created: list
     persona: str
     loop_msgs: list      # 현재 턴 ReAct 루프용 LangChain 메시지 객체
+    image_base64: str    # 첨부 이미지 (base64, 없으면 "")
+    image_mime: str      # 이미지 MIME 타입
 
 
 _FLIGHT_KEYWORDS = ["항공권", "비행기", "항공편", "직항", "편도", "왕복", "flight", "비행편"]
@@ -83,7 +85,15 @@ def agent_node(state: JakeState) -> JakeState:
                     msgs.append(AIMessage(content=msg["content"]))
             else:
                 msgs.append(msg)
-        msgs.append(HumanMessage(content=user_input))
+        image_b64 = state.get("image_base64", "")
+        image_mime = state.get("image_mime", "image/jpeg")
+        if image_b64:
+            msgs.append(HumanMessage(content=[
+                {"type": "text", "text": user_input},
+                {"type": "image_url", "image_url": {"url": f"data:{image_mime};base64,{image_b64}"}},
+            ]))
+        else:
+            msgs.append(HumanMessage(content=user_input))
         loop_msgs = msgs
 
     response = llm.invoke(loop_msgs)

@@ -41,6 +41,8 @@ jake_graph = build_jake_graph()
 class ChatRequest(BaseModel):
     message: str
     source: str = "api"  # "telegram" 이면 알림 중복 방지
+    image_base64: Optional[str] = None
+    image_mime: Optional[str] = "image/jpeg"
 
 class ChatResponse(BaseModel):
     response: str
@@ -57,7 +59,9 @@ async def chat_with_jake(req: ChatRequest):
         "user_input": req.message,
         "jake_response": "",
         "tasks_created": [],
-        "persona": persona
+        "persona": persona,
+        "image_base64": req.image_base64 or "",
+        "image_mime": req.image_mime or "image/jpeg",
     })
 
     # 텔레그램 발신 시 알림 중복 방지
