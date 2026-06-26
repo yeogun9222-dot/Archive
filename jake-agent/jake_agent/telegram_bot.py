@@ -40,17 +40,19 @@ def process_message(text: str) -> str:
 def send_message(text: str):
     if not BOT_TOKEN or not CHAT_ID:
         return
-    try:
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        payload = json.dumps({
-            "chat_id": CHAT_ID,
-            "text": text[:4000],
-            "parse_mode": "Markdown"
-        }).encode("utf-8")
-        req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
-        urllib.request.urlopen(req, timeout=10)
-    except Exception as e:
-        print(f"Telegram send error: {e}")
+    for parse_mode in ["Markdown", None]:
+        try:
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            body = {"chat_id": CHAT_ID, "text": text[:4000]}
+            if parse_mode:
+                body["parse_mode"] = parse_mode
+            payload = json.dumps(body).encode("utf-8")
+            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=10)
+            return
+        except Exception as e:
+            if parse_mode is None:
+                print(f"Telegram send error: {e}")
 
 def start_polling():
     global _offset
@@ -64,7 +66,7 @@ def start_polling():
             chat_id = str(msg.get("chat", {}).get("id", ""))
             text = msg.get("text", "").strip()
 
-            # 이사님 채팅만 처리
+            # 대표님 채팅만 처리
             if chat_id != CHAT_ID or not text:
                 continue
 
