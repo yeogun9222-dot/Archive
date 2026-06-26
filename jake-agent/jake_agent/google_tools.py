@@ -277,19 +277,86 @@ def list_calendar_events(days: int = 7) -> str:
         return f"오류: {e}"
 
 
+def _parse_calendar_datetime(date_str: str, time_str: str) -> str:
+    """날짜+시간 문자열을 Google Calendar ISO 형식(2026-07-01T14:00:00+09:00)으로 변환"""
+    import re
+    from datetime import datetime as dt
+
+    # 날짜 파싱
+    date_str = date_str.strip()
+    m = re.match(r'(\d{1,2})월\s*(\d{1,2})일?', date_str)
+    if m:
+        month, day = int(m.group(1)), int(m.group(2))
+        year = dt.now().year
+        if (month, day) < (dt.now().month, dt.now().day):
+            year += 1
+        date_iso = f"{year}-{month:02d}-{day:02d}"
+    elif re.match(r'\d{4}-\d{2}-\d{2}', date_str):
+        date_iso = date_str[:10]
+    else:
+        date_iso = date_str[:10]
+
+    # 시간 파싱
+    time_str = time_str.strip()
+    m = re.match(r'오후\s*(\d{1,2})시?(?:\s*(\d{2})분?)?', time_str)
+    if m:
+        h = int(m.group(1))
+        mins = int(m.group(2)) if m.group(2) else 0
+        h = h + 12 if h < 12 else h
+        time_iso = f"{h:02d}:{mins:02d}:00"
+    else:
+        m = re.match(r'오전\s*(\d{1,2})시?(?:\s*(\d{2})분?)?', time_str)
+        if m:
+            h = int(m.group(1)) % 12
+            mins = int(m.group(2)) if m.group(2) else 0
+            time_iso = f"{h:02d}:{mins:02d}:00"
+        else:
+            m = re.match(r'(\d{1,2}):(\d{2})', time_str)
+            if m:
+                time_iso = f"{int(m.group(1)):02d}:{m.group(2)}:00"
+            else:
+                m = re.match(r'(\d{1,2})시', time_str)
+                time_iso = f"{int(m.group(1)):02d}:00:00" if m else "09:00:00"
+
+    return f"{date_iso}T{time_iso}+09:00"
+
+
 @tool
-def create_calendar_event(title: str, start_datetime: str, end_datetime: str, description: str = "") -> str:
-    """Google Calendar에 일정을 추가합니다. start/end_datetime 형식: 2026-06-27T10:00:00+09:00"""
+def create_calendar_event(title: str, date: str, start_time: str, end_time: str = "", description: str = "") -> str:
+    """Google Calendar에 일정을 추가합니다.
+    title: 일정 제목
+    date: 날짜 (예: 2026-07-01, 7월1일)
+    start_time: 시작 시간 (예: 14:00, 오후2시, 오전10시)
+    end_time: 종료 시간 (비우면 시작+1시간 자동 설정)
+    description: 메모 (선택)
+    """
     try:
+        start_iso = _parse_calendar_datetime(date, start_time)
+
+        if end_time:
+            end_iso = _parse_calendar_datetime(date, end_time)
+        else:
+            # 시작 시간 +1시간
+            from datetime import datetime as dt, timedelta, timezone
+            kst = timezone(timedelta(hours=9))
+            start_dt = dt.fromisoformat(start_iso)
+            end_iso = (start_dt + timedelta(hours=1)).isoformat()
+
         svc = _calendar()
         event = {
             "summary": title,
             "description": description,
-            "start": {"dateTime": start_datetime, "timeZone": "Asia/Seoul"},
-            "end": {"dateTime": end_datetime, "timeZone": "Asia/Seoul"},
+            "start": {"dateTime": start_iso, "timeZone": "Asia/Seoul"},
+            "end": {"dateTime": end_iso, "timeZone": "Asia/Seoul"},
         }
         result = svc.events().insert(calendarId="primary", body=event).execute()
-        return f"✅ 일정 추가 완료\n제목: {title}\n시작: {start_datetime}\n링크: {result.get('htmlLink', '')}"
+        return (
+            f"일정 추가 완료\n"
+            f"제목: {title}\n"
+            f"날짜: {date}\n"
+            f"시간: {start_time} ~ {end_time or '(+1시간)'}\n"
+            f"링크: {result.get('htmlLink', '')}"
+        )
     except Exception as e:
         return f"오류: {e}"
 
