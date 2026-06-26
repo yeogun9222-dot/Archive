@@ -182,7 +182,14 @@ def start_polling():
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         send_group_message(chat_id, "처리 중입니다...")
-                        response = process_message(f"[그룹: {group_title}] {sender}: {text}")
+                        group_context = (
+                            f"[그룹 채팅 응답]\n"
+                            f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
+                            f"반드시 격식체(존댓말)로 정중하게 답변하세요. "
+                            f"질문자 이름을 첫 문장에 자연스럽게 포함하세요.\n\n"
+                            f"{sender}님 질문: {text}"
+                        )
+                        response = process_message(group_context)
                         send_group_message(chat_id, response)
 
                 # 모니터링 그룹: 조용히 버퍼링
