@@ -268,18 +268,27 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
 
         for i, item in enumerate(itineraries[:5], 1):
             try:
-                price = item.get("price", {}).get("formatted", "가격 미정")
+                price_info = item.get("price", {})
+                price_amount = price_info.get("amount", 0)
+                price = f"₩{int(price_amount):,}" if price_amount else price_info.get("formatted", "가격 미정")
+                booking_url = item.get("bookingUrl", "")
                 legs = item.get("legs", [])
                 if not legs:
                     continue
                 leg = legs[0]
                 dep_time = leg.get("departure", "")[:16].replace("T", " ")
                 arr_time = leg.get("arrival", "")[:16].replace("T", " ")
-                duration_mins = leg.get("durationInMinutes", 0)
+                duration_mins = leg.get("durationMinutes", leg.get("durationInMinutes", 0))
                 duration_str = f"{duration_mins // 60}시간 {duration_mins % 60}분" if duration_mins else "-"
                 stop_count = leg.get("stopCount", 0)
                 route_type = "직항" if stop_count == 0 else f"경유 {stop_count}회"
-                carriers = leg.get("carriers", {}).get("marketing", [])
+                carriers_raw = leg.get("carriers", {})
+                if isinstance(carriers_raw, dict):
+                    carriers = carriers_raw.get("marketing", [])
+                elif isinstance(carriers_raw, list):
+                    carriers = carriers_raw
+                else:
+                    carriers = []
                 airline_names = [airline_map.get(c.get("alternateId", ""), c.get("name", "항공사 미정")) for c in carriers]
                 airlines_str = " + ".join(airline_names) if airline_names else "항공사 미정"
 
@@ -288,8 +297,10 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
                     f"    출발: {dep_time} → 도착: {arr_time}\n"
                     f"    비행시간: {duration_str}\n"
                     f"    가격: {price}"
+                    + (f"\n    예약: {booking_url}" if booking_url else "")
                 )
-            except Exception:
+            except Exception as e:
+                print(f"[search_flights DEBUG] item {i} 파싱 오류: {e}")
                 continue
 
         lines.append(
