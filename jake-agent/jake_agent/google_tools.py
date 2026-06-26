@@ -23,7 +23,21 @@ CREDS_FILE = os.path.join(_BASE, "google_credentials.json")
 TOKEN_FILE = os.path.join(_BASE, "google_token.json")
 
 
+def _ensure_credential_files():
+    """환경변수(Base64)에서 인증 파일을 복원 — 파일이 없을 때만 실행"""
+    import base64
+    creds_b64 = os.getenv("GOOGLE_CREDENTIALS_B64", "")
+    token_b64 = os.getenv("GOOGLE_TOKEN_B64", "")
+    if creds_b64 and not os.path.exists(CREDS_FILE):
+        with open(CREDS_FILE, "wb") as f:
+            f.write(base64.b64decode(creds_b64))
+    if token_b64 and not os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "wb") as f:
+            f.write(base64.b64decode(token_b64))
+
+
 def _get_creds():
+    _ensure_credential_files()
     creds = None
     if os.path.exists(TOKEN_FILE):
         creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
@@ -33,7 +47,7 @@ def _get_creds():
             with open(TOKEN_FILE, "w") as f:
                 f.write(creds.to_json())
         else:
-            raise RuntimeError("Google 인증 토큰 없음. 로컬에서 auth_google.py 실행 후 배포 필요.")
+            raise RuntimeError("Google 인증 토큰 없음. GOOGLE_TOKEN_B64 환경변수를 확인하세요.")
     return creds
 
 

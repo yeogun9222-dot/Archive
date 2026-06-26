@@ -35,6 +35,8 @@ services:
       KIWI_API_KEY: ${KIWI_API_KEY:-}
       TIMETREE_ACCESS_TOKEN: ${TIMETREE_ACCESS_TOKEN:-}
       TIMETREE_CALENDAR_ID: ${TIMETREE_CALENDAR_ID:-}
+      GOOGLE_CREDENTIALS_B64: ${GOOGLE_CREDENTIALS_B64:-}
+      GOOGLE_TOKEN_B64: ${GOOGLE_TOKEN_B64:-}
     depends_on:
       - jake-postgres
     networks:
