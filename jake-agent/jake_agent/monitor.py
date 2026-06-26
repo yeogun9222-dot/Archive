@@ -157,11 +157,25 @@ def run_health_check():
     for alert in alerts:
         send_message(alert)
 
+def _silent_init():
+    """시작 시 현재 상태를 알림 없이 기록 — 이후부터 변화만 알림"""
+    global _prev_status
+    if OPENWEBUI_ENABLED:
+        ok, _ = check_openwebui()
+        _prev_status["openwebui"] = ok
+    ok, _ = check_jake_api()
+    _prev_status["jake_api"] = ok
+    ok, _ = check_postgres()
+    _prev_status["postgres"] = ok
+    print(f"[Monitor] 초기 상태 기록 완료: {_prev_status}")
+
+
 def start_monitor_thread():
     ensure_token_table()
 
     def loop():
-        time.sleep(90)  # 컨테이너 네트워크 DNS 준비 대기 (30→90초)
+        time.sleep(60)
+        _silent_init()
         while True:
             try:
                 run_health_check()
