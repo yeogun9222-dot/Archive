@@ -205,11 +205,14 @@ def start_polling():
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
                         title = _get_title(sender)
 
-                        # 느린 작업: 검색 키워드 + 액션 키워드 함께 있을 때만 선응답
+                        # 느린 작업 선응답
                         _SLOW_TOPICS = ["항공권", "비행기", "항공편", "flight", "환율", "환전", "달러", "엔화", "유로", "날씨"]
                         _ACTION_KEYWORDS = ["찾아줘", "검색", "알려줘", "조회", "확인해줘"]
+                        _CONSULT_KEYWORDS = ["전략", "방법", "어떻게", "접근", "좋을까", "할까", "추천", "의견", "조언", "방향", "계획"]
                         if any(t in text for t in _SLOW_TOPICS) and any(a in text for a in _ACTION_KEYWORDS):
                             send_group_message(chat_id, "네, 잠시만요! 바로 검색해드릴게요.")
+                        elif any(c in text for c in _CONSULT_KEYWORDS):
+                            send_group_message(chat_id, "좋은 질문이에요! 잠시만요, 팀원들에게 의견 종합해볼게요.")
 
                         group_context = (
                             f"[그룹 채팅 응답]\n"
