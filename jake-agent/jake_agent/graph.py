@@ -14,6 +14,7 @@ from .zero_tools import get_all_zero_tools
 from .google_tools import get_all_google_tools
 from .github_tools import get_all_github_tools
 from .tools_external import get_all_external_tools
+from .team_tools import get_all_team_tools
 
 load_dotenv()
 
@@ -21,7 +22,7 @@ TEAM_MEMBERS = list(PERSONAS.keys())
 ALL_TOOLS = (
     get_all_tools() + get_all_web_tools() + get_all_luna_tools() +
     get_all_zero_tools() + get_all_google_tools() + get_all_github_tools() +
-    get_all_external_tools()
+    get_all_external_tools() + get_all_team_tools()
 )
 TOOL_MAP = {t.name: t for t in ALL_TOOLS}
 
