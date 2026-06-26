@@ -542,6 +542,47 @@ def timetree_list_events(days: int = 7) -> str:
         return f"TimeTree 조회 오류: {e}"
 
 
+# ── 한국 도시명 → 영어 매핑 (Booking.com 검색용) ──
+_KO_TO_EN_CITY = {
+    "서울": "Seoul", "부산": "Busan", "제주": "Jeju", "인천": "Incheon",
+    "대구": "Daegu", "광주": "Gwangju", "대전": "Daejeon", "울산": "Ulsan",
+    "수원": "Suwon", "고양": "Goyang", "성남": "Seongnam", "용인": "Yongin",
+    "창원": "Changwon", "청주": "Cheongju", "전주": "Jeonju", "천안": "Cheonan",
+    "안산": "Ansan", "안양": "Anyang", "남양주": "Namyangju", "화성": "Hwaseong",
+    # 동남아
+    "다낭": "Da Nang", "하노이": "Hanoi", "호치민": "Ho Chi Minh City",
+    "호이안": "Hoi An", "냐짱": "Nha Trang", "푸꾸옥": "Phu Quoc",
+    "방콕": "Bangkok", "치앙마이": "Chiang Mai", "푸켓": "Phuket", "파타야": "Pattaya",
+    "발리": "Bali", "자카르타": "Jakarta", "롬복": "Lombok",
+    "싱가포르": "Singapore", "쿠알라룸푸르": "Kuala Lumpur", "페낭": "Penang",
+    "마닐라": "Manila", "세부": "Cebu", "보라카이": "Boracay",
+    "양곤": "Yangon", "프놈펜": "Phnom Penh", "씨엠립": "Siem Reap",
+    # 일본
+    "도쿄": "Tokyo", "오사카": "Osaka", "교토": "Kyoto", "후쿠오카": "Fukuoka",
+    "삿포로": "Sapporo", "나고야": "Nagoya", "나라": "Nara", "고베": "Kobe",
+    # 기타
+    "홍콩": "Hong Kong", "마카오": "Macau", "타이베이": "Taipei",
+    "베이징": "Beijing", "상하이": "Shanghai",
+    "시드니": "Sydney", "멜버른": "Melbourne",
+    "뉴욕": "New York", "로스앤젤레스": "Los Angeles", "파리": "Paris", "런던": "London",
+}
+
+
+def _to_english_location(location: str) -> str:
+    """한국어 지역명을 영어로 변환. 이미 영어면 그대로 반환."""
+    loc = location.strip()
+    if loc in _KO_TO_EN_CITY:
+        return _KO_TO_EN_CITY[loc]
+    # 공백 분리 후 각 단어 확인 ("원흥역 고양시" → "고양시" → "고양" → "Goyang")
+    for word in reversed(loc.split()):
+        bare = word.rstrip("시군구동읍면리역가")
+        if bare in _KO_TO_EN_CITY:
+            return _KO_TO_EN_CITY[bare]
+        if word.rstrip("시군구") in _KO_TO_EN_CITY:
+            return _KO_TO_EN_CITY[word.rstrip("시군구")]
+    return loc  # 변환 불가 시 원본 반환
+
+
 # ── 숙소 검색 (Airbnb13 via RapidAPI) ──
 
 @tool
@@ -611,9 +652,13 @@ def search_accommodation(
     print(f"[search_accommodation 결과 수] {len(results)}")
     if not results:
         airbnb_url = f"https://www.airbnb.co.kr/s/{urllib.parse.quote(clean_location)}/homes?checkin={checkin_str}&checkout={checkout_str}&adults={adults}&min_bedrooms={min_bedrooms}"
+        en_loc = _to_english_location(location)
+        booking_url = f"https://www.booking.com/searchresults.ko.html?ss={urllib.parse.quote(en_loc)}&checkin={checkin_str}&checkout={checkout_str}&group_adults={adults}"
         return (
-            f"Airbnb에서 '{clean_location}' 매물을 찾지 못했습니다 (API 커버리지 부족).\n"
-            f"직접 검색 링크: {airbnb_url}"
+            f"Airbnb에서 '{clean_location}' 매물을 찾지 못했습니다 (API 커버리지 부족).\n\n"
+            f"대신 아래 링크에서 직접 확인하세요:\n"
+            f"- Airbnb: {airbnb_url}\n"
+            f"- Booking.com: {booking_url}"
         )
 
     filtered = []
@@ -733,26 +778,38 @@ def search_hotels(
     }
 
     print(f"[search_hotels 호출] location={location}, {checkin_str}~{checkout_str}, adults={adults}, rooms={rooms}, max_usd={max_price_usd}")
-    # 1단계: 목적지 ID 조회
-    try:
-        dest_params = urllib.parse.urlencode({"query": location, "languagecode": "en-us"})
-        dest_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?{dest_params}"
-        req = urllib.request.Request(dest_url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            dest_data = json.loads(resp.read().decode("utf-8"))
-        print(f"[search_hotels 목적지] dest_id={dest_data.get('data', [{}])[0].get('dest_id') if dest_data.get('data') else 'none'}")
 
-        dest_list = dest_data.get("data", [])
-        if not dest_list:
-            return f"'{location}' 목적지를 찾을 수 없습니다."
+    def _booking_fallback_url():
+        en_loc = _to_english_location(location)
+        return (
+            f"'{location}' Booking.com에서 목적지를 찾지 못했습니다.\n\n"
+            f"직접 검색하세요:\n"
+            f"- Booking.com: https://www.booking.com/searchresults.ko.html?ss={urllib.parse.quote(en_loc)}&checkin={checkin_str}&checkout={checkout_str}&group_adults={adults}&no_rooms={rooms}\n"
+            f"- Agoda: https://www.agoda.com/ko-kr/search?city={urllib.parse.quote(en_loc)}&checkIn={checkin_str}&checkOut={checkout_str}&adults={adults}"
+        )
 
-        dest = dest_list[0]
-        dest_id = dest.get("dest_id", "")
-        dest_type = dest.get("search_type", "CITY")
-        dest_name = dest.get("name", location)
-    except Exception as e:
-        print(f"[search_hotels 목적지 오류] {e}")
-        return f"목적지 조회 오류: {e}"
+    # 1단계: 목적지 ID 조회 (한국어 실패 시 영어로 재시도)
+    dest_id = dest_type = dest_name = None
+    for query_loc in dict.fromkeys([location, _to_english_location(location)]):
+        try:
+            dest_params = urllib.parse.urlencode({"query": query_loc, "languagecode": "en-us"})
+            dest_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?{dest_params}"
+            req = urllib.request.Request(dest_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                dest_data = json.loads(resp.read().decode("utf-8"))
+            dest_list = dest_data.get("data", [])
+            print(f"[search_hotels 목적지 쿼리={query_loc}] {len(dest_list)}건")
+            if dest_list:
+                dest = dest_list[0]
+                dest_id = dest.get("dest_id", "")
+                dest_type = dest.get("search_type", "CITY")
+                dest_name = dest.get("name", location)
+                break
+        except Exception as e:
+            print(f"[search_hotels 목적지 오류 쿼리={query_loc}] {e}")
+
+    if not dest_id:
+        return _booking_fallback_url()
 
     # 2단계: 호텔 검색
     try:
@@ -779,7 +836,7 @@ def search_hotels(
 
     hotels = hotel_data.get("data", {}).get("hotels", [])
     if not hotels:
-        return f"'{dest_name}' 호텔 검색 결과가 없습니다."
+        return _booking_fallback_url()
 
     filtered = []
     for h in hotels:
