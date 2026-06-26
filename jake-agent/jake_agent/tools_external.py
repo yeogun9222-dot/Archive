@@ -572,6 +572,7 @@ def search_accommodation(
     else:
         checkin_dt = datetime.now()
     checkout_dt = checkin_dt + timedelta(days=duration_days)
+    print(f"[search_accommodation 호출] location={location}, duration={duration_days}일, min_bedrooms={min_bedrooms}, max_price_usd={max_price_usd}")
     checkin_str = checkin_dt.strftime("%Y-%m-%d")
     checkout_str = checkout_dt.strftime("%Y-%m-%d")
 

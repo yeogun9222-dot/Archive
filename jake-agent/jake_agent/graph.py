@@ -38,6 +38,8 @@ class JakeState(TypedDict):
 
 _FLIGHT_KEYWORDS = ["항공권", "비행기", "항공편", "직항", "편도", "왕복", "flight", "비행편"]
 _EXCHANGE_KEYWORDS = ["환율", "환전", "달러", "엔화", "유로", "원화", "USD", "JPY", "EUR", "VND", "THB"]
+_ACCOMMODATION_KEYWORDS = ["숙소", "호텔", "아파트", "오피스텔", "에어비앤비", "airbnb", "렌트", "임대", "숙박", "방 찾아", "룸 찾아", "거주할"]
+_HOTEL_KEYWORDS = ["호텔 찾아", "호텔 검색", "호텔 예약"]
 
 
 def _build_llm(forced_tool: str = ""):
@@ -65,6 +67,10 @@ def agent_node(state: JakeState) -> JakeState:
             forced_tool = "search_flights"
         elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
             forced_tool = "get_exchange_rate"
+        elif any(kw in user_input for kw in _HOTEL_KEYWORDS):
+            forced_tool = "search_hotels"
+        elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS):
+            forced_tool = "search_accommodation"
 
     llm = _build_llm(forced_tool)
 
