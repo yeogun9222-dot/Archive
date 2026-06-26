@@ -220,6 +220,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             "market": "KR",
             "locale": "ko-KR",
             "cabinClass": "economy",
+            "sortBy": "cheapest",
         })
         url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
@@ -237,6 +238,8 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
 
         if not itineraries:
             return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
+
+        itineraries.sort(key=lambda x: x.get("price", {}).get("amount", float("inf")))
 
         airline_map = {
             "KE": "대한항공", "OZ": "아시아나항공", "7C": "제주항공",
