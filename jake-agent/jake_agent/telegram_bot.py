@@ -21,13 +21,23 @@ RESPONSE_TRIGGERS = ["제이크", "jake"]
 # 그룹 멤버 호칭 매핑 (first_name 기준)
 MEMBER_TITLES = {
     "lskim": "김과장님",
-    "Lskim": "김과장님",
-    "LEE HYUNG HEE": "형희이사님",
-    "Lee Hyung Hee": "형희이사님",
-    "임철재": "임의장님",
-    "Kade Yeo": "대표님",
-    "Kade": "대표님",
+    "skim": "김과장님",
+    "hyung": "형희이사님",
+    "lee": "형희이사님",
+    "형희": "형희이사님",
+    "철재": "임의장님",
+    "임": "임의장님",
+    "kade": "대표님",
+    "yeo": "대표님",
 }
+
+
+def _get_title(sender: str) -> str:
+    s = sender.lower()
+    for key, title in MEMBER_TITLES.items():
+        if key in s:
+            return title
+    return f"{sender}님"
 
 _offset = 0
 _group_buffers = defaultdict(list)  # {group_id: [(time_str, sender, text), ...]}
@@ -192,7 +202,7 @@ def start_polling():
                 if chat_id in RESPONSE_GROUP_IDS:
                     if any(t in text.lower() for t in RESPONSE_TRIGGERS):
                         print(f"[그룹 응답] {group_title} | {sender}: {text}")
-                        title = MEMBER_TITLES.get(sender, f"{sender}님")
+                        title = _get_title(sender)
                         group_context = (
                             f"[그룹 채팅 응답]\n"
                             f"이 그룹({group_title})에는 대표님보다 연장자이신 임원진 및 그룹사 의장님들이 계십니다. "
