@@ -66,7 +66,7 @@ def process_message(text: str) -> str:
             data=payload,
             headers={"Content-Type": "application/json"}
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             result = json.loads(resp.read().decode("utf-8"))
             return result.get("response", "응답 없음")
     except Exception as e:

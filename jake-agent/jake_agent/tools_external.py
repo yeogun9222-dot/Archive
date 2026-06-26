@@ -192,7 +192,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             params = urllib.parse.urlencode({"market": "KR", "query": query, "locale": "en-US"})
             url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchAirport?{params}"
             req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=20) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             places = data.get("places", data.get("data", []))
             for p in places:
@@ -223,7 +223,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
         })
         url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=45) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         itineraries = (
