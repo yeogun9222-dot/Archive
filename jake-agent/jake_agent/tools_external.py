@@ -572,7 +572,12 @@ def search_accommodation(
     else:
         checkin_dt = datetime.now()
     checkout_dt = checkin_dt + timedelta(days=duration_days)
-    print(f"[search_accommodation 호출] location={location}, duration={duration_days}일, min_bedrooms={min_bedrooms}, max_price_usd={max_price_usd}")
+    # 국가명 제거하여 도시명만 추출 (API 호환성)
+    _COUNTRY_SUFFIXES = [" Vietnam", " Thailand", " Japan", " Korea", " Indonesia", " Malaysia", " Philippines", " Singapore", " 베트남", " 태국", " 일본"]
+    clean_location = location
+    for suffix in _COUNTRY_SUFFIXES:
+        clean_location = clean_location.replace(suffix, "").strip()
+    print(f"[search_accommodation 호출] location={clean_location}({location}), duration={duration_days}일, min_bedrooms={min_bedrooms}, max_price_usd={max_price_usd}")
     checkin_str = checkin_dt.strftime("%Y-%m-%d")
     checkout_str = checkout_dt.strftime("%Y-%m-%d")
 
@@ -581,7 +586,7 @@ def search_accommodation(
         "x-rapidapi-key": rapidapi_key,
     }
     params = urllib.parse.urlencode({
-        "location": location,
+        "location": clean_location,
         "checkin": checkin_str,
         "checkout": checkout_str,
         "adults": str(adults),
@@ -605,9 +610,10 @@ def search_accommodation(
     results = top.get("list", data.get("results", data.get("data", []))) if isinstance(top, dict) else (top if isinstance(top, list) else [])
     print(f"[search_accommodation 결과 수] {len(results)}")
     if not results:
+        airbnb_url = f"https://www.airbnb.co.kr/s/{urllib.parse.quote(clean_location)}/homes?checkin={checkin_str}&checkout={checkout_str}&adults={adults}&min_bedrooms={min_bedrooms}"
         return (
-            f"'{location}' 숙소 검색 결과가 없습니다.\n"
-            f"직접 확인: https://www.airbnb.co.kr/s/{urllib.parse.quote(location)}/homes"
+            f"Airbnb에서 '{clean_location}' 매물을 찾지 못했습니다 (API 커버리지 부족).\n"
+            f"직접 검색 링크: {airbnb_url}"
         )
 
     filtered = []
