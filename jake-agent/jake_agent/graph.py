@@ -59,10 +59,8 @@ _COMPLEX_KEYWORDS = [
 
 
 def _build_llm(forced_tool: str = "", user_input: str = ""):
-    is_complex = bool(forced_tool) or any(kw in user_input for kw in _COMPLEX_KEYWORDS)
-    model = "claude-sonnet-4-6" if is_complex else "claude-haiku-4-5-20251001"
     base = ChatAnthropic(
-        model=model,
+        model="claude-sonnet-4-6",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=4096
     )
