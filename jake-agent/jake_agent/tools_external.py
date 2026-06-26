@@ -542,6 +542,133 @@ def timetree_list_events(days: int = 7) -> str:
         return f"TimeTree 조회 오류: {e}"
 
 
+# ── 숙소 검색 (Airbnb13 via RapidAPI) ──
+
+@tool
+def search_accommodation(
+    location: str,
+    checkin: str = "",
+    duration_days: int = 30,
+    adults: int = 2,
+    min_bedrooms: int = 1,
+    max_price_usd: float = 0.0,
+) -> str:
+    """단기/장기 숙소 및 임대 매물을 검색합니다 (Airbnb 기반).
+    location: 검색 지역 (예: Hoi An Vietnam, 도쿄, Bangkok)
+    checkin: 입실 날짜 YYYY-MM-DD (생략 시 오늘)
+    duration_days: 숙박 기간 일수 (기본 30일)
+    adults: 성인 인원수 (기본 2)
+    min_bedrooms: 최소 침실 수 (기본 1)
+    max_price_usd: 전체 기간 최대 예산 USD (0이면 무제한, 100만원 ≈ 730 USD)
+    """
+    from datetime import timedelta
+
+    rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
+    if not rapidapi_key:
+        return "RAPIDAPI_KEY가 설정되지 않았습니다."
+
+    if checkin:
+        checkin_dt = datetime.strptime(_parse_date_iso(checkin), "%Y-%m-%d")
+    else:
+        checkin_dt = datetime.now()
+    checkout_dt = checkin_dt + timedelta(days=duration_days)
+    checkin_str = checkin_dt.strftime("%Y-%m-%d")
+    checkout_str = checkout_dt.strftime("%Y-%m-%d")
+
+    headers = {
+        "x-rapidapi-host": "airbnb13.p.rapidapi.com",
+        "x-rapidapi-key": rapidapi_key,
+    }
+    params = urllib.parse.urlencode({
+        "location": location,
+        "checkin": checkin_str,
+        "checkout": checkout_str,
+        "adults": str(adults),
+        "currency": "USD",
+        "page": "1",
+    })
+    url = f"https://airbnb13.p.rapidapi.com/search-location?{params}"
+
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"[search_accommodation 오류] {type(e).__name__}: {e}")
+        return f"숙소 검색 오류: {e}"
+
+    results = data.get("results", [])
+    if not results:
+        return (
+            f"'{location}' 숙소 검색 결과가 없습니다.\n"
+            f"직접 확인: https://www.airbnb.co.kr/s/{urllib.parse.quote(location)}/homes"
+        )
+
+    filtered = []
+    for r in results:
+        bedrooms = r.get("bedrooms") or 0
+        if bedrooms < min_bedrooms:
+            continue
+        price_info = r.get("price", {})
+        total_str = (price_info.get("total") or "").replace(",", "")
+        total_usd = 0.0
+        m = re.search(r"[\d]+\.?\d*", total_str)
+        if m:
+            try:
+                total_usd = float(m.group())
+            except Exception:
+                pass
+        if max_price_usd > 0 and total_usd > max_price_usd and total_usd > 0:
+            continue
+        filtered.append((r, total_usd))
+
+    if not filtered:
+        airbnb_url = (
+            f"https://www.airbnb.co.kr/s/{urllib.parse.quote(location)}/homes"
+            f"?checkin={checkin_str}&checkout={checkout_str}&adults={adults}"
+        )
+        return (
+            f"'{location}' — 침실 {min_bedrooms}개 이상"
+            + (f", ${max_price_usd:.0f} 이하" if max_price_usd > 0 else "")
+            + f" 조건의 숙소가 없습니다.\n직접 검색: {airbnb_url}"
+        )
+
+    filtered.sort(key=lambda x: x[1] if x[1] > 0 else float("inf"))
+
+    lines = [
+        f"숙소 검색: {location}\n"
+        f"기간: {checkin_str} ~ {checkout_str} ({duration_days}일) | 성인 {adults}명 | 침실 {min_bedrooms}개 이상\n"
+    ]
+
+    for i, (r, total_usd) in enumerate(filtered[:5], 1):
+        name = r.get("name", "이름 없음")
+        room_type = r.get("roomType", "")
+        beds = r.get("beds") or 0
+        bedrooms = r.get("bedrooms") or 0
+        bathrooms = r.get("bathrooms") or 0
+        rating = r.get("rating") or 0
+        reviews = r.get("reviewsCount") or 0
+        price_info = r.get("price", {})
+        rate_str = price_info.get("rate", "가격 미정")
+        total_disp = price_info.get("total", "합계 미정")
+        listing_url = r.get("url", "")
+        rating_str = f"★{rating:.1f} ({reviews}개 리뷰)" if rating else "평점 없음"
+
+        lines.append(
+            f"[{i}] {name}\n"
+            f"    타입: {room_type} | 침실 {bedrooms}개 | 침대 {beds}개 | 욕실 {bathrooms}개\n"
+            f"    가격: {rate_str}/박  총액: {total_disp} ({duration_days}일)\n"
+            f"    평점: {rating_str}\n"
+            f"    링크: {listing_url}"
+        )
+
+    lines.append(
+        f"\n전체 검색: https://www.airbnb.co.kr/s/{urllib.parse.quote(location)}/homes"
+        f"?checkin={checkin_str}&checkout={checkout_str}&adults={adults}"
+    )
+    return "\n\n".join(lines)
+
+
 def get_all_external_tools():
     return [
         search_flights,
@@ -549,4 +676,5 @@ def get_all_external_tools():
         timetree_list_calendars,
         timetree_create_event,
         timetree_list_events,
+        search_accommodation,
     ]
