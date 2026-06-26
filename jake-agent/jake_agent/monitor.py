@@ -16,7 +16,7 @@ _prev_status = {}
 
 def check_openwebui():
     try:
-        req = urllib.request.Request("http://localhost:3000", method="GET")
+        req = urllib.request.Request("http://open-webui:8080", method="GET")
         with urllib.request.urlopen(req, timeout=10) as resp:
             return resp.status in (200, 301, 302), "정상"
     except Exception as e:
@@ -137,16 +137,7 @@ def run_health_check():
             alerts.append(f"🟢 *PostgreSQL 복구됨*")
         _prev_status[key] = ok
 
-    # 4. Docker 컨테이너 체크
-    containers = check_docker_containers()
-    for name, (running, status) in containers.items():
-        key = f"docker_{name}"
-        if _prev_status.get(key) != running:
-            if not running:
-                alerts.append(f"🔴 *Docker 컨테이너 중단: {name}*\n상태: {status}\n→ docker start {name}")
-            elif key in _prev_status:
-                alerts.append(f"🟢 *Docker 컨테이너 복구: {name}*")
-            _prev_status[key] = running
+    # 4. Docker 컨테이너 체크 (docker CLI 없는 환경에선 스킵)
 
     # 5. 토큰 사용량 (하루 1회 오전 9시 근처 리포트)
     now = datetime.now()
