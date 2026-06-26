@@ -22,6 +22,12 @@ _BASE = os.path.dirname(os.path.dirname(__file__))
 CREDS_FILE = os.path.join(_BASE, "google_credentials.json")
 TOKEN_FILE = os.path.join(_BASE, "google_token.json")
 
+# Jake 전용 공유 캘린더 ID (기본값: primary)
+_SHARED_CAL_ID = os.getenv(
+    "GOOGLE_SHARED_CALENDAR_ID",
+    "27e0cb7b3ca3831a335c7629c9b83cf0131b8be77a383a1795684e677d86ed4e@group.calendar.google.com"
+)
+
 
 def _ensure_credential_files():
     """환경변수(Base64)에서 인증 파일을 복원 — 파일이 없을 때만 실행"""
@@ -256,7 +262,7 @@ def list_calendar_events(days: int = 7) -> str:
 
         svc = _calendar()
         events = svc.events().list(
-            calendarId="primary",
+            calendarId=_SHARED_CAL_ID,
             timeMin=now.isoformat(),
             timeMax=end.isoformat(),
             maxResults=20,
@@ -349,7 +355,7 @@ def create_calendar_event(title: str, date: str, start_time: str, end_time: str 
             "start": {"dateTime": start_iso, "timeZone": "Asia/Seoul"},
             "end": {"dateTime": end_iso, "timeZone": "Asia/Seoul"},
         }
-        result = svc.events().insert(calendarId="primary", body=event).execute()
+        result = svc.events().insert(calendarId=_SHARED_CAL_ID, body=event).execute()
         return (
             f"일정 추가 완료\n"
             f"제목: {title}\n"
@@ -390,7 +396,7 @@ def search_calendar_events(keyword: str, date: str = "") -> str:
             time_max = (now + timedelta(days=30)).isoformat()
 
         events = svc.events().list(
-            calendarId="primary",
+            calendarId=_SHARED_CAL_ID,
             timeMin=time_min,
             timeMax=time_max,
             q=keyword,
@@ -420,7 +426,7 @@ def delete_calendar_event(event_id: str) -> str:
     """
     try:
         svc = _calendar()
-        svc.events().delete(calendarId="primary", eventId=event_id).execute()
+        svc.events().delete(calendarId=_SHARED_CAL_ID, eventId=event_id).execute()
         return "✅ 일정 삭제 완료"
     except Exception as e:
         return f"오류: {e}"

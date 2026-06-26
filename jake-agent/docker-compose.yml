@@ -37,6 +37,7 @@ services:
       TIMETREE_CALENDAR_ID: ${TIMETREE_CALENDAR_ID:-}
       GOOGLE_CREDENTIALS_B64: ${GOOGLE_CREDENTIALS_B64:-}
       GOOGLE_TOKEN_B64: ${GOOGLE_TOKEN_B64:-}
+      GOOGLE_SHARED_CALENDAR_ID: ${GOOGLE_SHARED_CALENDAR_ID:-}
     depends_on:
       - jake-postgres
     networks:
