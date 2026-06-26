@@ -282,7 +282,6 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
                     f"    출발: {dep_time} → 도착: {arr_time}\n"
                     f"    비행시간: {duration_str}\n"
                     f"    가격: {price}"
-                    + (f"\n    예약: {booking_url}" if booking_url else "")
                 )
             except Exception:
                 continue
