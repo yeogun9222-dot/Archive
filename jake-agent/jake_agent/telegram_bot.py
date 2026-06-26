@@ -207,7 +207,7 @@ def start_polling():
 
                         # 느린 작업 선응답
                         _SLOW_TOPICS = ["항공권", "비행기", "항공편", "flight", "환율", "환전", "달러", "엔화", "유로", "날씨"]
-                        _ACTION_KEYWORDS = ["찾아줘", "검색", "알려줘", "조회", "확인해줘"]
+                        _ACTION_KEYWORDS = ["찾아줘", "검색해줘", "검색해주", "알려줘", "조회해줘", "확인해줘"]
                         _CONSULT_KEYWORDS = ["전략", "방법", "어떻게", "접근", "좋을까", "할까", "추천", "의견", "조언", "방향", "계획"]
                         if any(t in text for t in _SLOW_TOPICS) and any(a in text for a in _ACTION_KEYWORDS):
                             send_group_message(chat_id, "네, 잠시만요! 바로 검색해드릴게요.")
