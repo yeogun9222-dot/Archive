@@ -39,6 +39,9 @@ services:
       GOOGLE_CREDENTIALS_B64: ${GOOGLE_CREDENTIALS_B64:-}
       GOOGLE_TOKEN_B64: ${GOOGLE_TOKEN_B64:-}
       GOOGLE_SHARED_CALENDAR_ID: ${GOOGLE_SHARED_CALENDAR_ID:-}
+      BRAVE_API_KEY: ${BRAVE_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPO: ${GITHUB_REPO:-yeogun9222-dot/Archive}
     depends_on:
       - jake-postgres
     networks:
