@@ -669,6 +669,138 @@ def search_accommodation(
     return "\n\n".join(lines)
 
 
+# ── 호텔/숙소 검색 (Booking.com via RapidAPI DataCrawler) ──
+
+@tool
+def search_hotels(
+    location: str,
+    checkin: str = "",
+    checkout: str = "",
+    duration_days: int = 1,
+    adults: int = 2,
+    rooms: int = 1,
+    max_price_usd: float = 0.0,
+) -> str:
+    """호텔 및 숙소를 검색합니다 (Booking.com 기반).
+    location: 검색 지역 (예: Hoi An, 방콕, Tokyo, 호이안)
+    checkin: 체크인 날짜 YYYY-MM-DD (생략 시 오늘)
+    checkout: 체크아웃 날짜 YYYY-MM-DD (생략 시 checkin + duration_days)
+    duration_days: 숙박 일수 (checkout 미입력 시 사용, 기본 1)
+    adults: 성인 인원수 (기본 2)
+    rooms: 객실 수 (기본 1)
+    max_price_usd: 1박 최대 예산 USD (0이면 무제한)
+    """
+    from datetime import timedelta
+
+    rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
+    if not rapidapi_key:
+        return "RAPIDAPI_KEY가 설정되지 않았습니다."
+
+    if checkin:
+        checkin_dt = datetime.strptime(_parse_date_iso(checkin), "%Y-%m-%d")
+    else:
+        checkin_dt = datetime.now()
+    if checkout:
+        checkout_dt = datetime.strptime(_parse_date_iso(checkout), "%Y-%m-%d")
+    else:
+        checkout_dt = checkin_dt + timedelta(days=duration_days)
+    checkin_str = checkin_dt.strftime("%Y-%m-%d")
+    checkout_str = checkout_dt.strftime("%Y-%m-%d")
+    nights = (checkout_dt - checkin_dt).days or 1
+
+    headers = {
+        "x-rapidapi-host": "booking-com15.p.rapidapi.com",
+        "x-rapidapi-key": rapidapi_key,
+    }
+
+    # 1단계: 목적지 ID 조회
+    try:
+        dest_params = urllib.parse.urlencode({"query": location, "languagecode": "ko"})
+        dest_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchDestination?{dest_params}"
+        req = urllib.request.Request(dest_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            dest_data = json.loads(resp.read().decode("utf-8"))
+
+        dest_list = dest_data.get("data", [])
+        if not dest_list:
+            return f"'{location}' 목적지를 찾을 수 없습니다."
+
+        dest = dest_list[0]
+        dest_id = dest.get("dest_id", "")
+        dest_type = dest.get("search_type", "CITY")
+        dest_name = dest.get("name", location)
+    except Exception as e:
+        print(f"[search_hotels 목적지 오류] {e}")
+        return f"목적지 조회 오류: {e}"
+
+    # 2단계: 호텔 검색
+    try:
+        hotel_params = urllib.parse.urlencode({
+            "dest_id": dest_id,
+            "search_type": dest_type,
+            "arrival_date": checkin_str,
+            "departure_date": checkout_str,
+            "adults": str(adults),
+            "room_qty": str(rooms),
+            "currency_code": "USD",
+            "languagecode": "ko",
+            "sort_by": "popularity",
+            "page_number": "1",
+        })
+        hotel_url = f"https://booking-com15.p.rapidapi.com/api/v1/hotels/searchHotels?{hotel_params}"
+        req = urllib.request.Request(hotel_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            hotel_data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"[search_hotels 검색 오류] {e}")
+        return f"호텔 검색 오류: {e}"
+
+    hotels = hotel_data.get("data", {}).get("hotels", [])
+    if not hotels:
+        return f"'{dest_name}' 호텔 검색 결과가 없습니다."
+
+    filtered = []
+    for h in hotels:
+        price_info = h.get("property", {}).get("priceBreakdown", {})
+        gross = price_info.get("grossPrice", {})
+        price_per_night = gross.get("value", 0) or 0
+        if max_price_usd > 0 and price_per_night > max_price_usd and price_per_night > 0:
+            continue
+        filtered.append(h)
+
+    if not filtered:
+        filtered = hotels  # 필터 결과 없으면 전체 표시
+
+    lines = [
+        f"호텔 검색: {dest_name}\n"
+        f"기간: {checkin_str} ~ {checkout_str} ({nights}박) | 성인 {adults}명 | {rooms}객실\n"
+    ]
+
+    for i, h in enumerate(filtered[:5], 1):
+        prop = h.get("property", {})
+        name = prop.get("name", "이름 없음")
+        review_score = prop.get("reviewScore", 0) or 0
+        review_count = prop.get("reviewCount", 0) or 0
+        review_word = prop.get("reviewScoreWord", "")
+        price_info = prop.get("priceBreakdown", {})
+        gross = price_info.get("grossPrice", {})
+        price_val = gross.get("value", 0) or 0
+        currency = gross.get("currency", "USD")
+        total = price_val * nights
+
+        price_str = f"${price_val:.0f}/박 (총 ${total:.0f}, {nights}박)" if price_val else "가격 미정"
+        rating_str = f"★{review_score} {review_word} ({review_count}개 리뷰)" if review_score else "평점 없음"
+
+        lines.append(
+            f"[{i}] {name}\n"
+            f"    가격: {price_str}\n"
+            f"    평점: {rating_str}"
+        )
+
+    lines.append(f"\n전체 검색: https://www.booking.com/searchresults.ko.html?ss={urllib.parse.quote(location)}&checkin={checkin_str}&checkout={checkout_str}&group_adults={adults}&no_rooms={rooms}")
+    return "\n\n".join(lines)
+
+
 def get_all_external_tools():
     return [
         search_flights,
@@ -677,4 +809,5 @@ def get_all_external_tools():
         timetree_create_event,
         timetree_list_events,
         search_accommodation,
+        search_hotels,
     ]
