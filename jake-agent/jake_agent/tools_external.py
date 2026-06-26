@@ -240,6 +240,14 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             data.get("itineraries") or []
         )
         print(f"[search_flights DEBUG] itineraries 개수: {len(itineraries)}")
+        if itineraries:
+            first = itineraries[0]
+            print(f"[search_flights DEBUG] 첫번째 키: {list(first.keys())}")
+            print(f"[search_flights DEBUG] price: {first.get('price')}")
+            legs = first.get("legs", [])
+            print(f"[search_flights DEBUG] legs 개수: {len(legs)}")
+            if legs:
+                print(f"[search_flights DEBUG] leg[0] 키: {list(legs[0].keys())}")
 
         sc_date = date_iso.replace("-", "")[2:]
         skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
