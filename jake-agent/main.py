@@ -15,11 +15,13 @@ from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
+from jake_agent.scheduler import start_scheduler_thread
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_bot_thread()
     start_monitor_thread()
+    start_scheduler_thread()
     notify_startup()
     yield
 

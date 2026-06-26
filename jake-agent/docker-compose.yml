@@ -2,7 +2,7 @@ services:
   jake-postgres:
     image: postgres:16-alpine
     container_name: jake-postgres
-    restart: always
+    restart: "no"
     environment:
       POSTGRES_DB: jakedb
       POSTGRES_USER: jake
@@ -16,7 +16,7 @@ services:
     build: .
     image: jake-agent
     container_name: jake-agent
-    restart: always
+    restart: "no"
     ports:
       - "8000:8000"
     environment:
@@ -30,6 +30,7 @@ services:
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
       NOTION_API_KEY: ${NOTION_API_KEY}
       NOTION_ARCHITECTS_KEY: ${NOTION_ARCHITECTS_KEY}
+      TELEGRAM_GROUP_IDS: ${TELEGRAM_GROUP_IDS:-}
     depends_on:
       - jake-postgres
     networks:
@@ -46,7 +47,7 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
-    restart: always
+    restart: "no"
     ports:
       - "3000:8080"
     volumes:
