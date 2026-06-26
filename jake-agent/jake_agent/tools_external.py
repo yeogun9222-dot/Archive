@@ -194,7 +194,9 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=20) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+            print(f"[search_flights DEBUG] searchAirport({query}) 키: {list(data.keys())}")
             places = data.get("places", data.get("data", []))
+            print(f"[search_flights DEBUG] places 개수: {len(places)}, 첫번째: {places[0] if places else 'EMPTY'}")
             for p in places:
                 if p.get("skyId", "").upper() == query.upper() or p.get("iataCode", "").upper() == query.upper():
                     return p.get("skyId"), p.get("entityId")
@@ -204,8 +206,10 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
 
         origin_sky, origin_entity = get_entity_id(from_iata)
         dest_sky, dest_entity = get_entity_id(to_iata)
+        print(f"[search_flights DEBUG] origin=({origin_sky},{origin_entity}) dest=({dest_sky},{dest_entity})")
 
         if not origin_entity or not dest_entity:
+            print(f"[search_flights DEBUG] entityId 없음 → 폴백")
             return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
 
         # 2단계: 항공편 검색
