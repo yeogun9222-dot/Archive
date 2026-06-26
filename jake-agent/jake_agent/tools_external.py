@@ -224,7 +224,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
         })
         url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=25) as resp:
+        with urllib.request.urlopen(req, timeout=40) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         itineraries = (
