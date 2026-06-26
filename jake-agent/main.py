@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional, List
+import asyncio
 import json
 import time
 import uuid
@@ -55,7 +56,8 @@ async def chat_with_jake(req: ChatRequest):
     persona = detect_persona(req.message)
     history = get_recent_conversation_history(persona, limit=20)
 
-    result = jake_graph.invoke({
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, lambda: jake_graph.invoke({
         "messages": history,
         "user_input": req.message,
         "jake_response": "",
@@ -63,7 +65,7 @@ async def chat_with_jake(req: ChatRequest):
         "persona": persona,
         "image_base64": req.image_base64 or "",
         "image_mime": req.image_mime or "image/jpeg",
-    })
+    }))
 
     # 텔레그램 발신 시 알림 중복 방지
     if req.source != "telegram":
@@ -135,13 +137,14 @@ async def openai_chat_completions(req: OpenAIChatRequest):
     # 시스템 프롬프트 페르소나 우선, 없으면 메시지 키워드 감지
     persona = system_persona or detect_persona(user_message)
 
-    result = jake_graph.invoke({
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, lambda: jake_graph.invoke({
         "messages": history_without_last,
         "user_input": user_message,
         "jake_response": "",
         "tasks_created": [],
         "persona": persona
-    })
+    }))
 
     response_text = result["jake_response"]
 
