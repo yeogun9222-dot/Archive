@@ -5,6 +5,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import os
 import json
+import base64
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 SCOPES = [
     "https://www.googleapis.com/auth/documents",
@@ -203,6 +206,80 @@ def append_to_google_sheet(sheet_url_or_id: str, rows: str) -> str:
         return f"오류: {e}"
 
 
+def _gmail():
+    return build("gmail", "v1", credentials=_get_creds())
+
+
+def _calendar():
+    return build("calendar", "v3", credentials=_get_creds())
+
+
+@tool
+def send_gmail(to: str, subject: str, body: str) -> str:
+    """Gmail로 이메일을 발송합니다. to: 수신자 이메일, subject: 제목, body: 본문."""
+    try:
+        msg = MIMEMultipart()
+        msg["To"] = to
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+
+        raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+        svc = _gmail()
+        svc.users().messages().send(userId="me", body={"raw": raw}).execute()
+
+        return f"✅ 이메일 발송 완료\n수신: {to}\n제목: {subject}"
+    except Exception as e:
+        return f"오류: {e}"
+
+
+@tool
+def list_calendar_events(days: int = 7) -> str:
+    """Google Calendar 일정을 조회합니다. days: 앞으로 몇 일치 (기본 7일)."""
+    try:
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        end = now + timedelta(days=days)
+
+        svc = _calendar()
+        events = svc.events().list(
+            calendarId="primary",
+            timeMin=now.isoformat(),
+            timeMax=end.isoformat(),
+            maxResults=20,
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+
+        items = events.get("items", [])
+        if not items:
+            return f"앞으로 {days}일간 일정 없음."
+
+        lines = [f"[앞으로 {days}일 일정]"]
+        for e in items:
+            start = e["start"].get("dateTime", e["start"].get("date", ""))[:16].replace("T", " ")
+            lines.append(f"  {start} — {e.get('summary', '(제목 없음)')}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"오류: {e}"
+
+
+@tool
+def create_calendar_event(title: str, start_datetime: str, end_datetime: str, description: str = "") -> str:
+    """Google Calendar에 일정을 추가합니다. start/end_datetime 형식: 2026-06-27T10:00:00+09:00"""
+    try:
+        svc = _calendar()
+        event = {
+            "summary": title,
+            "description": description,
+            "start": {"dateTime": start_datetime, "timeZone": "Asia/Seoul"},
+            "end": {"dateTime": end_datetime, "timeZone": "Asia/Seoul"},
+        }
+        result = svc.events().insert(calendarId="primary", body=event).execute()
+        return f"✅ 일정 추가 완료\n제목: {title}\n시작: {start_datetime}\n링크: {result.get('htmlLink', '')}"
+    except Exception as e:
+        return f"오류: {e}"
+
+
 def get_all_google_tools():
     return [
         create_google_doc,
@@ -211,4 +288,7 @@ def get_all_google_tools():
         read_google_doc,
         list_drive_files,
         append_to_google_sheet,
+        send_gmail,
+        list_calendar_events,
+        create_calendar_event,
     ]
