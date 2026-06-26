@@ -273,11 +273,15 @@ def start_polling():
                 send_message(_summarize_groups())
                 continue
 
+            # 소환된 팀원 미리 감지 (응답 앞에 표시용)
+            from .personas import detect_persona as _dp
+            active_persona = _dp(text)
+            persona_label = f"[{active_persona}] " if active_persona != "제이크" else ""
             send_message("처리 중입니다...")
 
-            def _reply_dm(t=text, img=image_base64, mime=image_mime):
+            def _reply_dm(t=text, img=image_base64, mime=image_mime, label=persona_label):
                 response = process_message(t, img, mime)
-                send_message(response)
+                send_message(f"{label}{response}" if label else response)
 
             threading.Thread(target=_reply_dm, daemon=True).start()
 
