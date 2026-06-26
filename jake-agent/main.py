@@ -9,7 +9,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system
@@ -19,6 +19,7 @@ from jake_agent.scheduler import start_scheduler_thread
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_db()
     start_bot_thread()
     start_monitor_thread()
     start_scheduler_thread()

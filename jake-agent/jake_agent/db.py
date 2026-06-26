@@ -14,6 +14,45 @@ def get_conn():
         password=os.getenv("DB_PASSWORD", "jake1234")
     )
 
+def init_db():
+    """테이블이 없으면 생성 (서버 시작 시 자동 호출)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            instruction TEXT,
+            assigned_to TEXT,
+            status TEXT DEFAULT 'pending',
+            result TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS conversation_log (
+            id SERIAL PRIMARY KEY,
+            agent TEXT NOT NULL,
+            message TEXT,
+            related_task_id INTEGER,
+            timestamp TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS token_usage (
+            id SERIAL PRIMARY KEY,
+            agent TEXT,
+            input_tokens INTEGER DEFAULT 0,
+            output_tokens INTEGER DEFAULT 0,
+            api_error TEXT,
+            timestamp TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
 def create_task(title: str, instruction: str, assigned_to: str) -> int:
     conn = get_conn()
     cur = conn.cursor()
