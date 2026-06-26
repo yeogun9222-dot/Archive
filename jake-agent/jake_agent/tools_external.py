@@ -732,6 +732,7 @@ def search_hotels(
         "x-rapidapi-key": rapidapi_key,
     }
 
+    print(f"[search_hotels 호출] location={location}, {checkin_str}~{checkout_str}, adults={adults}, rooms={rooms}, max_usd={max_price_usd}")
     # 1단계: 목적지 ID 조회
     try:
         dest_params = urllib.parse.urlencode({"query": location, "languagecode": "ko"})

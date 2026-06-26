@@ -67,10 +67,8 @@ def agent_node(state: JakeState) -> JakeState:
             forced_tool = "search_flights"
         elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
             forced_tool = "get_exchange_rate"
-        elif any(kw in user_input for kw in _HOTEL_KEYWORDS):
+        elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS + _HOTEL_KEYWORDS):
             forced_tool = "search_hotels"
-        elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS):
-            forced_tool = "search_accommodation"
 
     llm = _build_llm(forced_tool)
 
