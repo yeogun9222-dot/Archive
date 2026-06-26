@@ -179,19 +179,18 @@ def _search_kiwi(from_iata, to_iata, date, adults, direct_only, api_key):
 
 
 def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date, adults, direct_only, api_key):
-    """Skyscanner Flights & Travel API (RapidAPI) 실시간 항공권 검색"""
+    """Sky Scrapper API (RapidAPI) 실시간 항공권 검색"""
     try:
         date_iso = _parse_date_iso(date)
         headers = {
-            "x-rapidapi-host": "skyscanner-flights-travel-api.p.rapidapi.com",
+            "x-rapidapi-host": "sky-scrapper.p.rapidapi.com",
             "x-rapidapi-key": api_key,
-            "Content-Type": "application/json",
         }
 
         # 1단계: 출발지/도착지 entityId 조회
         def get_entity_id(query):
-            params = urllib.parse.urlencode({"market": "KR", "query": query, "locale": "ko-KR"})
-            url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchAirport?{params}"
+            params = urllib.parse.urlencode({"query": query, "locale": "en-US"})
+            url = f"https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchAirport?{params}"
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -222,9 +221,9 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
             "locale": "ko-KR",
             "cabinClass": "economy",
         })
-        url = f"https://skyscanner-flights-travel-api.p.rapidapi.com/flights/searchFlights?{params}"
+        url = f"https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights?{params}"
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         itineraries = (
@@ -283,6 +282,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
         return "\n\n".join(lines)
 
     except Exception as e:
+        print(f"[search_flights 오류] {type(e).__name__}: {e}")
         return _search_links_only(from_iata, to_iata, departure, destination, _parse_date_iso(date), adults)
 
 
