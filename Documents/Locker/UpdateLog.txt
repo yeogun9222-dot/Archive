@@ -1,9 +1,0 @@
-[2020-07-29] v0.15.1 Apply the partial fix before made in Rollback
-
-[2019-11-28] v0.15 Some algorithm change to RandomX in accordance with fork
-
-[2019-09-30] v0.14.2 Optimize by deleting some effects
-
-[2019-08-20] v0.14.1 fix UI critical bug
-
-[2018-01-02] v0.14 initial update Log
