@@ -11,11 +11,12 @@ from .notion_tools import get_all_tools
 from .web_tools import get_all_web_tools
 from .luna_tools import get_all_luna_tools
 from .zero_tools import get_all_zero_tools
+from .google_tools import get_all_google_tools
 
 load_dotenv()
 
 TEAM_MEMBERS = list(PERSONAS.keys())
-ALL_TOOLS = get_all_tools() + get_all_web_tools() + get_all_luna_tools() + get_all_zero_tools()
+ALL_TOOLS = get_all_tools() + get_all_web_tools() + get_all_luna_tools() + get_all_zero_tools() + get_all_google_tools()
 TOOL_MAP = {t.name: t for t in ALL_TOOLS}
 
 
