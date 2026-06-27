@@ -99,7 +99,7 @@ async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
 
     history = get_chat_history(persona_name, limit=20)
-    messages_history = [{"role": m["role"], "content": m["content"]} for m in history[:-0] if True]
+    messages_history = [{"role": m["role"], "content": m["content"]} for m in history]
 
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, lambda: jake_graph.invoke({
