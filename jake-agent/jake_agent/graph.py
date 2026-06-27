@@ -15,16 +15,49 @@ from .google_tools import get_all_google_tools
 from .github_tools import get_all_github_tools
 from .tools_external import get_all_external_tools
 from .team_tools import get_all_team_tools
+from .rex_tools import get_all_rex_tools
 
 load_dotenv()
 
 TEAM_MEMBERS = list(PERSONAS.keys())
+
+# 모든 도구 풀 (도구 실행 조회용)
 ALL_TOOLS = (
     get_all_tools() + get_all_web_tools() + get_all_luna_tools() +
     get_all_zero_tools() + get_all_google_tools() + get_all_github_tools() +
-    get_all_external_tools() + get_all_team_tools()
+    get_all_external_tools() + get_all_team_tools() + get_all_rex_tools()
 )
 TOOL_MAP = {t.name: t for t in ALL_TOOLS}
+
+# 페르소나별 도구 세트
+def _get_persona_tools(persona: str) -> list:
+    notion   = get_all_tools()
+    web      = get_all_web_tools()
+    luna     = get_all_luna_tools()
+    zero     = get_all_zero_tools()
+    google   = get_all_google_tools()
+    github   = get_all_github_tools()
+    external = get_all_external_tools()
+    team     = get_all_team_tools()
+    rex      = get_all_rex_tools()
+
+    mapping = {
+        "제이크": notion + web + external + team + google + github + luna + zero + rex,
+        "렉스":   rex + zero + web + github,
+        "루나":   luna + web,
+        "제로":   zero + web + rex,
+        "다인":   notion + web + google,
+        "바쿠":   luna + web,
+        "피오":   github + web + luna,
+        "리리":   github + web,
+        "에바":   notion + web,
+        "사라":   notion + web,
+        "미나":   web + luna,
+        "카이":   web,
+        "설리":   github + web + rex,
+        "노바":   rex + github + web,
+    }
+    return mapping.get(persona, web)
 
 
 class JakeState(TypedDict):
@@ -59,20 +92,21 @@ _COMPLEX_KEYWORDS = [
 ]
 
 
-def _build_llm(forced_tool: str = "", user_input: str = ""):
+def _build_llm(persona_tools: list, forced_tool: str = ""):
     base = ChatAnthropic(
         model="claude-sonnet-4-6",
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=4096
     )
     if forced_tool:
-        return base.bind_tools(ALL_TOOLS, tool_choice={"type": "tool", "name": forced_tool})
-    return base.bind_tools(ALL_TOOLS)
+        return base.bind_tools(persona_tools, tool_choice={"type": "tool", "name": forced_tool})
+    return base.bind_tools(persona_tools)
 
 
 def agent_node(state: JakeState) -> JakeState:
     persona = state.get("persona", "제이크")
     system_prompt = get_system_prompt(persona)
+    persona_tools = _get_persona_tools(persona)
 
     loop_msgs = state.get("loop_msgs") or []
     user_input = state.get("user_input", "")
@@ -83,13 +117,15 @@ def agent_node(state: JakeState) -> JakeState:
         has_flight = any(kw in user_input for kw in _FLIGHT_KEYWORDS)
         has_date = any(kw in user_input for kw in _DATE_KEYWORDS)
         has_cheapest = any(kw in user_input for kw in _CHEAPEST_FLIGHT_KEYWORDS)
-        if has_flight and has_cheapest:
-            # "가장 저렴한 날짜 언제?" → web_search로 검색
+
+        # 강제 도구는 해당 페르소나 도구 목록에 있을 때만 적용
+        tool_names = {t.name for t in persona_tools}
+
+        if has_flight and has_cheapest and "web_search" in tool_names:
             forced_tool = "web_search"
-        elif has_flight and has_date:
+        elif has_flight and has_date and "search_flights" in tool_names:
             forced_tool = "search_flights"
-        elif has_flight and not has_date:
-            # 날짜 없는 항공 질문 → 시스템 지시 직접 주입
+        elif has_flight and not has_date and "search_flights" in tool_names:
             system_prompt += (
                 "\n\n[현재 요청 처리 지시 — 최우선 적용]"
                 "\n사용자가 항공권을 문의했지만 날짜를 명시하지 않았습니다."
@@ -98,12 +134,12 @@ def agent_node(state: JakeState) -> JakeState:
                 "\n2. 수치, 항공사명, 가격, 링크를 절대 생성하지 마세요."
                 "\n3. search_flights 도구를 호출하지 마세요."
             )
-        elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS):
+        elif any(kw in user_input for kw in _EXCHANGE_KEYWORDS) and "get_exchange_rate" in tool_names:
             forced_tool = "get_exchange_rate"
-        elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS + _HOTEL_KEYWORDS):
+        elif any(kw in user_input for kw in _ACCOMMODATION_KEYWORDS + _HOTEL_KEYWORDS) and "search_hotels" in tool_names:
             forced_tool = "search_hotels"
 
-    llm = _build_llm(forced_tool)
+    llm = _build_llm(persona_tools, forced_tool)
 
     if not loop_msgs:
         # 첫 진입: 히스토리 + 현재 입력으로 메시지 구성

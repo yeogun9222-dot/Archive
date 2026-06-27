@@ -274,14 +274,24 @@ def start_polling():
                 continue
 
             # 소환된 팀원 미리 감지 (응답 앞에 표시용)
-            from .personas import detect_persona as _dp
+            from .personas import detect_persona as _dp, PERSONAS as _PERSONAS
             active_persona = _dp(text)
-            persona_label = f"[{active_persona}] " if active_persona != "제이크" else ""
-            send_message("처리 중입니다...")
+            # 제이크 외 팀원은 이름 라벨 표시. 팀원 직함도 함께 표시.
+            if active_persona != "제이크":
+                persona_label = f"[{active_persona}] "
+                send_message(f"{active_persona} 연결 중입니다...")
+            else:
+                persona_label = ""
+                send_message("처리 중입니다...")
 
             def _reply_dm(t=text, img=image_base64, mime=image_mime, label=persona_label):
                 response = process_message(t, img, mime)
-                send_message(f"{label}{response}" if label else response)
+                # 팀원 응답 앞에 이름 라벨이 이미 붙으므로 응답 내 자기소개가 중복될 수 있음
+                # 첫 줄이 "[이름]"으로 시작하면 라벨 중복 제거
+                if label and response.startswith(f"[{label.strip()[1:-1]}]"):
+                    send_message(response)
+                else:
+                    send_message(f"{label}{response}" if label else response)
 
             threading.Thread(target=_reply_dm, daemon=True).start()
 
