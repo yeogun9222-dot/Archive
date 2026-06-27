@@ -46,6 +46,8 @@ _group_buffers = defaultdict(list)  # {group_id: [(time_str, sender, text), ...]
 _group_names = {}                    # {group_id: group_title}
 _BUFFER_MAX = 100
 _URGENT_KEYWORDS = ["긴급", "급함", "urgent", "즉시", "!!"]
+_processed_ids = set()              # 중복 처리 방지용 update_id 캐시
+_PROCESSED_ID_MAX = 500             # 최대 보관 수
 
 
 def get_updates():
@@ -207,7 +209,15 @@ def start_polling():
     while True:
         updates = get_updates()
         for update in updates:
-            _offset = update["update_id"] + 1
+            uid = update["update_id"]
+            _offset = uid + 1
+            if uid in _processed_ids:
+                continue
+            _processed_ids.add(uid)
+            if len(_processed_ids) > _PROCESSED_ID_MAX:
+                oldest = sorted(_processed_ids)[:100]
+                for oid in oldest:
+                    _processed_ids.discard(oid)
             msg = update.get("message", {})
             chat = msg.get("chat", {})
             chat_id = str(chat.get("id", ""))
