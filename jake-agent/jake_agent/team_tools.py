@@ -51,6 +51,9 @@ def consult_team(question: str, members: str) -> str:
     for member in member_list:
         response = _consult_member(member, question)
         results.append(f"[{member}] {response}")
+        # 단체회의 발언을 해당 팀원 개인 채팅 기록에도 저장 → 1:1 탭에서 맥락 이어짐
+        save_chat_message(member, "user", f"[Alpha Squad 회의] {question}", source="group-meeting")
+        save_chat_message(member, "assistant", response, source="group-meeting")
 
     return "\n\n".join(results)
 
