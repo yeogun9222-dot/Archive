@@ -1,0 +1,89 @@
+{
+  "name": "jake-squad",
+  "displayName": "Jake Squad",
+  "description": "Alpha Squad 13인 팀원 채팅 패널",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "jake-squad",
+          "title": "Jake Squad",
+          "icon": "media/team.svg"
+        }
+      ]
+    },
+    "views": {
+      "jake-squad": [
+        {
+          "id": "jakeSquadTeam",
+          "name": "Alpha Squad"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "jakeSquad.openChat",
+        "title": "채팅 열기",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "jakeSquad.refreshTree",
+        "title": "새로고침",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "jakeSquad.openGroupChat",
+        "title": "전체 회의",
+        "icon": "$(organization)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "jakeSquad.refreshTree",
+          "when": "view == jakeSquadTeam",
+          "group": "navigation"
+        },
+        {
+          "command": "jakeSquad.openGroupChat",
+          "when": "view == jakeSquadTeam",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "jakeSquad.openChat",
+          "when": "view == jakeSquadTeam && viewItem == persona",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Jake Squad",
+      "properties": {
+        "jakeSquad.apiBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "jake-agent API 서버 주소"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}
