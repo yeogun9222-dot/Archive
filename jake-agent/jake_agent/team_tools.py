@@ -3,6 +3,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
+from .db import save_chat_message, create_task, update_task
 
 
 def _consult_member(member_name: str, question: str) -> str:
@@ -54,5 +55,41 @@ def consult_team(question: str, members: str) -> str:
     return "\n\n".join(results)
 
 
+@tool
+def delegate_task(member: str, task: str) -> str:
+    """특정 팀원에게 실제 업무를 위임합니다. 팀원은 본인 전용 도구를 사용해 작업을 수행하고 결과를 보고합니다.
+    member: 업무를 수행할 팀원 이름 (예: 렉스, 다인, 루나, 피오 등)
+    task: 위임할 업무 내용 (구체적으로 작성)
+    유효한 이름: 다인, 에바, 미나, 바쿠, 피오, 리리, 설리, 카이, 렉스, 루나, 제로, 사라, 노바
+    """
+    if member not in PERSONAS:
+        return f"[위임 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
+
+    # DB에 태스크 생성
+    task_id = create_task(title=task[:100], instruction=task, assigned_to=member)
+
+    try:
+        # 해당 팀원 전용 에이전트(도구 포함) 실행
+        from .graph import build_jake_graph
+        graph = build_jake_graph()
+        result = graph.invoke({
+            "messages": [],
+            "user_input": task,
+            "jake_response": "",
+            "tasks_created": [],
+            "persona": member,
+            "image_base64": "",
+            "image_mime": "image/jpeg",
+        })
+        response = result["jake_response"]
+        update_task(task_id, "completed", response)
+        save_chat_message(member, "user", f"[위임 업무] {task}", source="delegation")
+        save_chat_message(member, "assistant", response, source="delegation")
+        return f"[{member} 완료 보고]\n{response}"
+    except Exception as e:
+        update_task(task_id, "failed", str(e))
+        return f"[{member} 위임 실패] {e}"
+
+
 def get_all_team_tools():
-    return [consult_team]
+    return [consult_team, delegate_task]

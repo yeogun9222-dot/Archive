@@ -10,10 +10,10 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
-from jake_agent.personas import detect_persona, detect_persona_from_system
+from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 from jake_agent.scheduler import start_scheduler_thread
@@ -67,6 +67,10 @@ async def chat_with_jake(req: ChatRequest):
         "image_mime": req.image_mime or "image/jpeg",
     }))
 
+    # 대화 기록 저장
+    save_chat_message(persona, "user", req.message, source=req.source)
+    save_chat_message(persona, "assistant", result["jake_response"], source=req.source)
+
     # 텔레그램 발신 시 알림 중복 방지
     if req.source != "telegram":
         notify_jake_response(req.message, result["jake_response"], result["tasks_created"])
@@ -79,6 +83,63 @@ async def chat_with_jake(req: ChatRequest):
         tasks_created=result["tasks_created"],
         persona=persona
     )
+
+
+class PersonaChatRequest(BaseModel):
+    message: str
+    persona: str
+    source: str = "vscode"
+
+
+@app.post("/chat/persona/{persona_name}", response_model=ChatResponse)
+async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
+    """VSCode 확장에서 특정 페르소나와 직접 대화하는 엔드포인트"""
+    if persona_name not in PERSONAS:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+
+    history = get_chat_history(persona_name, limit=20)
+    messages_history = [{"role": m["role"], "content": m["content"]} for m in history[:-0] if True]
+
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, lambda: jake_graph.invoke({
+        "messages": messages_history,
+        "user_input": req.message,
+        "jake_response": "",
+        "tasks_created": [],
+        "persona": persona_name,
+        "image_base64": "",
+        "image_mime": "image/jpeg",
+    }))
+
+    save_chat_message(persona_name, "user", req.message, source=req.source)
+    save_chat_message(persona_name, "assistant", result["jake_response"], source=req.source)
+
+    return ChatResponse(
+        response=result["jake_response"],
+        tasks_created=result["tasks_created"],
+        persona=persona_name
+    )
+
+
+@app.get("/history/{persona_name}")
+async def get_persona_history(persona_name: str, limit: int = 50):
+    """VSCode 확장에서 채팅창 열 때 과거 대화 기록 로드"""
+    if persona_name not in PERSONAS:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+    return {"persona": persona_name, "messages": get_chat_history(persona_name, limit=limit)}
+
+
+@app.get("/personas")
+async def list_personas():
+    """모든 팀원 페르소나 목록 반환 (VSCode 확장용)"""
+    return {
+        "personas": [
+            {"name": name, "keywords": info["keywords"]}
+            for name, info in PERSONAS.items()
+        ]
+    }
 
 @app.get("/tasks")
 async def get_tasks():
@@ -94,17 +155,11 @@ async def health():
 
 @app.get("/v1/models")
 async def list_models():
-    return {
-        "object": "list",
-        "data": [
-            {
-                "id": "jake-agent",
-                "object": "model",
-                "created": int(time.time()),
-                "owned_by": "longrise"
-            }
-        ]
-    }
+    created = int(time.time())
+    models = [{"id": "jake-agent", "object": "model", "created": created, "owned_by": "longrise"}]
+    for name in PERSONAS:
+        models.append({"id": f"jake-{name}", "object": "model", "created": created, "owned_by": "longrise"})
+    return {"object": "list", "data": models}
 
 class OpenAIMessage(BaseModel):
     role: str
@@ -134,8 +189,13 @@ async def openai_chat_completions(req: OpenAIChatRequest):
     # 마지막 user 메시지는 user_input으로 전달하므로 히스토리에서 제외
     history_without_last = history[:-1] if history and history[-1]["role"] == "user" else history
 
-    # 시스템 프롬프트 페르소나 우선, 없으면 메시지 키워드 감지
-    persona = system_persona or detect_persona(user_message)
+    # 모델 ID 페르소나 우선 (jake-렉스 → 렉스), 없으면 시스템 프롬프트, 없으면 키워드 감지
+    model_persona = None
+    if req.model.startswith("jake-") and req.model != "jake-agent":
+        candidate = req.model[len("jake-"):]
+        if candidate in PERSONAS:
+            model_persona = candidate
+    persona = model_persona or system_persona or detect_persona(user_message)
 
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, lambda: jake_graph.invoke({

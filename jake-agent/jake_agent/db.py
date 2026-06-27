@@ -49,6 +49,20 @@ def init_db():
             timestamp TIMESTAMP DEFAULT NOW()
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id SERIAL PRIMARY KEY,
+            persona TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            source TEXT DEFAULT 'api',
+            timestamp TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_chat_messages_persona_ts
+        ON chat_messages (persona, timestamp DESC)
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -96,6 +110,32 @@ def get_pending_tasks():
     cur.close()
     conn.close()
     return rows
+
+def save_chat_message(persona: str, role: str, content: str, source: str = "api"):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO chat_messages (persona, role, content, source) VALUES (%s, %s, %s, %s)",
+        (persona, role, content, source)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_chat_history(persona: str, limit: int = 50) -> list:
+    """VSCode 채팅창 히스토리 반환 — [{role, content, timestamp}]"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT role, content, timestamp FROM chat_messages WHERE persona=%s ORDER BY timestamp DESC LIMIT %s",
+        (persona, limit)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [{"role": r[0], "content": r[1], "timestamp": r[2].isoformat()} for r in reversed(rows)]
+
 
 def get_recent_conversation_history(persona: str, limit: int = 20) -> list:
     """최근 대화를 messages 형식으로 반환. 새 세션 시작 시 컨텍스트 복원용."""
