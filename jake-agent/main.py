@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS
@@ -171,6 +171,17 @@ async def group_chat(req: GroupChatRequest):
         tasks_created=result["tasks_created"],
         persona="alpha-squad"
     )
+
+
+@app.delete("/history/{persona_name}")
+async def delete_persona_history(persona_name: str):
+    """채팅창 초기화 — 해당 페르소나의 저장된 대화 기록 전체 삭제"""
+    historyKey = "alpha-squad" if persona_name == "alpha-squad" else persona_name
+    if historyKey != "alpha-squad" and historyKey not in PERSONAS:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+    clear_chat_history(historyKey)
+    return {"status": "cleared", "persona": persona_name}
 
 
 @app.get("/personas")

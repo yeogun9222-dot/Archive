@@ -1,23 +1,19 @@
 import * as vscode from 'vscode';
 import { PersonaTreeProvider } from './personaTreeProvider';
-import { ChatViewProvider } from './chatViewProvider';
+import { ChatPanel } from './chatPanel';
 
 export function activate(context: vscode.ExtensionContext) {
   const treeProvider = new PersonaTreeProvider();
-  const chatProvider = new ChatViewProvider(context.extensionUri);
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('jakeSquadTeam', treeProvider)
   );
 
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(ChatViewProvider.viewType, chatProvider)
-  );
-
-  // 팀원 클릭 → 사이드바 채팅 전환
+  // 팀원 클릭 → 에디터 탭으로 채팅창 열기
   context.subscriptions.push(
     vscode.commands.registerCommand('jakeSquad.selectPersona', (name: string) => {
-      chatProvider.switchPersona(name);
+      const isGroup = name.includes('Alpha Squad');
+      ChatPanel.createOrShow(isGroup ? '🏢 Alpha Squad' : name, isGroup);
     })
   );
 
@@ -27,10 +23,9 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // 전체 회의 버튼
   context.subscriptions.push(
     vscode.commands.registerCommand('jakeSquad.openGroupChat', () => {
-      chatProvider.switchPersona('전체 회의');
+      ChatPanel.createOrShow('🏢 Alpha Squad', true);
     })
   );
 }

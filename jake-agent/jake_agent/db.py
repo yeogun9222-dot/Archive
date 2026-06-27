@@ -111,6 +111,15 @@ def get_pending_tasks():
     conn.close()
     return rows
 
+def clear_chat_history(persona: str):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM chat_messages WHERE persona = %s", (persona,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 def save_chat_message(persona: str, role: str, content: str, source: str = "api"):
     conn = get_conn()
     cur = conn.cursor()

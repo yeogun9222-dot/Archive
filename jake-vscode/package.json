@@ -2,7 +2,7 @@
   "name": "jake-squad",
   "displayName": "Jake Squad",
   "description": "Alpha Squad 13인 팀원 채팅 패널",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "publisher": "longrise",
   "engines": {
     "vscode": "^1.80.0"
@@ -25,17 +25,12 @@
         {
           "id": "jakeSquadTeam",
           "name": "Alpha Squad"
-        },
-        {
-          "id": "jakeSquadChat",
-          "name": "채팅",
-          "type": "webview"
         }
       ]
     },
     "commands": [
       {
-        "command": "jakeSquad.openChat",
+        "command": "jakeSquad.selectPersona",
         "title": "채팅 열기",
         "icon": "$(comment-discussion)"
       },
@@ -61,13 +56,6 @@
           "command": "jakeSquad.openGroupChat",
           "when": "view == jakeSquadTeam",
           "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "jakeSquad.openChat",
-          "when": "view == jakeSquadTeam && viewItem == persona",
-          "group": "inline"
         }
       ]
     },

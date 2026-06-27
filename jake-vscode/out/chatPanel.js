@@ -104,17 +104,17 @@ class ChatPanel {
             else if (msg.type === 'ready') {
                 await this._loadHistory();
             }
+            else if (msg.type === 'clear') {
+                await this._handleClear();
+            }
         });
         this._panel.webview.html = this._getHtml();
     }
     async _loadHistory() {
-        if (this._isGroupChat) {
-            this._postMessages([]);
-            return;
-        }
         try {
             const base = getApiBase();
-            const data = await httpRequest(`${base}/history/${encodeURIComponent(this._persona)}`, 'GET');
+            const historyKey = this._isGroupChat ? 'alpha-squad' : encodeURIComponent(this._persona);
+            const data = await httpRequest(`${base}/history/${historyKey}`, 'GET');
             this._messages = (data.messages || []);
             this._postMessages(this._messages);
         }
@@ -133,7 +133,7 @@ class ChatPanel {
             const base = getApiBase();
             let data;
             if (this._isGroupChat) {
-                data = await httpRequest(`${base}/chat`, 'POST', { message: text, source: 'vscode' });
+                data = await httpRequest(`${base}/chat/group`, 'POST', { message: text, source: 'vscode' });
             }
             else {
                 data = await httpRequest(`${base}/chat/persona/${encodeURIComponent(this._persona)}`, 'POST', { message: text, persona: this._persona, source: 'vscode' });
@@ -147,6 +147,21 @@ class ChatPanel {
             this._panel.webview.postMessage({ type: 'thinking', value: false });
             const errMsg = { role: 'assistant', content: `오류: ${e.message}` };
             this._panel.webview.postMessage({ type: 'addMessage', message: errMsg });
+        }
+    }
+    async _handleClear() {
+        const confirm = await vscode.window.showWarningMessage(`${this._persona}와의 대화 기록을 전부 삭제할까요?`, { modal: true }, '삭제');
+        if (confirm !== '삭제')
+            return;
+        try {
+            const base = getApiBase();
+            const historyKey = this._isGroupChat ? 'alpha-squad' : encodeURIComponent(this._persona);
+            await httpRequest(`${base}/history/${historyKey}`, 'DELETE');
+            this._messages = [];
+            this._postMessages([]);
+        }
+        catch (e) {
+            vscode.window.showErrorMessage(`초기화 실패: ${e.message}`);
         }
     }
     _postMessages(messages) {
@@ -183,6 +198,17 @@ class ChatPanel {
   }
   #header h2 { font-size: 13px; font-weight: 600; }
   #header .role { font-size: 11px; color: var(--vscode-descriptionForeground); }
+  #header { justify-content: space-between; }
+  #clear-btn {
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  #clear-btn:hover { color: var(--vscode-errorForeground); border-color: var(--vscode-errorForeground); }
   #messages {
     flex: 1;
     overflow-y: auto;
@@ -277,6 +303,7 @@ class ChatPanel {
     <h2>${title}</h2>
     <div class="role">${this._isGroupChat ? 'Alpha Squad 전체' : (this._persona)}</div>
   </div>
+  <button id="clear-btn" title="대화 기록 초기화">초기화</button>
 </div>
 <div id="messages">
   <div class="empty-state" id="empty-state">
@@ -296,6 +323,8 @@ class ChatPanel {
   const sendBtn = document.getElementById('send-btn');
   const thinkingEl = document.getElementById('thinking');
   const emptyState = document.getElementById('empty-state');
+  const clearBtn = document.getElementById('clear-btn');
+  clearBtn.addEventListener('click', () => vscode.postMessage({ type: 'clear' }));
 
   function addMessage(msg) {
     if (emptyState) emptyState.style.display = 'none';
