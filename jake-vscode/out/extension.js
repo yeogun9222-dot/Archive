@@ -37,20 +37,22 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const personaTreeProvider_1 = require("./personaTreeProvider");
-const chatPanel_1 = require("./chatPanel");
 function activate(context) {
     const treeProvider = new personaTreeProvider_1.PersonaTreeProvider();
     context.subscriptions.push(vscode.window.registerTreeDataProvider('jakeSquadTeam', treeProvider));
-    // 팀원 클릭 → 에디터 탭으로 채팅창 열기
+    // 팀원 클릭 → Claude Code 네이티브 새 채팅 탭 열기 (슬래시 명령어 미리 입력)
     context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.selectPersona', (name) => {
         const isGroup = name.includes('Alpha Squad');
-        chatPanel_1.ChatPanel.createOrShow(isGroup ? '🏢 Alpha Squad' : name, isGroup);
+        const command = isGroup ? '/알파스쿼드' : `/${name}`;
+        const uri = vscode.Uri.parse(`vscode://anthropic.claude-code/open?prompt=${encodeURIComponent(command + ' ')}`);
+        vscode.env.openExternal(uri);
     }));
     context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.refreshTree', () => {
         treeProvider.refresh();
     }));
     context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.openGroupChat', () => {
-        chatPanel_1.ChatPanel.createOrShow('🏢 Alpha Squad', true);
+        const uri = vscode.Uri.parse(`vscode://anthropic.claude-code/open?prompt=${encodeURIComponent('/알파스쿼드 ')}`);
+        vscode.env.openExternal(uri);
     }));
 }
 function deactivate() { }
