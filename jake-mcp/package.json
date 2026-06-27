@@ -1,0 +1,19 @@
+{
+  "name": "jake-mcp",
+  "version": "1.0.0",
+  "description": "jake-agent MCP server — Alpha Squad 14인 페르소나 연동",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p ./",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

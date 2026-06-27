@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "jake-squad": {
+      "command": "node",
+      "args": ["E:\\Claude\\jake-mcp\\dist\\index.js"],
+      "env": {
+        "JAKE_API_BASE": "http://34.47.74.42:8000"
+      }
+    }
+  }
+}
