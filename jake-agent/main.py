@@ -125,10 +125,52 @@ async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
 @app.get("/history/{persona_name}")
 async def get_persona_history(persona_name: str, limit: int = 50):
     """VSCode 확장에서 채팅창 열 때 과거 대화 기록 로드"""
+    if persona_name == "alpha-squad":
+        return {"persona": "alpha-squad", "messages": get_chat_history("alpha-squad", limit=limit)}
     if persona_name not in PERSONAS:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
     return {"persona": persona_name, "messages": get_chat_history(persona_name, limit=limit)}
+
+
+class GroupChatRequest(BaseModel):
+    message: str
+    source: str = "vscode"
+
+
+@app.post("/chat/group")
+async def group_chat(req: GroupChatRequest):
+    """Alpha Squad 단체방 — 제이크가 진행하고 관련 팀원들이 순서대로 의견 제시"""
+    history = get_chat_history("alpha-squad", limit=20)
+    messages_history = [{"role": m["role"], "content": m["content"]} for m in history]
+
+    group_prompt = (
+        f"[Alpha Squad 전체 회의]\n"
+        f"대표님 발언: {req.message}\n\n"
+        f"지금은 Alpha Squad 전체 회의입니다. 제이크 COO로서 이 안건을 받아 핵심 팀원들의 의견을 취합하여 "
+        f"회의를 진행하세요. consult_team 도구로 관련 팀원 2~3명의 의견을 수렴한 뒤, "
+        f"각 팀원 의견을 '[팀원명]: 내용' 형식으로 정리하고 제이크의 종합 의견으로 마무리하세요."
+    )
+
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, lambda: jake_graph.invoke({
+        "messages": messages_history,
+        "user_input": group_prompt,
+        "jake_response": "",
+        "tasks_created": [],
+        "persona": "제이크",
+        "image_base64": "",
+        "image_mime": "image/jpeg",
+    }))
+
+    save_chat_message("alpha-squad", "user", req.message, source=req.source)
+    save_chat_message("alpha-squad", "assistant", result["jake_response"], source=req.source)
+
+    return ChatResponse(
+        response=result["jake_response"],
+        tasks_created=result["tasks_created"],
+        persona="alpha-squad"
+    )
 
 
 @app.get("/personas")

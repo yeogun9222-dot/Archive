@@ -37,26 +37,22 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const personaTreeProvider_1 = require("./personaTreeProvider");
-const chatPanel_1 = require("./chatPanel");
+const chatViewProvider_1 = require("./chatViewProvider");
 function activate(context) {
     const treeProvider = new personaTreeProvider_1.PersonaTreeProvider();
+    const chatProvider = new chatViewProvider_1.ChatViewProvider(context.extensionUri);
     context.subscriptions.push(vscode.window.registerTreeDataProvider('jakeSquadTeam', treeProvider));
-    context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.openChat', (personaName) => {
-        if (!personaName) {
-            vscode.window.showQuickPick(['제이크', '다인', '렉스', '루나', '제로', '바쿠', '피오', '리리', '에바', '사라', '미나', '카이', '설리', '노바'], { placeHolder: '채팅할 팀원을 선택하세요' }).then(selected => {
-                if (selected)
-                    chatPanel_1.ChatPanel.createOrShow(selected);
-            });
-        }
-        else {
-            chatPanel_1.ChatPanel.createOrShow(personaName);
-        }
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(chatViewProvider_1.ChatViewProvider.viewType, chatProvider));
+    // 팀원 클릭 → 사이드바 채팅 전환
+    context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.selectPersona', (name) => {
+        chatProvider.switchPersona(name);
     }));
     context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.refreshTree', () => {
         treeProvider.refresh();
     }));
+    // 전체 회의 버튼
     context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.openGroupChat', () => {
-        chatPanel_1.ChatPanel.createOrShow('전체 회의', true);
+        chatProvider.switchPersona('전체 회의');
     }));
 }
 function deactivate() { }

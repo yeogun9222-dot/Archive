@@ -1,11 +1,4 @@
 import * as vscode from 'vscode';
-import * as https from 'https';
-import * as http from 'http';
-
-export interface PersonaInfo {
-  name: string;
-  keywords: string[];
-}
 
 const PERSONA_ROLES: Record<string, string> = {
   '제이크': 'COO',
@@ -28,26 +21,24 @@ export class PersonaItem extends vscode.TreeItem {
   constructor(
     public readonly personaName: string,
     public readonly role: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState
+    public readonly isGroup = false,
   ) {
-    super(personaName, collapsibleState);
-    this.tooltip = `${personaName} — ${role}`;
-    this.description = role;
-    this.contextValue = 'persona';
+    super(personaName, vscode.TreeItemCollapsibleState.None);
+    this.tooltip = isGroup ? 'Alpha Squad 전체 회의방' : `${personaName} — ${role}`;
+    this.description = isGroup ? '전체 14인' : role;
+    this.contextValue = isGroup ? 'group' : 'persona';
+    this.iconPath = new vscode.ThemeIcon(isGroup ? 'organization' : 'person');
     this.command = {
-      command: 'jakeSquad.openChat',
-      title: '채팅 열기',
+      command: 'jakeSquad.selectPersona',
+      title: isGroup ? '전체 회의' : '채팅',
       arguments: [personaName],
     };
-    this.iconPath = new vscode.ThemeIcon('person');
   }
 }
 
 export class PersonaTreeProvider implements vscode.TreeDataProvider<PersonaItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<PersonaItem | undefined | null>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
-
-  private personas: string[] = Object.keys(PERSONA_ROLES);
 
   refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
@@ -57,9 +48,11 @@ export class PersonaTreeProvider implements vscode.TreeDataProvider<PersonaItem>
     return element;
   }
 
-  getChildren(_element?: PersonaItem): vscode.ProviderResult<PersonaItem[]> {
-    return this.personas.map(
-      name => new PersonaItem(name, PERSONA_ROLES[name] || '', vscode.TreeItemCollapsibleState.None)
+  getChildren(): vscode.ProviderResult<PersonaItem[]> {
+    const groupItem = new PersonaItem('🏢 Alpha Squad', '전체 회의', true);
+    const personas = Object.entries(PERSONA_ROLES).map(
+      ([name, role]) => new PersonaItem(name, role, false)
     );
+    return [groupItem, ...personas];
   }
 }

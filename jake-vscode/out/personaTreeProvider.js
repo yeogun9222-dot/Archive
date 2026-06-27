@@ -52,20 +52,20 @@ const PERSONA_ROLES = {
     '노바': 'DevOps 팀장',
 };
 class PersonaItem extends vscode.TreeItem {
-    constructor(personaName, role, collapsibleState) {
-        super(personaName, collapsibleState);
+    constructor(personaName, role, isGroup = false) {
+        super(personaName, vscode.TreeItemCollapsibleState.None);
         this.personaName = personaName;
         this.role = role;
-        this.collapsibleState = collapsibleState;
-        this.tooltip = `${personaName} — ${role}`;
-        this.description = role;
-        this.contextValue = 'persona';
+        this.isGroup = isGroup;
+        this.tooltip = isGroup ? 'Alpha Squad 전체 회의방' : `${personaName} — ${role}`;
+        this.description = isGroup ? '전체 14인' : role;
+        this.contextValue = isGroup ? 'group' : 'persona';
+        this.iconPath = new vscode.ThemeIcon(isGroup ? 'organization' : 'person');
         this.command = {
-            command: 'jakeSquad.openChat',
-            title: '채팅 열기',
+            command: 'jakeSquad.selectPersona',
+            title: isGroup ? '전체 회의' : '채팅',
             arguments: [personaName],
         };
-        this.iconPath = new vscode.ThemeIcon('person');
     }
 }
 exports.PersonaItem = PersonaItem;
@@ -73,7 +73,6 @@ class PersonaTreeProvider {
     constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-        this.personas = Object.keys(PERSONA_ROLES);
     }
     refresh() {
         this._onDidChangeTreeData.fire(undefined);
@@ -81,8 +80,10 @@ class PersonaTreeProvider {
     getTreeItem(element) {
         return element;
     }
-    getChildren(_element) {
-        return this.personas.map(name => new PersonaItem(name, PERSONA_ROLES[name] || '', vscode.TreeItemCollapsibleState.None));
+    getChildren() {
+        const groupItem = new PersonaItem('🏢 Alpha Squad', '전체 회의', true);
+        const personas = Object.entries(PERSONA_ROLES).map(([name, role]) => new PersonaItem(name, role, false));
+        return [groupItem, ...personas];
     }
 }
 exports.PersonaTreeProvider = PersonaTreeProvider;
