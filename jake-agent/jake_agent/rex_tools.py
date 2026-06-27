@@ -3,7 +3,7 @@ import os
 
 
 _ALLOWED_CONTAINERS = {"jake-agent", "jake-postgres", "open-webui"}
-_SOCKET = "unix://var/run/docker.sock"
+_SOCKET = "unix:///var/run/docker.sock"
 
 
 def _get_client():
