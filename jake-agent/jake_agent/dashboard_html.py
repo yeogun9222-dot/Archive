@@ -41,13 +41,35 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel {
+  /* 네이티브 select/option이 밝은 OS 기본 테마로 렌더링되어 다크 패널과 대비가 깨지는 문제 수정 */
+  select { color-scheme: dark; }
+  select, option {
+    background-color: #161c26; color: #e6e6e6;
+  }
+
+  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show { display: block; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show { display: block; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .legend-group { margin-bottom: 14px; }
+  .legend-label { font-size: 10.5px; color: #9fb4c4; font-weight: 700; margin-bottom: 7px; }
+  .legend-row { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #c5cdd6; padding: 4px 0; }
+  .legend-swatch { width: 22px; height: 10px; border-radius: 5px; flex-shrink: 0; background: #2a323e; }
+  .lg-working { background: linear-gradient(90deg, transparent, #5ff0ff, transparent); animation: barShimmer 1.3s linear infinite; }
+  .lg-discussing { background: #a78bfa; animation: barPulse 1.8s ease-in-out infinite; }
+  .lg-error { background: #f87171; }
+  .lg-idle { background: transparent; border: 1px dashed rgba(255,255,255,0.15); }
+  .lg-glowpending { background: rgba(251,191,36,0.5); animation: legendGlow 2.4s ease-in-out infinite; }
+  .lg-glowfailed { background: rgba(248,113,113,0.5); animation: legendGlow 2.4s ease-in-out infinite; }
+  .lg-glowheld { background: rgba(148,163,184,0.5); animation: legendGlow 2.4s ease-in-out infinite; }
+  .lg-active { background: #4ade80; }
+  .lg-flash { background: linear-gradient(90deg, #4ade80, transparent); }
+  .lg-inactive { background: #5a6473; opacity: 0.5; }
+  @keyframes legendGlow { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 
   .bn-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(251,191,36,0.2); border-radius: 9px; padding: 9px 11px; margin-bottom: 9px; font-size: 11.5px; }
   .bn-row .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -298,6 +320,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="perfBtn">📊 성과</button>
   <button class="header-btn" id="decBtn">📝 의사결정</button>
   <button class="header-btn" id="bnBtn">🚧 병목</button>
+  <button class="header-btn" id="legendBtn">ℹ️ 범례 <span id="legendArrow">▾</span></button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -390,6 +413,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h3>🚧 병목 현황 — 누구에게 일이 쌓여있나</h3>
   <div id="bnBody"></div>
   <div id="bnNote" style="font-size:10px; color:#5a7184; margin-top:10px; line-height:1.5;">작업 간 선후관계 추적은 아직 없어, 미해결(대기/실패) 작업 적체량과 대기 시간으로 병목을 판단합니다.</div>
+</div>
+
+<div id="legendPanel">
+  <h3>ℹ️ 카드 색상 안내</h3>
+  <div class="legend-group">
+    <div class="legend-label">① 카드 하단 얇은 색상 바 — 지금 이 순간 실시간 활동</div>
+    <div class="legend-row"><span class="legend-swatch lg-working"></span>흐르는 cyan — 작업중 (위임받아 처리 중)</div>
+    <div class="legend-row"><span class="legend-swatch lg-discussing"></span>느린 보라 pulse — 협업중 (1:1논의/그룹회의 중)</div>
+    <div class="legend-row"><span class="legend-swatch lg-error"></span>정적 빨강 — 직전 작업 오류 발생</div>
+    <div class="legend-row"><span class="legend-swatch lg-idle"></span>표시 없음 — 대기 중 (할 일 없음)</div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-label">② 카드 테두리/그림자 — 처리 필요한 미해결 작업 적체 (실시간 활동과는 별개)</div>
+    <div class="legend-row"><span class="legend-swatch lg-glowpending"></span>은은한 노랑 pulse — 대기(pending) 중인 작업이 있음</div>
+    <div class="legend-row"><span class="legend-swatch lg-glowfailed"></span>은은한 빨강 pulse — 실패한 작업이 있음</div>
+    <div class="legend-row"><span class="legend-swatch lg-glowheld"></span>은은한 회색 pulse — 보류된 작업이 있음</div>
+    <div class="legend-row"><span class="legend-swatch lg-active"></span>초록 + 살짝 떠오름 — 방금(3초간) 위임/응답이 오간 카드</div>
+    <div class="legend-row"><span class="legend-swatch lg-flash"></span>한 번 반짝 — 방금 작업이 완료/승인으로 전환됨</div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-label">③ 기타</div>
+    <div class="legend-row"><span class="legend-swatch lg-inactive"></span>흐릿한 회색조 + "해임됨" — 비활성화된 페르소나</div>
+  </div>
+  <div id="legendNote" style="font-size:10px; color:#5a7184; margin-top:6px; line-height:1.5;">①과 ②는 서로 다른 신호입니다 — ①은 "지금 일하는지", ②는 "쌓여서 확인이 필요한 게 있는지"를 의미합니다.</div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -811,11 +858,11 @@ async function pollAttention() {
       });
     }
     if (pending.length > 0) {
-      attentionBody.innerHTML += '<div class="sec-label">⏳ 진행 중</div>';
+      attentionBody.innerHTML += '<div class="sec-label">⏳ 진행/확인 필요 — 요청 내용</div>';
       pending.forEach(t => {
         attentionBody.innerHTML +=
           '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text brief">' + esc(t.title) + '</div>' + actionButtons(t, 'pending') + '</div>';
+          '<div class="text">' + esc(t.instruction || t.title) + '</div>' + actionButtons(t, 'pending') + '</div>';
       });
     }
     if (held.length > 0) {
@@ -823,7 +870,7 @@ async function pollAttention() {
       held.forEach(t => {
         attentionBody.innerHTML +=
           '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text brief">' + esc(t.title) + '</div>' + actionButtons(t, 'held') + '</div>';
+          '<div class="text">' + esc(t.instruction || t.title) + '</div>' + actionButtons(t, 'held') + '</div>';
       });
     }
 
@@ -1092,7 +1139,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -1155,7 +1202,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -1187,7 +1234,7 @@ function renderPermTable() {
 
 permBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   permPanel.classList.toggle('show');
   if (permPanel.classList.contains('show')) renderPermTable();
 });
@@ -1244,7 +1291,7 @@ document.getElementById('perfTabAll').addEventListener('click', (e) => {
 
 perfBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   perfPanel.classList.toggle('show');
   if (perfPanel.classList.contains('show')) pollPerformance();
 });
@@ -1288,7 +1335,7 @@ document.getElementById('decAddBtn').addEventListener('click', async (e) => {
 
 decBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   decPanel.classList.toggle('show');
   if (decPanel.classList.contains('show')) pollDecisions();
 });
@@ -1317,12 +1364,30 @@ async function pollBottlenecks() {
 
 bnBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); legendPanel.classList.remove('show');
   bnPanel.classList.toggle('show');
   if (bnPanel.classList.contains('show')) pollBottlenecks();
 });
 document.addEventListener('click', (e) => {
   if (!bnPanel.contains(e.target) && !bnBtn.contains(e.target)) bnPanel.classList.remove('show');
+});
+
+// ── 색상 범례 패널 ───────────────────────────────────────
+const legendBtn = document.getElementById('legendBtn');
+const legendPanel = document.getElementById('legendPanel');
+const legendArrow = document.getElementById('legendArrow');
+
+legendBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  legendPanel.classList.toggle('show');
+  legendArrow.textContent = legendPanel.classList.contains('show') ? '▴' : '▾';
+});
+document.addEventListener('click', (e) => {
+  if (!legendPanel.contains(e.target) && !legendBtn.contains(e.target)) {
+    legendPanel.classList.remove('show');
+    legendArrow.textContent = '▾';
+  }
 });
 
 async function poll() {
