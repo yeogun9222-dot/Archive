@@ -2,7 +2,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1300, initial-scale=0.3, minimum-scale=0.15, maximum-scale=4, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>ALPHA SQUAD — Org Chart</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,6 +40,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     cursor: pointer; margin-left: 8px;
   }
   .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
+
+  /* 좌측 사이드 메뉴 — 탑바 버튼들을 그룹별 하위드롭다운으로 재구성. 모바일에서는 슬라이드 드로어로 전환 */
+  #sideMenuBtn {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(95,240,255,0.25);
+    background: rgba(95,240,255,0.06); color: #5ff0ff; font-size: 16px; cursor: pointer;
+    display: none; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #sideMenuBtn:hover { background: rgba(95,240,255,0.16); }
+  #sideMenuOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 39; }
+  body.sidebar-open #sideMenuOverlay { display: block; }
+  #sideMenu {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 208px; z-index: 40;
+    background: rgba(10,14,22,0.97); border-right: 1px solid rgba(95,240,255,0.15);
+    padding: 16px 12px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+  }
+  #sideMenu .sm-brand { font-size: 12.5px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px; padding: 0 6px 12px; }
+  #sideMenu .sm-pin { margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .sm-item {
+    display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+    font-size: 11.5px; color: #9fb4c4; background: rgba(95,240,255,0.05);
+    border: 1px solid rgba(95,240,255,0.15); border-radius: 9px; padding: 8px 10px;
+    cursor: pointer; position: relative; margin: 0; box-sizing: border-box;
+  }
+  .sm-item:hover { background: rgba(95,240,255,0.14); color: #c5cdd6; }
+  .sm-item.header-btn-alert { background: rgba(255,215,106,0.1); border-color: rgba(255,215,106,0.35); color: #ffd76a; }
+  .sm-item.header-btn-alert:hover { background: rgba(255,215,106,0.2); }
+  #sideMenu .cost-widget { margin-left: 0; }
+  .sm-group { display: flex; flex-direction: column; }
+  .sm-grouptitle {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    font-size: 10px; letter-spacing: 0.5px; color: #5a7184; background: none; border: none;
+    padding: 9px 6px 5px; cursor: pointer; font-weight: 700;
+  }
+  .sm-grouptitle:hover { color: #9fb4c4; }
+  .sm-grouptitle .car { transition: transform 0.2s ease; font-size: 9px; }
+  .sm-grouptitle.open .car { transform: rotate(180deg); }
+  .sm-sublist { display: none; flex-direction: column; gap: 6px; padding: 0 0 6px; }
+  .sm-sublist.open { display: flex; }
 
   /* 네이티브 select/option이 밝은 OS 기본 테마로 렌더링되어 다크 패널과 대비가 깨지는 문제 수정 */
   select { color-scheme: dark; }
@@ -351,7 +389,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   #empty { color: #34465a; font-size: 12px; text-align: center; padding: 40px 10px; line-height: 1.6; }
 
-  body { padding-right: 320px; }
+  body { padding-right: 320px; padding-left: 208px; }
 
   /* 종 알림은 카드 위가 아니라 헤더의 다른 버튼들과 같은 줄에 — 겹침 없이, 확인이 필요한
      항목들과 시각적으로 한 그룹으로 묶임. 강조를 위해 amber 톤만 다르게 줌 */
@@ -419,21 +457,83 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .act-btn.delete { background: rgba(248,113,113,0.15); color: #f87171; margin-left: auto; }
   .act-btn:hover { filter: brightness(1.3); }
   .act-btn:disabled { opacity: 0.5; cursor: default; }
+
+  #logMobileHandle { display: none; width: 100%; background: none; border: none; color: #5ff0ff; font-size: 11px; padding: 4px 0 8px; cursor: pointer; font-weight: 700; letter-spacing: 0.5px; }
+
+  /* 모바일 — PC와 동일한 기능을 폰에서 그대로 쓸 수 있도록 좌측 메뉴는 슬라이드 드로어,
+     우측 패널들은 화면 중앙 전체폭 모달, Activity Stream은 하단 드로어로 전환 */
+  @media (max-width: 860px) {
+    body { padding-left: 0; padding-right: 0; }
+    #sideMenuBtn { display: flex; }
+    #sideMenu {
+      transform: translateX(-100%); transition: transform 0.25s ease; width: 78vw; max-width: 280px;
+    }
+    body.sidebar-open #sideMenu { transform: translateX(0); }
+
+    #header { padding: 12px 12px 8px; flex-wrap: wrap; gap: 8px; }
+    #header h1 { font-size: 15px; }
+    #header .sub { display: none; }
+    #header .status { margin-left: 0; }
+
+    #chart { padding: 14px 8px 50px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .level { gap: 12px; }
+    .level-members { gap: 8px; }
+    .card { padding: 9px 12px; }
+
+    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel {
+      left: 50%; right: auto; transform: translateX(-50%);
+      width: 92vw; max-width: 420px; top: 64px; max-height: 78vh;
+    }
+    #attentionPanel, #cardChatPanel { width: 92vw; max-width: 420px; }
+    #cardChatPanel.maximized { width: 96vw; max-height: 90vh; }
+
+    #log {
+      position: fixed; left: 0; right: 0; top: auto; bottom: 0; width: 100%; height: 52vh;
+      max-height: 72vh; border-left: none; border-top: 1px solid rgba(95,240,255,0.15);
+      padding: 6px 14px 14px; border-radius: 14px 14px 0 0;
+      transform: translateY(calc(100% - 40px)); transition: transform 0.25s ease;
+    }
+    #log.expanded { transform: translateY(0); }
+    #logMobileHandle { display: block; }
+  }
 </style>
 </head>
 <body>
+<div id="sideMenuOverlay"></div>
+<div id="sideMenu">
+  <div class="sm-brand">ALPHA SQUAD</div>
+  <div class="sm-pin">
+    <button class="sm-item header-btn-alert" id="bellWrap" style="position:relative;">🔔 확인필요 <span id="bellBadge" class="bell-badge" style="position:absolute; top:6px; right:8px;">0</span></button>
+    <div class="cost-widget sm-item" id="costWidget">💰 <span id="costValue">—</span> <span id="costPeriod">이번달</span></div>
+  </div>
+  <div class="sm-group">
+    <button class="sm-grouptitle">업무 <span class="car">▾</span></button>
+    <div class="sm-sublist">
+      <button class="sm-item" id="projectBtn">📁 프로젝트</button>
+      <button class="sm-item" id="decBtn" style="position:relative;">🖋 결재 <span id="decBadge" class="bell-badge" style="position:absolute; top:6px; right:8px;">0</span></button>
+      <button class="sm-item" id="bnBtn">🚧 병목</button>
+    </div>
+  </div>
+  <div class="sm-group">
+    <button class="sm-grouptitle">기록/분석 <span class="car">▾</span></button>
+    <div class="sm-sublist">
+      <button class="sm-item" id="auditBtn">📜 감사로그</button>
+      <button class="sm-item" id="perfBtn">📊 성과</button>
+      <button class="sm-item" id="permBtn">🔐 권한</button>
+    </div>
+  </div>
+  <div class="sm-group">
+    <button class="sm-grouptitle">안내 <span class="car">▾</span></button>
+    <div class="sm-sublist">
+      <button class="sm-item" id="legendBtn">ℹ️ 범례 <span id="legendArrow">▾</span></button>
+    </div>
+  </div>
+</div>
+
 <div id="header">
+  <button id="sideMenuBtn" title="메뉴">☰</button>
   <h1>ALPHA SQUAD</h1>
   <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
-  <button class="header-btn header-btn-alert" id="bellWrap" style="position:relative;">🔔 확인필요 <span id="bellBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
-  <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> <span id="costPeriod">이번달</span></div>
-  <button class="header-btn" id="projectBtn">📁 프로젝트</button>
-  <button class="header-btn" id="auditBtn">📜 감사로그</button>
-  <button class="header-btn" id="permBtn">🔐 권한</button>
-  <button class="header-btn" id="perfBtn">📊 성과</button>
-  <button class="header-btn" id="decBtn" style="position:relative;">🖋 결재 <span id="decBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
-  <button class="header-btn" id="bnBtn">🚧 병목</button>
-  <button class="header-btn" id="legendBtn">ℹ️ 범례 <span id="legendArrow">▾</span></button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -609,6 +709,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="log">
+  <button id="logMobileHandle">▲ Activity Stream</button>
   <div id="logHeadRow">
     <h2>Activity Stream</h2>
     <button id="streamClearAllBtn" title="전체 삭제">🗑 전체삭제</button>
@@ -1792,6 +1893,33 @@ document.addEventListener('click', (e) => {
   if (!cardChatPanel.contains(e.target) && !e.target.closest('.card.member, .card.coo')) {
     cardChatPanel.classList.remove('show');
   }
+});
+
+// ── 좌측 메뉴(모바일 드로어 + 그룹 아코디언) ─────────────────────
+const sideMenuBtn = document.getElementById('sideMenuBtn');
+const sideMenuOverlay = document.getElementById('sideMenuOverlay');
+sideMenuBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.body.classList.toggle('sidebar-open');
+});
+sideMenuOverlay.addEventListener('click', () => {
+  document.body.classList.remove('sidebar-open');
+});
+document.querySelectorAll('.sm-grouptitle').forEach(gt => {
+  gt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    gt.classList.toggle('open');
+    gt.nextElementSibling.classList.toggle('open');
+  });
+});
+document.querySelectorAll('#sideMenu .sm-item').forEach(it => {
+  it.addEventListener('click', () => document.body.classList.remove('sidebar-open'));
+});
+
+// ── 모바일 Activity Stream 하단 드로어 ───────────────────────
+const logMobileHandle = document.getElementById('logMobileHandle');
+logMobileHandle.addEventListener('click', () => {
+  document.getElementById('log').classList.toggle('expanded');
 });
 
 async function poll() {
