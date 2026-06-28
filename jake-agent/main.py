@@ -1,11 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional, List
 import asyncio
+import base64
 import json
+import mimetypes
+import os
 import time
 import uuid
 
@@ -40,6 +43,54 @@ app.add_middleware(
 )
 
 jake_graph = build_jake_graph()
+
+# ── 파일 첨부/다운로드 ────────────────────────────────────────
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15MB
+TEXT_EXTRACT_EXT = {".txt", ".md", ".csv", ".json", ".log", ".py", ".js", ".ts",
+                     ".html", ".css", ".yml", ".yaml", ".xml"}
+MAX_EXTRACT_CHARS = 6000
+
+
+@app.post("/uploads")
+async def upload_file(file: UploadFile = File(...)):
+    """대시보드 카드챗 첨부파일 업로드 — 이미지는 비전 입력용 base64, 텍스트류는 본문 추출까지 함께 반환"""
+    raw = await file.read()
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="파일이 너무 큽니다 (최대 15MB)")
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    stored_name = uuid.uuid4().hex + ext
+    with open(os.path.join(UPLOAD_DIR, stored_name), "wb") as f:
+        f.write(raw)
+
+    content_type = file.content_type or mimetypes.guess_type(file.filename or "")[0] or "application/octet-stream"
+    is_image = content_type.startswith("image/")
+    image_base64, text_excerpt = "", ""
+    if is_image:
+        image_base64 = base64.b64encode(raw).decode()
+    elif ext in TEXT_EXTRACT_EXT:
+        text_excerpt = raw.decode("utf-8", errors="ignore")[:MAX_EXTRACT_CHARS]
+
+    return {
+        "filename": file.filename or stored_name,
+        "url": f"/uploads/{stored_name}",
+        "content_type": content_type,
+        "is_image": is_image,
+        "image_base64": image_base64,
+        "image_mime": content_type if is_image else "",
+        "text_excerpt": text_excerpt,
+    }
+
+
+@app.get("/uploads/{stored_name}")
+async def download_file(stored_name: str, name: Optional[str] = None):
+    path = os.path.join(UPLOAD_DIR, stored_name)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다")
+    return FileResponse(path, filename=name or stored_name)
+
 
 # ── 기존 API ──────────────────────────────────────────────────
 
@@ -93,11 +144,15 @@ class PersonaChatRequest(BaseModel):
     message: str
     persona: str
     source: str = "vscode"
+    image_base64: Optional[str] = None
+    image_mime: Optional[str] = "image/jpeg"
+    attachment_name: Optional[str] = None
+    attachment_url: Optional[str] = None
 
 
 @app.post("/chat/persona/{persona_name}", response_model=ChatResponse)
 async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
-    """VSCode 확장에서 특정 페르소나와 직접 대화하는 엔드포인트"""
+    """VSCode 확장/대시보드 카드챗에서 특정 페르소나와 직접 대화하는 엔드포인트"""
     if persona_name not in PERSONAS:
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
     if not is_persona_active(persona_name):
@@ -113,11 +168,12 @@ async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
         "jake_response": "",
         "tasks_created": [],
         "persona": persona_name,
-        "image_base64": "",
-        "image_mime": "image/jpeg",
+        "image_base64": req.image_base64 or "",
+        "image_mime": req.image_mime or "image/jpeg",
     }))
 
-    save_chat_message(persona_name, "user", req.message, source=req.source)
+    save_chat_message(persona_name, "user", req.message, source=req.source,
+                       attachment_name=req.attachment_name, attachment_url=req.attachment_url)
     save_chat_message(persona_name, "assistant", result["jake_response"], source=req.source)
     log_ceo_instruction(persona_name, req.message, result["jake_response"])
 

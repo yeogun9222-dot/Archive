@@ -125,10 +125,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cc-req .reason { color: #9fb4c4; }
   .cc-req .hint { font-size: 10px; color: #6b7d8f; margin-top: 6px; }
   #cardChatInput { width: 100%; min-height: 64px; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; color: #e6e6e6; font-size: 12.5px; padding: 9px; resize: vertical; font-family: inherit; }
-  #cardChatSendRow { display: flex; justify-content: flex-end; margin-top: 8px; }
+  #cardChatSendRow { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
   #cardChatSendBtn { background: rgba(95,240,255,0.18); color: #5ff0ff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 12px; cursor: pointer; font-weight: 600; }
   #cardChatSendBtn:hover { filter: brightness(1.25); }
   #cardChatSendBtn:disabled { opacity: 0.5; cursor: default; }
+  #ccAttachBtn { background: rgba(255,255,255,0.05); color: #9fb4c4; border: 1px solid rgba(95,240,255,0.2); border-radius: 7px; padding: 7px 11px; font-size: 13px; cursor: pointer; }
+  #ccAttachBtn:hover { background: rgba(95,240,255,0.14); color: #c5cdd6; }
+  #ccAttachPreview:empty { display: none; }
+  #ccAttachPreview {
+    display: flex; align-items: center; gap: 6px; margin-top: 6px; padding: 5px 9px;
+    background: rgba(95,240,255,0.08); border: 1px solid rgba(95,240,255,0.25); border-radius: 7px;
+    font-size: 11px; color: #9fb4c4;
+  }
+  #ccAttachPreview .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #ccAttachPreview button { background: none; border: none; color: #f87171; cursor: pointer; font-size: 13px; padding: 0 2px; }
+  .cchat-attachment {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 4px 9px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(95,240,255,0.2); border-radius: 12px;
+    font-size: 10.5px; color: #5ff0ff; text-decoration: none;
+  }
+  .cchat-attachment:hover { background: rgba(95,240,255,0.16); }
   #cardChatLog { margin-top: 12px; max-height: 260px; overflow-y: auto; }
   #cardChatPanel.maximized #cardChatLog { max-height: 56vh; }
 
@@ -693,8 +709,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="cardChatBody">
     <div class="cstatus" id="ccStatus"></div>
     <div id="ccRequestBlock"></div>
-    <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요..."></textarea>
-    <div id="cardChatSendRow"><button id="cardChatSendBtn">전송</button></div>
+    <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요... (파일을 참고/학습시키려면 📎로 첨부)"></textarea>
+    <div id="ccAttachPreview"></div>
+    <input type="file" id="ccFileInput" style="display:none;">
+    <div id="cardChatSendRow">
+      <button id="ccAttachBtn" title="파일 첨부">📎</button>
+      <button id="cardChatSendBtn">전송</button>
+    </div>
     <div id="cardChatLog"></div>
   </div>
 </div>
@@ -1949,24 +1970,91 @@ async function renderRequestBlock(name) {
   block.innerHTML = html;
 }
 
+function attachmentChip(name, url) {
+  if (!name || !url) return '';
+  return '<a class="cchat-attachment" href="' + url + '" target="_blank" rel="noopener" download>📎 ' + esc(name) + '</a>';
+}
+
 function renderCardChatLog(messages) {
   cardChatLog.innerHTML = messages.map(m =>
-    '<div class="cchat-msg ' + m.role + '"><div class="who">' + (m.role === 'user' ? '대표님' : currentCardTarget) + ' · ' + new Date(m.timestamp).toLocaleString('ko-KR') + '</div>' + esc(m.content) + '</div>'
+    '<div class="cchat-msg ' + m.role + '"><div class="who">' + (m.role === 'user' ? '대표님' : currentCardTarget) + ' · ' + new Date(m.timestamp).toLocaleString('ko-KR') + '</div>' + esc(m.content) +
+    '<div>' + attachmentChip(m.attachment_name, m.attachment_url) + '</div></div>'
   ).join('') || '<div style="color:#34465a;font-size:11px;">대화 기록 없음</div>';
   cardChatLog.scrollTop = cardChatLog.scrollHeight;
+}
+
+// ── 파일 첨부 — 참고자료를 페르소나에게 보내고, 첨부한 파일은 언제든 다운로드 가능 ──
+const ccFileInput = document.getElementById('ccFileInput');
+const ccAttachBtn = document.getElementById('ccAttachBtn');
+const ccAttachPreview = document.getElementById('ccAttachPreview');
+let selectedFile = null;
+
+ccAttachBtn.addEventListener('click', (e) => { e.stopPropagation(); ccFileInput.click(); });
+ccFileInput.addEventListener('click', (e) => e.stopPropagation());
+ccFileInput.addEventListener('change', () => {
+  selectedFile = ccFileInput.files[0] || null;
+  renderAttachPreview();
+});
+function renderAttachPreview() {
+  if (!selectedFile) { ccAttachPreview.innerHTML = ''; return; }
+  ccAttachPreview.innerHTML = '📎 <span class="name">' + esc(selectedFile.name) + '</span><button id="ccAttachRemove" title="제거">×</button>';
+  document.getElementById('ccAttachRemove').addEventListener('click', (e) => {
+    e.stopPropagation();
+    selectedFile = null; ccFileInput.value = ''; renderAttachPreview();
+  });
+}
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/uploads', { method: 'POST', body: fd });
+  if (!res.ok) throw new Error('파일 업로드 실패');
+  return await res.json();
 }
 
 cardChatSendBtn.addEventListener('click', async (e) => {
   e.stopPropagation();
   const message = cardChatInput.value.trim();
-  if (!message || !currentCardTarget) return;
+  if ((!message && !selectedFile) || !currentCardTarget) return;
   cardChatSendBtn.disabled = true; cardChatSendBtn.textContent = '전송 중...';
-  cardChatLog.innerHTML += '<div class="cchat-msg user"><div class="who">대표님</div>' + esc(message) + '</div>';
+
+  let finalMessage = message;
+  let imageBase64 = '', imageMime = '';
+  let attachmentName = null, attachmentUrl = null;
+  const fileToSend = selectedFile;
+  selectedFile = null; ccFileInput.value = ''; renderAttachPreview();
+
+  try {
+    if (fileToSend) {
+      const up = await uploadFile(fileToSend);
+      attachmentName = up.filename; attachmentUrl = up.url;
+      if (up.is_image) {
+        imageBase64 = up.image_base64; imageMime = up.image_mime;
+        finalMessage = (message || '첨부한 이미지를 확인하고 의견을 알려줘.');
+      } else if (up.text_excerpt) {
+        finalMessage = '[첨부파일: ' + up.filename + ' — 아래 내용을 참고/학습하세요]\\n\\n' + up.text_excerpt +
+          '\\n\\n[지시사항]\\n' + (message || '위 첨부파일 내용을 참고해서 답변해줘.');
+      } else {
+        finalMessage = '[첨부파일: ' + up.filename + ' (다운로드: ' + up.url + ')]\\n\\n[지시사항]\\n' +
+          (message || '첨부파일을 확인해줘.');
+      }
+    }
+  } catch (err) {
+    cardChatSendBtn.disabled = false; cardChatSendBtn.textContent = '전송';
+    alert('파일 업로드 실패: ' + err.message);
+    return;
+  }
+
+  cardChatLog.innerHTML += '<div class="cchat-msg user"><div class="who">대표님</div>' + esc(message || '(첨부파일 전송)') +
+    '<div>' + attachmentChip(attachmentName, attachmentUrl) + '</div></div>';
   cardChatLog.scrollTop = cardChatLog.scrollHeight;
   try {
     const res = await fetch('/chat/persona/' + currentCardTarget, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, persona: currentCardTarget, source: 'dashboard' })
+      body: JSON.stringify({
+        message: finalMessage, persona: currentCardTarget, source: 'dashboard',
+        image_base64: imageBase64 || null, image_mime: imageMime || null,
+        attachment_name: attachmentName, attachment_url: attachmentUrl,
+      })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

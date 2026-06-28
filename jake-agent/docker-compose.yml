@@ -50,6 +50,7 @@ services:
       ANTHROPIC_ADMIN_KEY: ${ANTHROPIC_ADMIN_KEY:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - jake-uploads:/app/uploads
     depends_on:
       - jake-postgres
     networks:
@@ -82,6 +83,7 @@ services:
 
 volumes:
   jake-postgres-data:
+  jake-uploads:
   open-webui:
     external: true
     name: open-webui

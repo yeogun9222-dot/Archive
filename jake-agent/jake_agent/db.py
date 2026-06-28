@@ -63,6 +63,8 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_chat_messages_persona_ts
         ON chat_messages (persona, timestamp DESC)
     """)
+    cur.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS attachment_name TEXT")
+    cur.execute("ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS attachment_url TEXT")
     # 기존 tasks 테이블에 누락된 컬럼 보강 (CREATE TABLE IF NOT EXISTS는 기존 테이블을 변경하지 않음)
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result TEXT")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
@@ -887,12 +889,14 @@ def clear_chat_history(persona: str):
     conn.close()
 
 
-def save_chat_message(persona: str, role: str, content: str, source: str = "api"):
+def save_chat_message(persona: str, role: str, content: str, source: str = "api",
+                       attachment_name: str = None, attachment_url: str = None):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO chat_messages (persona, role, content, source) VALUES (%s, %s, %s, %s)",
-        (persona, role, content, source)
+        "INSERT INTO chat_messages (persona, role, content, source, attachment_name, attachment_url) "
+        "VALUES (%s, %s, %s, %s, %s, %s)",
+        (persona, role, content, source, attachment_name, attachment_url)
     )
     conn.commit()
     cur.close()
@@ -900,17 +904,21 @@ def save_chat_message(persona: str, role: str, content: str, source: str = "api"
 
 
 def get_chat_history(persona: str, limit: int = 50) -> list:
-    """VSCode 채팅창 히스토리 반환 — [{role, content, timestamp}]"""
+    """VSCode 채팅창 히스토리 반환 — [{role, content, timestamp, attachment_name, attachment_url}]"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "SELECT role, content, timestamp FROM chat_messages WHERE persona=%s ORDER BY timestamp DESC LIMIT %s",
+        "SELECT role, content, timestamp, attachment_name, attachment_url FROM chat_messages "
+        "WHERE persona=%s ORDER BY timestamp DESC LIMIT %s",
         (persona, limit)
     )
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return [{"role": r[0], "content": r[1], "timestamp": r[2].isoformat()} for r in reversed(rows)]
+    return [
+        {"role": r[0], "content": r[1], "timestamp": r[2].isoformat(), "attachment_name": r[3], "attachment_url": r[4]}
+        for r in reversed(rows)
+    ]
 
 
 def get_recent_conversation_history(persona: str, limit: int = 20) -> list:
