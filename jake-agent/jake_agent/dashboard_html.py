@@ -19,7 +19,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
   .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
-  .level-members { flex-wrap: wrap; max-width: 1180px; gap: 18px 22px; margin-bottom: 0; }
+  .level-members { flex-wrap: wrap; max-width: 1180px; gap: 18px 22px; margin-bottom: 28px; }
+  .level-subteam { flex-wrap: wrap; max-width: 1180px; gap: 16px; margin-bottom: 0; }
+  .level-subteam .card { padding: 9px 14px; }
+  .level-subteam .avatar { width: 30px; height: 30px; font-size: 13px; }
+  .level-subteam .info .name { font-size: 12px; }
+  .level-subteam .info .role { font-size: 9.5px; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
@@ -29,12 +34,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     display: flex; align-items: center; gap: 10px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.4);
     transition: box-shadow 0.4s ease, border-color 0.4s ease, transform 0.4s ease;
-    animation: breathe 3.2s ease-in-out infinite;
   }
-  @keyframes breathe {
-    0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 6px rgba(95,240,255,0.10); }
-    50%      { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 16px rgba(95,240,255,0.28); }
-  }
+  /* 이슈 없을 때는 완전 정적 — 이슈(pending/failed/held) 발생 시에만 glow-* 클래스로 애니메이션 부여 */
   .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
   .info .name { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
   .info .role { font-size: 10.5px; color: #6b7d8f; }
@@ -43,8 +44,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .card.ceo .avatar { width: 46px; height: 46px; background: radial-gradient(circle, #ffe9a8, #ffd76a); box-shadow: 0 0 16px rgba(255,215,106,0.5); }
   .card.ceo .info .name { font-size: 16px; color: #ffd76a; }
   .card.ceo .info .role { color: #b89a4e; }
-  @keyframes breatheCeo { 0%,100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 10px rgba(255,215,106,0.18); } 50% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 26px rgba(255,215,106,0.45); } }
-  .card.ceo { animation: breatheCeo 3.2s ease-in-out infinite; }
 
   .card.coo { padding: 14px 22px; border-color: rgba(95,240,255,0.4); }
   .card.coo .avatar { width: 42px; height: 42px; background: radial-gradient(circle, #aef6ff, #5ff0ff); box-shadow: 0 0 16px rgba(95,240,255,0.5); }
@@ -105,15 +104,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .card { position: relative; }
   .status-badge { display: none; }
 
-  /* 상태별 백라이트 글로우 — 색만 다르고 주기/강도는 통일 (리리 검수: 산만함 방지) */
-  .card.glow-pending  { animation: glowPulse 2.4s ease-in-out infinite; --glow: 251,191,36; }
-  .card.glow-completed{ animation: glowPulse 2.4s ease-in-out infinite; --glow: 74,222,128; }
-  .card.glow-failed   { animation: glowPulse 2.4s ease-in-out infinite; --glow: 248,113,113; }
-  .card.glow-held     { animation: glowPulse 2.4s ease-in-out infinite; --glow: 148,163,184; }
-  .card.glow-approved { animation: glowPulse 2.4s ease-in-out infinite; --glow: 95,240,255; }
+  /* 이슈(pending/failed/held)가 있는 동안만 계속 펄스 — 없으면 완전 정적 */
+  .card.glow-pending { animation: glowPulse 2.4s ease-in-out infinite; --glow: 251,191,36; }
+  .card.glow-failed  { animation: glowPulse 2.4s ease-in-out infinite; --glow: 248,113,113; }
+  .card.glow-held    { animation: glowPulse 2.4s ease-in-out infinite; --glow: 148,163,184; }
   @keyframes glowPulse {
     0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 10px rgba(var(--glow), 0.25), inset 0 0 14px rgba(var(--glow), 0.06); border-color: rgba(var(--glow), 0.45); }
     50%      { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 34px rgba(var(--glow), 0.65), inset 0 0 22px rgba(var(--glow), 0.16); border-color: rgba(var(--glow), 0.8); }
+  }
+  /* completed/approved로 막 전환된 순간만 한 번 반짝 — 이후 완전 정적으로 복귀 */
+  .card.flash-once { animation: flashOnce 1.4s ease-out 1; }
+  @keyframes flashOnce {
+    0%   { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 6px rgba(var(--glow), 0.1); border-color: rgba(var(--glow), 0.3); }
+    35%  { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 32px rgba(var(--glow), 0.75); border-color: rgba(var(--glow), 0.9); }
+    100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 0 rgba(var(--glow), 0); border-color: rgba(95,240,255,0.15); }
   }
 
   #attentionPanel {
@@ -181,6 +185,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 
   <div class="level level-members" id="members"></div>
+  <div class="level level-subteam" id="subteam"></div>
 </div>
 
 <div id="log">
@@ -208,11 +213,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <script>
-const MEMBERS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","사라","미나","카이","설리","노바"];
+// 제이크(COO) 직속 11인 — 본부장/CFO급, 전부 동급(피어)
+const DIRECT_REPORTS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","미나","카이","설리"];
+// 팀장급 — 각자의 본부장 산하 (제이크 직속 아님)
+const SUB_REPORTS = { "사라": "에바", "노바": "렉스" };
+const MEMBERS = [...DIRECT_REPORTS, ...Object.keys(SUB_REPORTS)];
 const ROLES = {
   "다인":"기획본부장","렉스":"AI시스템본부장","루나":"CFO","제로":"보안본부장","바쿠":"데이터본부장",
-  "피오":"백엔드본부장","리리":"프론트엔드본부장","에바":"UXR본부장","사라":"UXR팀장",
-  "미나":"CRO본부장","카이":"GTM본부장","설리":"QA본부장","노바":"DevOps팀장"
+  "피오":"백엔드본부장","리리":"프론트엔드본부장","에바":"UXR본부장","사라":"UXR팀장(에바 산하)",
+  "미나":"CRO본부장","카이":"GTM본부장","설리":"QA본부장","노바":"DevOps팀장(렉스 산하)"
 };
 const ICONS = {
   "다인":"📋","렉스":"🤖","루나":"💰","제로":"🛡️","바쿠":"📊",
@@ -221,14 +230,19 @@ const ICONS = {
 };
 const ALL_NAMES = ["대표님", "제이크", ...MEMBERS];
 
-const membersEl = document.getElementById('members');
-MEMBERS.forEach(name => {
+function buildCard(name, sizeClass) {
   const div = document.createElement('div');
-  div.className = 'card member';
+  div.className = 'card member' + (sizeClass || '');
   div.id = 'card-' + name;
   div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div>';
-  membersEl.appendChild(div);
-});
+  return div;
+}
+
+const membersEl = document.getElementById('members');
+DIRECT_REPORTS.forEach(name => membersEl.appendChild(buildCard(name)));
+
+const subteamEl = document.getElementById('subteam');
+Object.keys(SUB_REPORTS).forEach(name => subteamEl.appendChild(buildCard(name)));
 
 const svg = document.getElementById('lines');
 const chart = document.getElementById('chart');
@@ -258,12 +272,25 @@ function drawStaticLines() {
   p1.setAttribute('fill', 'none');
   svg.appendChild(p1);
 
-  MEMBERS.forEach(name => {
+  DIRECT_REPORTS.forEach(name => {
     const m = center(document.getElementById('card-' + name));
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     p.setAttribute('d', elbowPath(jake, m));
     p.setAttribute('stroke', 'rgba(95,240,255,0.16)');
     p.setAttribute('stroke-width', '1.2');
+    p.setAttribute('fill', 'none');
+    svg.appendChild(p);
+  });
+
+  // 팀장급은 본부장 산하 — 제이크가 아니라 각자의 본부장에서 선 연결
+  Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
+    const parentPos = center(document.getElementById('card-' + parent));
+    const m = center(document.getElementById('card-' + name));
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', elbowPath(parentPos, m));
+    p.setAttribute('stroke', 'rgba(165,180,255,0.3)');
+    p.setAttribute('stroke-width', '1.2');
+    p.setAttribute('stroke-dasharray', '3,3');
     p.setAttribute('fill', 'none');
     svg.appendChild(p);
   });
@@ -363,8 +390,12 @@ function renderEvent(ev) {
   renderStream();
 }
 
-// ── 카드 백라이트 글로우 (상태별 색, 통일된 펄스 주기 — 리리 검수 반영) ──
-const GLOW_CLASSES = ['glow-pending', 'glow-completed', 'glow-failed', 'glow-held', 'glow-approved'];
+// ── 카드 백라이트: 이슈(pending/failed/held)일 때만 계속 펄스, 그 외엔 정적 ──
+const GLOW_CLASSES = ['glow-pending', 'glow-failed', 'glow-held'];
+const ONGOING_GLOW = new Set(['pending', 'failed', 'held']);
+const FLASH_COLOR = { completed: '74,222,128', approved: '95,240,255' };
+const lastStatus = {};
+
 async function pollStatusMap() {
   try {
     const res = await fetch('/activity/status_map');
@@ -373,9 +404,27 @@ async function pollStatusMap() {
     ALL_NAMES.forEach(name => {
       const el = document.getElementById('card-' + name);
       if (!el) return;
-      el.classList.remove(...GLOW_CLASSES);
       const st = statuses[name];
-      if (st) { el.classList.add('glow-' + st); el.title = name + ' — ' + st; }
+      const prev = lastStatus[name];
+
+      if (ONGOING_GLOW.has(st)) {
+        el.classList.remove(...GLOW_CLASSES, 'flash-once');
+        el.classList.add('glow-' + st);
+        el.title = name + ' — ' + st;
+      } else if (st && (st === 'completed' || st === 'approved')) {
+        el.classList.remove(...GLOW_CLASSES);
+        if (st !== prev) {
+          el.style.setProperty('--glow', FLASH_COLOR[st]);
+          el.classList.remove('flash-once');
+          void el.offsetWidth; // 리플로우 강제 — 같은 애니메이션 재실행 보장
+          el.classList.add('flash-once');
+        }
+        el.title = name + ' — ' + st;
+      } else {
+        el.classList.remove(...GLOW_CLASSES, 'flash-once');
+        el.title = name;
+      }
+      lastStatus[name] = st;
     });
   } catch (e) { /* ignore */ }
 }
@@ -487,15 +536,17 @@ async function pollAttention() {
     }
 
     attentionBody.querySelectorAll('.act-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.dataset.id, act = btn.dataset.act;
+        let ok = false;
         if (act === 'delete') {
           if (!confirm('이 작업을 영구적으로 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
-          taskAction(id, '', 'DELETE');
+          ok = await taskAction(id, '', 'DELETE');
         } else {
-          taskAction(id, act, 'POST');
+          ok = await taskAction(id, act, 'POST');
         }
+        if (ok) { pollAttention(); pollStatusMap(); }
       });
     });
   } catch (e) { /* ignore */ }
