@@ -346,7 +346,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
   <button class="header-btn" id="permBtn">🔐 권한</button>
   <button class="header-btn" id="perfBtn">📊 성과</button>
-  <button class="header-btn" id="decBtn" style="position:relative;">📝 의사결정 <span id="decBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
+  <button class="header-btn" id="decBtn" style="position:relative;">🖋 결재 <span id="decBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
   <button class="header-btn" id="bnBtn">🚧 병목</button>
   <button class="header-btn" id="legendBtn">ℹ️ 범례 <span id="legendArrow">▾</span></button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
@@ -419,7 +419,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="decPanel">
-  <h3>📝 의사결정</h3>
+  <h3>🖋 결재</h3>
   <div class="sec-label" style="font-size:10.5px; color:#fbbf24; margin-bottom:6px;">⏳ 결재 대기</div>
   <div id="decPendingBody"></div>
 
@@ -439,7 +439,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <button id="decAddBtn" style="background:rgba(95,240,255,0.18); color:#5ff0ff; border:none; border-radius:6px; padding:6px 11px; font-size:11px; cursor:pointer; font-weight:600; align-self:flex-end;">기록</button>
   </div>
 
-  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:14px 0 6px;">📜 결정 이력</div>
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:14px 0 6px;">📜 결재 이력</div>
   <div id="decBody"></div>
 </div>
 
@@ -1029,7 +1029,7 @@ async function pollCost() {
             '삭제되지 않는 것: 기존 대화기록, 처리했던 작업기록, 이번달 누적 비용(' + cost + ')은 전부 그대로 보존됩니다.\\n' +
             '되돌리는 방법: 같은 패널의 "재고용" 버튼을 누르면 즉시 모든 기능이 복구됩니다 (데이터 손실 없음).\\n\\n계속할까요?'
           )) return;
-          const deactivateReason = prompt('해임 이유를 입력하세요 (의사결정 이력에 기록됩니다, 비워두면 미기록)', '') || '';
+          const deactivateReason = prompt('해임 이유를 입력하세요 (결재 이력에 기록됩니다, 비워두면 미기록)', '') || '';
           personaAction(name, 'deactivate', deactivateReason);
         } else {
           if (!confirm(name + '을 재고용(활성화)할까요? 즉시 대화/위임 요청을 다시 받습니다.')) return;
@@ -1354,7 +1354,7 @@ document.addEventListener('click', (e) => {
   if (!perfPanel.contains(e.target) && !perfBtn.contains(e.target)) perfPanel.classList.remove('show');
 });
 
-// ── 의사결정 이력 패널 ───────────────────────────────────
+// ── 결재 패널 ───────────────────────────────────────────
 const decBtn = document.getElementById('decBtn');
 const decPanel = document.getElementById('decPanel');
 const decBody = document.getElementById('decBody');
@@ -1374,7 +1374,7 @@ async function pollDecisions() {
       (d.reason ? '<div class="reason">배경: ' + esc(d.reason) + '</div>' : '') +
       (d.resolution ? '<div class="reason" style="color:#5ff0ff;">결정: ' + esc(d.resolution) + '</div>' : '') +
       '<div class="by">결재: ' + esc(d.decided_by) + '</div></div>'
-    ).join('') || '<div style="color:#34465a;font-size:11px;">기록된 의사결정이 없습니다</div>';
+    ).join('') || '<div style="color:#34465a;font-size:11px;">기록된 결재 이력이 없습니다</div>';
   } catch (e) { decBody.textContent = '불러오기 실패'; }
 }
 

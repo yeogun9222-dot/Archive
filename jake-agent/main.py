@@ -307,7 +307,7 @@ class DecisionRequest(BaseModel):
 
 @app.get("/decisions")
 async def list_decisions(limit: int = 100):
-    """의사결정 이력 — 해임/재고용/프로젝트 상태변경은 자동 기록, 그 외는 수동 기록"""
+    """결재 이력 — 해임/재고용/프로젝트 상태변경은 자동 기록, 그 외는 수동 기록"""
     return {"decisions": get_decisions(limit)}
 
 

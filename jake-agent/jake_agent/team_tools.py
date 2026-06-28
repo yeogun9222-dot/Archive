@@ -228,7 +228,7 @@ def request_ceo_decision(category: str, summary: str, reason: str) -> str:
     requester = current_caller.get()
     decision_id = request_decision(category, summary, reason, requested_by=requester)
     notify_decision_request(requester, category, summary, reason)
-    return f"[결재 요청 등록됨 #{decision_id}] 대표님의 의사결정 패널에 올라갔습니다. 결정이 나면 알려드리겠습니다."
+    return f"[결재 요청 등록됨 #{decision_id}] 대표님의 결재 패널에 올라갔습니다. 결재가 나면 알려드리겠습니다."
 
 
 def get_all_team_tools():
