@@ -693,7 +693,7 @@ async function pollCost() {
         if (btn.classList.contains('deactivate')) {
           const row = btn.closest('.cost-row');
           const cost = row.querySelector('.val').textContent;
-          if (!confirm(name + '을 해임(비활성화)합니다.\n이번달 누적 비용: ' + cost + '\n비활성화하면 해당 페르소나는 모든 대화/위임 요청을 거부합니다. 계속할까요?')) return;
+          if (!confirm(name + '을 해임(비활성화)합니다.\\n이번달 누적 비용: ' + cost + '\\n비활성화하면 해당 페르소나는 모든 대화/위임 요청을 거부합니다. 계속할까요?')) return;
           personaAction(name, 'deactivate');
         } else {
           if (!confirm(name + '을 재고용(활성화)할까요?')) return;
