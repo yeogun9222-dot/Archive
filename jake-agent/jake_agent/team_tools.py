@@ -221,7 +221,7 @@ def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
 def request_ceo_decision(category: str, summary: str, reason: str) -> str:
     """대표님(CEO)의 직접 판단/결재가 필요한 사안을 올립니다. 본인 권한으로 결정할 수 없는 예산·인사·전략 사안일 때 사용하세요.
     단순 업무 위임이나 의견 수렴에는 절대 사용하지 마세요 — delegate_task/consult_team과 혼동하지 마세요.
-    category: 전략, 예산, 인사, 프로젝트, 기타 중 하나
+    category: 전략, 예산, 인사, 기술, 보안, 프로젝트, 기타 중 하나 (애매하면 기타 사용)
     summary: 결정이 필요한 사안 (한 줄, 구체적으로)
     reason: 왜 CEO 판단이 필요한지 배경/맥락
     """

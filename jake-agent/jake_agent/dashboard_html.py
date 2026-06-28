@@ -430,6 +430,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <option value="전략">전략</option>
         <option value="예산">예산</option>
         <option value="인사">인사</option>
+        <option value="기술">기술</option>
+        <option value="보안">보안</option>
         <option value="프로젝트">프로젝트</option>
         <option value="기타">기타</option>
       </select>
