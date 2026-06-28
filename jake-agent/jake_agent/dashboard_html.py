@@ -1483,7 +1483,7 @@ legendBtn.addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => {
   if (!legendPanel.contains(e.target) && !legendBtn.contains(e.target)) {
-    legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+    legendPanel.classList.remove('show');
     legendArrow.textContent = '▾';
   }
 });
