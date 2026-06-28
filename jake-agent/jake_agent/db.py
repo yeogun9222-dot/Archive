@@ -66,22 +66,44 @@ def init_db():
     # 기존 tasks 테이블에 누락된 컬럼 보강 (CREATE TABLE IF NOT EXISTS는 기존 테이블을 변경하지 않음)
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result TEXT")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS delegated_by TEXT")
     conn.commit()
     cur.close()
     conn.close()
 
-def create_task(title: str, instruction: str, assigned_to: str) -> int:
+def create_task(title: str, instruction: str, assigned_to: str, delegated_by: str = None) -> int:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO tasks (title, instruction, assigned_to, status) VALUES (%s, %s, %s, 'pending') RETURNING id",
-        (title, instruction, assigned_to)
+        "INSERT INTO tasks (title, instruction, assigned_to, status, delegated_by) VALUES (%s, %s, %s, 'pending', %s) RETURNING id",
+        (title, instruction, assigned_to, delegated_by)
     )
     task_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
     conn.close()
     return task_id
+
+
+def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
+    """대시보드용 — 최근 위임 활동 (id > since_id)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, title, assigned_to, delegated_by, status, result, created_at
+           FROM tasks WHERE id > %s ORDER BY id DESC LIMIT %s""",
+        (since_id, limit)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {
+            "id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크",
+            "status": r[4], "result": (r[5] or "")[:300], "timestamp": r[6].isoformat()
+        }
+        for r in rows
+    ]
 
 def update_task(task_id: int, status: str, result: str = None):
     conn = get_conn()

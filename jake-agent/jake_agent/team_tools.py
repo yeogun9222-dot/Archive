@@ -73,8 +73,9 @@ def delegate_task(member: str, task: str) -> str:
     if member not in PERSONAS:
         return f"[위임 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
 
+    caller = current_caller.get()
     # DB에 태스크 생성
-    task_id = create_task(title=task[:100], instruction=task, assigned_to=member)
+    task_id = create_task(title=task[:100], instruction=task, assigned_to=member, delegated_by=caller)
 
     try:
         # 해당 팀원 전용 에이전트(도구 포함) 실행

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional, List
@@ -10,7 +10,8 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity
+from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS
@@ -182,6 +183,17 @@ async def delete_persona_history(persona_name: str):
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
     clear_chat_history(historyKey)
     return {"status": "cleared", "persona": persona_name}
+
+
+@app.get("/activity/recent")
+async def activity_recent(since_id: int = 0):
+    """대시보드용 — 최근 위임 활동 폴링 엔드포인트"""
+    return {"events": get_recent_activity(since_id=since_id, limit=50)}
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    return DASHBOARD_HTML
 
 
 @app.get("/personas")
