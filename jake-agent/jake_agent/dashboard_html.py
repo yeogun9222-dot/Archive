@@ -2,7 +2,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Alpha Squad — Live Activity</title>
+<title>ALPHA SQUAD — Live Org Chart</title>
 <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10,14 +10,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
   #header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-    padding: 16px 22px; background: linear-gradient(180deg, rgba(5,8,16,0.95), rgba(5,8,16,0.0));
-    display: flex; align-items: center; gap: 12px;
+    padding: 18px 22px; background: linear-gradient(180deg, rgba(5,8,16,0.95), rgba(5,8,16,0.0));
+    display: flex; align-items: baseline; gap: 14px;
   }
   #header h1 {
-    font-size: 17px; font-weight: 700; color: #5ff0ff; letter-spacing: 0.5px;
-    text-shadow: 0 0 12px rgba(95,240,255,0.6);
+    font-size: 19px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px;
+    text-shadow: 0 0 14px rgba(95,240,255,0.7);
   }
-  #header .status { font-size: 11px; color: #4a6577; }
+  #header .sub { font-size: 11px; color: #5a7184; letter-spacing: 1px; }
+  #header .status { font-size: 11px; color: #4a6577; margin-left: auto; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   #network { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1; }
@@ -25,14 +26,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     position: fixed; right: 0; top: 0; bottom: 0; width: 340px; z-index: 10;
     background: rgba(8,12,20,0.75); backdrop-filter: blur(10px);
     border-left: 1px solid rgba(95,240,255,0.15);
-    overflow-y: auto; padding: 70px 14px 14px;
+    overflow-y: auto; padding: 80px 14px 14px;
   }
   #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase; }
   .event {
     background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px;
     padding: 11px 13px; margin-bottom: 9px; font-size: 12px;
     animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1);
-    box-shadow: 0 0 0 rgba(95,240,255,0);
   }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
   .event .route { color: #5ff0ff; font-weight: 700; margin-bottom: 5px; font-size: 12.5px; }
@@ -43,22 +43,36 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .status-failed { color: #f87171; }
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   #empty { color: #34465a; font-size: 12px; text-align: center; padding: 40px 10px; line-height: 1.6; }
+  #legend {
+    position: fixed; left: 18px; bottom: 18px; z-index: 10; font-size: 11px; color: #5a7184;
+    background: rgba(8,12,20,0.6); border: 1px solid rgba(95,240,255,0.12); border-radius: 8px; padding: 10px 14px;
+    display: flex; gap: 16px;
+  }
+  #legend span { display: flex; align-items: center; gap: 6px; }
+  #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 </style>
 </head>
 <body>
 <canvas id="stars"></canvas>
 <div id="header">
-  <h1>🧠 ALPHA SQUAD — LIVE</h1>
+  <h1>ALPHA SQUAD</h1>
+  <div class="sub">LONGRISE AI ORGANIZATION · LIVE ORG CHART</div>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 <div id="network"></div>
+<div id="legend">
+  <span><i style="background:#ffd76a;box-shadow:0 0 6px #ffd76a"></i>CEO</span>
+  <span><i style="background:#5ff0ff;box-shadow:0 0 6px #5ff0ff"></i>COO</span>
+  <span><i style="background:#6b7d8f"></i>본부장/팀장</span>
+  <span><i style="background:#4ade80;box-shadow:0 0 6px #4ade80"></i>위임 중</span>
+</div>
 <div id="log">
   <h2>Activity Stream</h2>
   <div id="empty">신호 대기 중...<br>팀원 간 위임이 발생하면<br>여기에 표시됩니다.</div>
   <div id="events"></div>
 </div>
 <script>
-// ── 배경 파티클 (별/네트워크 느낌) ──────────────────────────
+// ── 배경 파티클 ──────────────────────────────────────────
 const starCanvas = document.getElementById('stars');
 const sctx = starCanvas.getContext('2d');
 function resizeStars() { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; }
@@ -87,67 +101,90 @@ function drawStars() {
 }
 drawStars();
 
-// ── 네트워크 그래프 ──────────────────────────────────────
-const PERSONAS = ["제이크","다인","렉스","루나","제로","바쿠","피오","리리","에바","사라","미나","카이","설리","노바"];
+// ── 조직도 데이터 ────────────────────────────────────────
+const MEMBERS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","사라","미나","카이","설리","노바"];
 const ROLES = {
-  "제이크":"COO","다인":"기획","렉스":"AI시스템","루나":"CFO","제로":"보안","바쿠":"데이터",
-  "피오":"백엔드","리리":"프론트엔드","에바":"UXR","사라":"UXR팀장","미나":"CRO","카이":"GTM","설리":"QA","노바":"DevOps"
+  "다인":"기획본부장","렉스":"AI시스템본부장","루나":"CFO","제로":"보안본부장","바쿠":"데이터본부장",
+  "피오":"백엔드본부장","리리":"프론트엔드본부장","에바":"UXR본부장","사라":"UXR팀장",
+  "미나":"CRO본부장","카이":"GTM본부장","설리":"QA본부장","노바":"DevOps팀장"
 };
-const IDLE_COLOR = { background: 'rgba(31,41,55,0.9)', border: 'rgba(95,240,255,0.35)' };
-const JAKE_COLOR = { background: 'rgba(10,30,40,0.95)', border: '#5ff0ff' };
-const ACTIVE_COLOR = { background: 'rgba(20,60,40,0.95)', border: '#4ade80' };
+const ALL_NAMES = ["제이크", ...MEMBERS];
 
-function baseShadow(color, size) {
-  return { enabled: true, color, size, x: 0, y: 0 };
+const CEO_COLOR   = { background: 'rgba(40,32,10,0.95)', border: '#ffd76a' };
+const COO_COLOR   = { background: 'rgba(10,30,40,0.95)', border: '#5ff0ff' };
+const IDLE_COLOR  = { background: 'rgba(31,41,55,0.9)',  border: 'rgba(107,125,143,0.5)' };
+const ACTIVE_COLOR= { background: 'rgba(20,60,40,0.95)', border: '#4ade80' };
+
+function shadow(color, size) { return { enabled: true, color, size, x: 0, y: 0 }; }
+
+// 2줄로 13명 배치 (7 + 6) — 가로 혼잡 방지
+const ROW1 = MEMBERS.slice(0, 7);
+const ROW2 = MEMBERS.slice(7);
+const GAP_X = 165;
+
+const nodeList = [];
+
+nodeList.push({
+  id: "대표님", label: "Kade YEO\\nCEO",
+  x: 0, y: -480, shape: 'dot', size: 36,
+  color: CEO_COLOR, font: { color: '#ffd76a', size: 16, vadjust: 48 },
+  shadow: shadow('rgba(255,215,106,0.55)', 22), borderWidth: 3, fixed: { x: true, y: true },
+});
+
+nodeList.push({
+  id: "제이크", label: "제이크\\nCOO",
+  x: 0, y: -280, shape: 'dot', size: 32,
+  color: COO_COLOR, font: { color: '#5ff0ff', size: 15, vadjust: 44 },
+  shadow: shadow('rgba(95,240,255,0.55)', 20), borderWidth: 3, fixed: { x: true, y: true },
+});
+
+function placeRow(names, y) {
+  const startX = -((names.length - 1) * GAP_X) / 2;
+  names.forEach((name, i) => {
+    nodeList.push({
+      id: name, label: name + "\\n" + ROLES[name],
+      x: startX + i * GAP_X, y, shape: 'dot', size: 22,
+      color: IDLE_COLOR, font: { color: '#9fb4c4', size: 11.5, vadjust: 30 },
+      shadow: shadow('rgba(95,240,255,0.15)', 7), borderWidth: 2, fixed: { x: true, y: true },
+    });
+  });
 }
+placeRow(ROW1, -60);
+placeRow(ROW2, 140);
 
-const nodes = new vis.DataSet(PERSONAS.map((name) => {
-  const isJake = name === "제이크";
-  const others = PERSONAS.filter(n => n !== "제이크");
-  const idx = others.indexOf(name);
-  const angle = (idx / others.length) * 2 * Math.PI - Math.PI / 2;
-  const r = 300;
-  return {
-    id: name,
-    label: name + "\\n" + ROLES[name],
-    x: isJake ? 0 : Math.cos(angle) * r,
-    y: isJake ? 0 : Math.sin(angle) * r,
-    shape: 'dot',
-    size: isJake ? 38 : 24,
-    color: isJake ? JAKE_COLOR : IDLE_COLOR,
-    font: { color: isJake ? '#5ff0ff' : '#9fb4c4', size: isJake ? 15 : 12, face: 'inherit', multi: false, vadjust: isJake ? 50 : 32 },
-    shadow: baseShadow(isJake ? 'rgba(95,240,255,0.6)' : 'rgba(95,240,255,0.15)', isJake ? 25 : 8),
-    borderWidth: isJake ? 3 : 2,
-    fixed: { x: true, y: true },
-  };
+const nodes = new vis.DataSet(nodeList);
+
+// 조직도 고정선 (항상 보이는 회색 라인) + 동적 위임선(분리된 edge들은 런타임에 추가)
+const staticEdges = [{ from: "대표님", to: "제이크", color: { color: 'rgba(255,215,106,0.3)' }, width: 1.5, arrows: { to: { enabled: false } }, dashes: false, smooth: false }];
+MEMBERS.forEach(name => staticEdges.push({
+  from: "제이크", to: name, color: { color: 'rgba(95,240,255,0.18)' }, width: 1, arrows: { to: { enabled: false } }, dashes: [2, 4], smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.5 }
 }));
 
-const edges = new vis.DataSet([]);
+const edges = new vis.DataSet(staticEdges.map((e, i) => ({ id: 'org' + i, ...e })));
 
 const network = new vis.Network(document.getElementById('network'), { nodes, edges }, {
   physics: false,
   interaction: { dragNodes: false, zoomView: true, dragView: true, hover: true },
-  edges: {
-    smooth: { type: 'curvedCW', roundness: 0.18 },
-    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
-  },
 });
+network.once('afterDrawing', () => network.fit({ animation: false, maxZoomLevel: 1.05 }));
+setTimeout(() => network.moveTo({ position: { x: 0, y: -140 }, scale: window.innerWidth < 900 ? 0.55 : 0.85 }), 50);
 
-// ── 숨쉬기 효과 (idle 노드 은은한 글로우 펄스) ──────────────
+// ── 숨쉬기 효과 ──────────────────────────────────────────
+const activeUntil = {};
 let breathT = 0;
 setInterval(() => {
   breathT += 0.12;
-  const pulse = (Math.sin(breathT) + 1) / 2; // 0~1
-  PERSONAS.forEach(name => {
-    if (activeUntil[name] && activeUntil[name] > Date.now()) return; // 활성 중이면 숨쉬기 생략
-    const isJake = name === "제이크";
-    const size = isJake ? 20 + pulse * 10 : 6 + pulse * 4;
-    nodes.update({ id: name, shadow: baseShadow(isJake ? 'rgba(95,240,255,0.6)' : 'rgba(95,240,255,0.18)', size) });
+  const pulse = (Math.sin(breathT) + 1) / 2;
+  ALL_NAMES.concat(["대표님"]).forEach(name => {
+    if (activeUntil[name] && activeUntil[name] > Date.now()) return;
+    let base = 'rgba(95,240,255,0.15)', sizeBase = 6;
+    if (name === "대표님") { base = 'rgba(255,215,106,0.5)'; sizeBase = 16; }
+    else if (name === "제이크") { base = 'rgba(95,240,255,0.5)'; sizeBase = 16; }
+    nodes.update({ id: name, shadow: shadow(base, sizeBase + pulse * 8) });
   });
 }, 120);
 
 // ── 이벤트 처리 ──────────────────────────────────────────
-const activeUntil = {};
 let sinceId = 0;
 let edgeCounter = 0;
 const statusEl = document.getElementById('status');
@@ -156,21 +193,24 @@ const emptyEl = document.getElementById('empty');
 
 function activateNode(id) {
   activeUntil[id] = Date.now() + 3000;
-  const isJake = id === "제이크";
-  nodes.update({ id, color: ACTIVE_COLOR, shadow: baseShadow('rgba(74,222,128,0.85)', isJake ? 40 : 26), borderWidth: 3 });
+  const isCeo = id === "대표님", isJake = id === "제이크";
+  nodes.update({ id, color: ACTIVE_COLOR, shadow: shadow('rgba(74,222,128,0.85)', isCeo || isJake ? 34 : 24), borderWidth: 3 });
   setTimeout(() => {
     if (activeUntil[id] <= Date.now()) {
-      nodes.update({ id, color: isJake ? JAKE_COLOR : IDLE_COLOR, borderWidth: isJake ? 3 : 2 });
+      const restore = isCeo ? CEO_COLOR : isJake ? COO_COLOR : IDLE_COLOR;
+      nodes.update({ id, color: restore, borderWidth: isCeo || isJake ? 3 : 2 });
     }
   }, 3000);
 }
 
 function addEdge(from, to) {
-  if (!PERSONAS.includes(from) || !PERSONAS.includes(to) || from === to) return;
-  const id = 'e' + (edgeCounter++);
-  edges.add({ id, from, to, color: { color: '#4ade80', opacity: 1 }, width: 4, shadow: { enabled: true, color: 'rgba(74,222,128,0.7)', size: 15 } });
+  if (!ALL_NAMES.includes(from) || !ALL_NAMES.includes(to) || from === to) return;
+  const id = 'live' + (edgeCounter++);
+  edges.add({ id, from, to, color: { color: '#4ade80', opacity: 1 }, width: 4,
+    smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 },
+    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+    shadow: { enabled: true, color: 'rgba(74,222,128,0.7)', size: 15 } });
   activateNode(from); activateNode(to);
-  // 페이드아웃
   let step = 0;
   const fade = setInterval(() => {
     step++;
