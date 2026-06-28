@@ -8,6 +8,7 @@ def _clients():
     keys = [
         os.getenv("NOTION_API_KEY"),
         os.getenv("NOTION_ARCHITECTS_KEY"),
+        os.getenv("NOTION_GUIDE_KEY"),
     ]
     return [Client(auth=k) for k in keys if k]
 
