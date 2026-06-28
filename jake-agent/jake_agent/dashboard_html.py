@@ -253,11 +253,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:8px 0 6px;">자동 집계 — Anthropic API 토큰</div>
   <div id="costBody"></div>
   <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:12px 0 6px;">수동 입력 — Claude 콘솔 실청구 / Gemini / GCP VM 등</div>
-  <div id="manualCostForm" style="display:flex; gap:5px; margin-bottom:10px; flex-wrap:wrap;">
-    <input type="text" id="manualLabelInput" placeholder="항목명 (예: GCP VM)" style="flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
-    <input type="number" id="manualAmountInput" placeholder="USD" step="0.01" style="width:70px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+  <div id="manualCostForm" style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
+    <input type="text" id="manualLabelInput" placeholder="항목명 (예: GCP VM 서울)" style="flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <input type="number" id="manualAmountInput" placeholder="금액" step="1" style="width:65px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <select id="manualCurrencyInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 4px;">
+      <option value="KRW">KRW</option>
+      <option value="USD">USD</option>
+    </select>
     <input type="date" id="manualDateInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
-    <button id="manualAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">추가</button>
+  </div>
+  <div id="manualCostForm2" style="display:flex; gap:6px; align-items:center; margin-bottom:10px; font-size:10.5px; color:#9fb4c4;">
+    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="manualRecurringInput"> 매달 반복(정기 고정비)</label>
+    <button id="manualAddBtn" style="margin-left:auto; background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">추가</button>
   </div>
   <div id="manualCostBody"></div>
   <div id="costNote"></div>
@@ -781,11 +788,13 @@ async function pollCost() {
         '<span class="val">$' + p.cost.toFixed(4) + '</span>' + btn + '</div>';
     }).join('') || '<div style="color:#34465a;font-size:11px;">집계된 사용량 없음</div>';
 
-    manualCostBody.innerHTML = data.manual_costs.map(m =>
-      '<div class="cost-row"><span class="name">' + esc(m.label) + ' (' + m.billed_date + ')' + (m.note ? ' — ' + esc(m.note) : '') + '</span>' +
-      '<span class="val">$' + m.amount_usd.toFixed(2) + '</span>' +
-      '<button class="cost-act deactivate" data-mid="' + m.id + '" style="margin-left:6px;">삭제</button></div>'
-    ).join('') || '<div style="color:#34465a;font-size:11px;">수동 입력 항목 없음</div>';
+    manualCostBody.innerHTML = data.manual_costs.map(m => {
+      const amtStr = m.currency === 'KRW' ? (Math.round(m.amount).toLocaleString('ko-KR') + '원') : ('$' + m.amount.toFixed(2));
+      const recurTag = m.recurring ? ' <span style="color:#5ff0ff;">[정기]</span>' : '';
+      return '<div class="cost-row"><span class="name">' + esc(m.label) + recurTag + ' (' + m.billed_date + ')' + (m.note ? ' — ' + esc(m.note) : '') + '</span>' +
+        '<span class="val">' + amtStr + ' (≈$' + m.amount_usd.toFixed(2) + ')</span>' +
+        '<button class="cost-act deactivate" data-mid="' + m.id + '" style="margin-left:6px;">삭제</button></div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">수동 입력 항목 없음</div>';
 
     costNote.textContent = data.note + (diffStr ? (' 전월 대비' + diffStr) : '');
 
@@ -826,12 +835,15 @@ manualAddBtn.addEventListener('click', async (e) => {
   const label = manualLabelInput.value.trim();
   const amount = parseFloat(manualAmountInput.value);
   const date = manualDateInput.value;
+  const currency = document.getElementById('manualCurrencyInput').value;
+  const recurring = document.getElementById('manualRecurringInput').checked;
   if (!label || !amount || !date) { alert('항목명/금액/날짜를 모두 입력하세요.'); return; }
   await fetch('/cost/manual', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ label, amount_usd: amount, billed_date: date })
+    body: JSON.stringify({ label, amount, currency, recurring, billed_date: date })
   });
   manualLabelInput.value = ''; manualAmountInput.value = '';
+  document.getElementById('manualRecurringInput').checked = false;
   pollCost();
 });
 

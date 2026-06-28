@@ -317,8 +317,10 @@ async def update_project_status_endpoint(project_id: int, req: ProjectStatusRequ
 
 class ManualCostRequest(BaseModel):
     label: str
-    amount_usd: float
+    amount: float
     billed_date: str
+    currency: str = "USD"
+    recurring: bool = False
     note: Optional[str] = None
 
 
@@ -347,7 +349,7 @@ async def cost_manual_list():
 
 @app.post("/cost/manual")
 async def cost_manual_add(req: ManualCostRequest):
-    cost_id = create_manual_cost(req.label, req.amount_usd, req.billed_date, req.note)
+    cost_id = create_manual_cost(req.label, req.amount, req.billed_date, req.currency, req.recurring, req.note)
     return {"id": cost_id, "status": "created"}
 
 

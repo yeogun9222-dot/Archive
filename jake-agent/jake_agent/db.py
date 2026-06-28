@@ -93,12 +93,17 @@ def init_db():
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
             label TEXT NOT NULL,
-            amount_usd NUMERIC NOT NULL,
+            amount NUMERIC NOT NULL,
+            currency TEXT DEFAULT 'USD',
             billed_date DATE NOT NULL,
+            recurring BOOLEAN DEFAULT FALSE,
             note TEXT,
             created_at TIMESTAMP DEFAULT NOW()
         )
     """)
+    cur.execute("ALTER TABLE manual_costs ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD'")
+    cur.execute("ALTER TABLE manual_costs ADD COLUMN IF NOT EXISTS recurring BOOLEAN DEFAULT FALSE")
+    cur.execute("DO $$ BEGIN ALTER TABLE manual_costs RENAME COLUMN amount_usd TO amount; EXCEPTION WHEN undefined_column THEN NULL; END $$;")
     conn.commit()
     cur.close()
     conn.close()
@@ -403,12 +408,23 @@ def get_contention_personas() -> list:
     return [{"persona": r[0], "count": r[1]} for r in rows]
 
 
-def create_manual_cost(label: str, amount_usd: float, billed_date: str, note: str = None) -> int:
+# 환율은 매일 변동하므로 정확한 USD 환산이 필요하면 직접 갱신 — 표시는 원래 입력 통화 그대로 보여주고,
+# 합계 집계용으로만 근사 환산 사용
+USD_PER_KRW = 1 / 1380
+
+
+def _to_usd(amount: float, currency: str) -> float:
+    if currency == "KRW":
+        return amount * USD_PER_KRW
+    return amount
+
+
+def create_manual_cost(label: str, amount: float, billed_date: str, currency: str = "USD", recurring: bool = False, note: str = None) -> int:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO manual_costs (label, amount_usd, billed_date, note) VALUES (%s, %s, %s, %s) RETURNING id",
-        (label, amount_usd, billed_date, note)
+        "INSERT INTO manual_costs (label, amount, currency, billed_date, recurring, note) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+        (label, amount, currency, billed_date, recurring, note)
     )
     cost_id = cur.fetchone()[0]
     conn.commit()
@@ -418,18 +434,30 @@ def create_manual_cost(label: str, amount_usd: float, billed_date: str, note: st
 
 
 def get_manual_costs_this_month() -> list:
+    """이번 달에 적용되는 수동 비용 — 일회성은 이번달에 청구된 것만, 정기(recurring)는
+    시작일(billed_date)이 이번 달 말일 이전이면 매달 자동 포함 (예: GCP VM 월 고정비)."""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, label, amount_usd, billed_date, note FROM manual_costs
-        WHERE billed_date >= date_trunc('month', NOW())::date
-          AND billed_date < (date_trunc('month', NOW()) + INTERVAL '1 month')::date
-        ORDER BY billed_date DESC
+        SELECT id, label, amount, currency, billed_date, recurring, note FROM manual_costs
+        WHERE (recurring = FALSE
+               AND billed_date >= date_trunc('month', NOW())::date
+               AND billed_date < (date_trunc('month', NOW()) + INTERVAL '1 month')::date)
+           OR (recurring = TRUE
+               AND billed_date < (date_trunc('month', NOW()) + INTERVAL '1 month')::date)
+        ORDER BY recurring DESC, billed_date DESC
     """)
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return [{"id": r[0], "label": r[1], "amount_usd": float(r[2]), "billed_date": r[3].isoformat(), "note": r[4] or ""} for r in rows]
+    return [
+        {
+            "id": r[0], "label": r[1], "amount": float(r[2]), "currency": r[3] or "USD",
+            "amount_usd": round(_to_usd(float(r[2]), r[3] or "USD"), 4),
+            "billed_date": r[4].isoformat(), "recurring": r[5], "note": r[6] or ""
+        }
+        for r in rows
+    ]
 
 
 def delete_manual_cost(cost_id: int) -> bool:
@@ -495,7 +523,7 @@ def get_cost_summary() -> dict:
         "prev_month": prev_cost,
         "by_persona": by_persona,
         "manual_costs": manual,
-        "note": "by_persona는 Anthropic API 토큰 비용 자동집계. manual_costs는 Claude 콘솔 실청구/Gemini/GCP VM 등 직접 입력한 값. 자동집계가 어려운 항목은 '비용 입력'으로 직접 추가하세요."
+        "note": f"by_persona는 Anthropic API 토큰 비용 자동집계. manual_costs는 Claude 콘솔 실청구/Gemini/GCP VM 등 직접 입력한 값(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환율로 환산, 실제 환율과 다를 수 있음). '정기' 항목은 매달 자동 합산됨."
     }
 
 
