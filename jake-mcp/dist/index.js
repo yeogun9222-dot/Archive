@@ -4,7 +4,7 @@ const mcp_js_1 = require("@modelcontextprotocol/sdk/server/mcp.js");
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
 const zod_1 = require("zod");
 const API_BASE = process.env.JAKE_API_BASE || 'http://34.47.74.42:8000';
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 120000;
 const PERSONAS = [
     '제이크', '다인', '렉스', '루나', '제로', '바쿠', '피오',
     '리리', '에바', '사라', '미나', '카이', '설리', '노바',

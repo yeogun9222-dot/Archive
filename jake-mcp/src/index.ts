@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 
 const API_BASE = process.env.JAKE_API_BASE || 'http://34.47.74.42:8000';
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 120000;
 
 const PERSONAS = [
   '제이크', '다인', '렉스', '루나', '제로', '바쿠', '피오',
