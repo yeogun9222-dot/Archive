@@ -45,6 +45,14 @@ def notify_delegation(from_member: str, to_member: str, task: str, response: str
     )
     return send_message(message)
 
+def notify_discussion(member_a: str, member_b: str, topic: str, transcript: str, status: str):
+    message = (
+        f"💬 *1:1 논의* {member_a} ↔ {member_b} ({status})\n\n"
+        f"📌 *주제:*\n{topic[:200]}\n\n"
+        f"🗒 *대화 내용:*\n{transcript[:600]}{'...' if len(transcript) > 600 else ''}"
+    )
+    return send_message(message)
+
 def notify_startup():
     message = (
         "✅ *Jake Orchestrator 시작됨*\n\n"

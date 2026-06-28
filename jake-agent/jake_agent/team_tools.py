@@ -1,11 +1,12 @@
 import os
+import time
 from contextvars import ContextVar
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
 from .db import save_chat_message, create_task, update_task, is_persona_active
-from .telegram import notify_delegation
+from .telegram import notify_delegation, notify_discussion
 
 # 현재 도구를 호출 중인 페르소나 — graph.py의 tool_exec_node에서 매 호출 전 설정
 current_caller: ContextVar[str] = ContextVar("current_caller", default="제이크")
@@ -103,5 +104,73 @@ def delegate_task(member: str, task: str) -> str:
         return f"[{member} 위임 실패] {e}"
 
 
+@tool
+def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
+    """팀원과 여러 차례 의견을 주고받아야 결론이 나는 주제에 대해 1:1 다회성 논의를 진행합니다.
+    1회성 질문(consult_team)이나 단순 업무지시(delegate_task)로는 부족한, 합의가 필요한 쟁점에만 사용하세요.
+    member: 논의할 상대 팀원 이름
+    topic: 논의 주제 (구체적인 쟁점/질문)
+    max_turns: 최대 대화 턴 수 (기본 4, 비용 보호를 위해 최대 6으로 강제 제한됨)
+    유효한 이름: 다인, 에바, 미나, 바쿠, 피오, 리리, 설리, 카이, 렉스, 루나, 제로, 사라, 노바, 제이크
+    """
+    caller = current_caller.get()
+    if member not in PERSONAS:
+        return f"[논의 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
+    if member == caller:
+        return "[논의 실패] 본인과는 1:1 논의를 할 수 없습니다."
+    if not is_persona_active(member):
+        return f"[논의 불가] {member}은(는) 현재 비활성화(해임) 상태입니다."
+    if not is_persona_active(caller):
+        return f"[논의 불가] {caller}은(는) 현재 비활성화(해임) 상태입니다."
+
+    # 비용/무한루프 방지 — 턴 수 하드캡 + 전체 wall-clock 타임아웃
+    max_turns = max(1, min(int(max_turns), 6))
+    timeout_s = 90
+    start = time.monotonic()
+
+    participants = [member, caller]
+    transcript = []
+    last_message = topic
+    resolved = False
+    turns_done = 0
+
+    for turn in range(1, max_turns + 1):
+        if time.monotonic() - start > timeout_s:
+            transcript.append("[시스템] 제한시간(90초) 초과로 논의를 종료합니다.")
+            break
+
+        speaker = participants[turn % 2]
+        listener = participants[(turn + 1) % 2]
+
+        prompt = (
+            f"[{listener}와의 1:1 논의 — {turn}/{max_turns}번째 턴]\n"
+            f"논의 주제: {topic}\n"
+            f"직전 발언({'없음, 첫 턴' if turn == 1 else listener}): {last_message}\n\n"
+            "직전 발언에 대해 동의/반대/추가의견을 명확히 밝히세요. "
+            "더 논의할 필요가 없다고 판단되면 답변 끝에 반드시 '[합의완료]'를 붙이세요."
+        )
+        response = _consult_member(speaker, prompt)
+        transcript.append(f"[{speaker}] {response}")
+        turns_done += 1
+
+        save_chat_message(speaker, "assistant", f"(1:1 논의 · {listener}) {response}", source="discussion")
+        save_chat_message(listener, "user", f"(1:1 논의 · {speaker}) {response}", source="discussion")
+
+        last_message = response
+        if "[합의완료]" in response:
+            resolved = True
+            break
+
+    status = "합의 도달" if resolved else ("최대 턴 도달" if turns_done >= max_turns else "시간 초과 종료")
+    summary = "\n\n".join(transcript)
+
+    task_id = create_task(title=f"{member}↔{caller} 1:1 논의: {topic[:60]}", instruction=topic, assigned_to=member, delegated_by=caller)
+    update_task(task_id, "completed", f"[{status}]\n{summary}")
+
+    notify_discussion(caller, member, topic, summary, status)
+
+    return f"[{member}↔{caller} 논의 종료 — {status}]\n\n{summary}"
+
+
 def get_all_team_tools():
-    return [consult_team, delegate_task]
+    return [consult_team, delegate_task, discuss_with]
