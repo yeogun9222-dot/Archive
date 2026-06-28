@@ -67,15 +67,19 @@ def init_db():
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result TEXT")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS delegated_by TEXT")
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE")
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP")
     conn.commit()
     cur.close()
     conn.close()
 
 def create_task(title: str, instruction: str, assigned_to: str, delegated_by: str = None) -> int:
+    """due_date는 기본 위임 SLA로 24시간 후 자동 설정 (미배정/기한초과 추적용 기본값)"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO tasks (title, instruction, assigned_to, status, delegated_by) VALUES (%s, %s, %s, 'pending', %s) RETURNING id",
+        """INSERT INTO tasks (title, instruction, assigned_to, status, delegated_by, due_date)
+           VALUES (%s, %s, %s, 'pending', %s, NOW() + INTERVAL '24 hours') RETURNING id""",
         (title, instruction, assigned_to, delegated_by)
     )
     task_id = cur.fetchone()[0]
@@ -86,7 +90,7 @@ def create_task(title: str, instruction: str, assigned_to: str, delegated_by: st
 
 
 def log_ceo_instruction(persona: str, instruction: str, result: str):
-    """대표님이 팀원에게 직접 보낸 지시도 대시보드 활동으로 기록"""
+    """대표님이 팀원에게 직접 보낸 지시도 대시보드 활동으로 기록 (이미 완료된 대화라 due_date 불필요)"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
@@ -105,7 +109,7 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
     cur = conn.cursor()
     cur.execute(
         """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
-           FROM tasks WHERE id > %s ORDER BY id DESC LIMIT %s""",
+           FROM tasks WHERE id > %s AND archived = FALSE ORDER BY id DESC LIMIT %s""",
         (since_id, limit)
     )
     rows = cur.fetchall()
@@ -148,7 +152,8 @@ def get_attention_tasks(limit: int = 50) -> list:
     cur = conn.cursor()
     cur.execute(
         """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
-           FROM tasks WHERE status IN ('failed', 'pending', 'held') ORDER BY id DESC LIMIT %s""",
+           FROM tasks WHERE status IN ('failed', 'pending', 'held') AND archived = FALSE
+           ORDER BY id DESC LIMIT %s""",
         (limit,)
     )
     rows = cur.fetchall()
@@ -170,9 +175,9 @@ def get_persona_statuses() -> dict:
     cur = conn.cursor()
     cur.execute("""
         SELECT DISTINCT ON (persona) persona, status, id FROM (
-            SELECT assigned_to AS persona, status, id FROM tasks WHERE assigned_to IS NOT NULL
+            SELECT assigned_to AS persona, status, id FROM tasks WHERE assigned_to IS NOT NULL AND archived = FALSE
             UNION ALL
-            SELECT delegated_by AS persona, status, id FROM tasks WHERE delegated_by IS NOT NULL
+            SELECT delegated_by AS persona, status, id FROM tasks WHERE delegated_by IS NOT NULL AND archived = FALSE
         ) t
         ORDER BY persona, id DESC
     """)
@@ -198,14 +203,103 @@ def update_task_status_guarded(task_id: int, new_status: str, expected_statuses:
 
 
 def delete_task_row(task_id: int) -> bool:
+    """소프트 삭제 — 감사 로그 보존 원칙상 실제로 지우지 않고 archived=TRUE만 표시"""
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("DELETE FROM tasks WHERE id = %s RETURNING id", (task_id,))
+    cur.execute("UPDATE tasks SET archived = TRUE WHERE id = %s AND archived = FALSE RETURNING id", (task_id,))
     row = cur.fetchone()
     conn.commit()
     cur.close()
     conn.close()
     return row is not None
+
+
+def get_archived_tasks(limit: int = 100) -> list:
+    """감사 로그 조회용 — 보관된(삭제 처리된) 작업 전체"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
+           FROM tasks WHERE archived = TRUE ORDER BY id DESC LIMIT %s""",
+        (limit,)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {
+            "id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크",
+            "status": r[4], "result": r[5] or "", "timestamp": r[6].isoformat(),
+            "instruction": r[7] or ""
+        }
+        for r in rows
+    ]
+
+
+def get_task_health() -> dict:
+    """기한초과/미배정 작업 — Phase 1 핵심 알림"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, title, assigned_to, delegated_by, status, due_date
+        FROM tasks
+        WHERE archived = FALSE AND status NOT IN ('completed', 'approved')
+          AND due_date IS NOT NULL AND due_date < NOW()
+        ORDER BY due_date ASC
+    """)
+    overdue = [
+        {"id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크", "status": r[4], "due_date": r[5].isoformat()}
+        for r in cur.fetchall()
+    ]
+    cur.execute("""
+        SELECT id, title, delegated_by, status, created_at
+        FROM tasks
+        WHERE archived = FALSE AND (assigned_to IS NULL OR assigned_to = '')
+        ORDER BY id DESC
+    """)
+    unassigned = [
+        {"id": r[0], "title": r[1], "from": r[2] or "제이크", "status": r[3], "timestamp": r[4].isoformat()}
+        for r in cur.fetchall()
+    ]
+    cur.close()
+    conn.close()
+    return {"overdue": overdue, "unassigned": unassigned}
+
+
+def get_cost_summary() -> dict:
+    """대시보드 월비용 요약 — token_usage 기반 (루나 도구와 동일 단가: input $3/output $15 per 1M)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT agent, COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+        FROM token_usage
+        WHERE created_at >= date_trunc('month', NOW())
+        GROUP BY agent ORDER BY SUM(input_tokens + output_tokens) DESC
+    """)
+    rows = cur.fetchall()
+
+    cur.execute("""
+        SELECT COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+        FROM token_usage
+        WHERE created_at >= date_trunc('month', NOW() - INTERVAL '1 month')
+          AND created_at < date_trunc('month', NOW())
+    """)
+    prev = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    def cost(inp, out):
+        return round((inp / 1_000_000 * 3) + (out / 1_000_000 * 15), 4)
+
+    by_persona = [{"persona": r[0] or "제이크", "input_tokens": r[1], "output_tokens": r[2], "cost": cost(r[1], r[2])} for r in rows]
+    total = round(sum(p["cost"] for p in by_persona), 4)
+    prev_cost = cost(prev[0], prev[1]) if prev else 0
+    return {
+        "total_this_month": total,
+        "prev_month": prev_cost,
+        "by_persona": by_persona,
+        "note": "Anthropic API 토큰 비용만 집계됨. GCP 서버비/Notion/Telegram 등은 미집계 (수동 확인 필요)."
+    }
 
 
 def get_pending_tasks():

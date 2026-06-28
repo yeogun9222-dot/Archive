@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -237,6 +237,24 @@ async def delete_task_endpoint(task_id: int):
     if not ok:
         raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
     return {"status": "deleted"}
+
+
+@app.get("/activity/archived")
+async def activity_archived():
+    """감사 로그 — 보관(삭제 처리)된 작업 전체 조회"""
+    return {"tasks": get_archived_tasks(limit=100)}
+
+
+@app.get("/activity/health")
+async def activity_health():
+    """기한초과/미배정 작업 알림"""
+    return get_task_health()
+
+
+@app.get("/cost/summary")
+async def cost_summary():
+    """월비용 대시보드 — 토큰 비용만 집계 (GCP 등 미포함, 명시적 안내)"""
+    return get_cost_summary()
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

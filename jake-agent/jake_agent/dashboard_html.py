@@ -13,6 +13,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #header h1 { font-size: 20px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px; text-shadow: 0 0 14px rgba(95,240,255,0.5); }
   #header .sub { font-size: 11px; color: #5a7184; letter-spacing: 1px; }
   #header .status { font-size: 11px; color: #4a6577; margin-left: auto; }
+  .cost-widget {
+    font-size: 11.5px; color: #ffd76a; background: rgba(255,215,106,0.08);
+    border: 1px solid rgba(255,215,106,0.25); border-radius: 14px; padding: 4px 12px;
+    cursor: pointer; margin-left: auto;
+  }
+  .cost-widget:hover { background: rgba(255,215,106,0.16); }
+  #costPanel {
+    position: fixed; top: 60px; right: 20px; width: 300px; max-height: 50vh; overflow-y: auto;
+    background: rgba(12,16,24,0.97); border: 1px solid rgba(255,215,106,0.3); border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
+  }
+  #costPanel.show { display: block; }
+  #costPanel h3 { font-size: 12px; color: #ffd76a; margin-bottom: 10px; }
+  .cost-row { display: flex; justify-content: space-between; font-size: 12px; color: #c5cdd6; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .cost-row .name { color: #9fb4c4; }
+  .cost-row .val { color: #ffd76a; font-weight: 600; }
+  #costNote { font-size: 10px; color: #5a7184; margin-top: 10px; line-height: 1.5; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
@@ -166,7 +183,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="header">
   <h1>ALPHA SQUAD</h1>
   <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
+  <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> 이번달</div>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
+</div>
+
+<div id="costPanel">
+  <h3>💰 이번 달 API 비용</h3>
+  <div id="costBody"></div>
+  <div id="costNote"></div>
 </div>
 
 <div id="chart">
@@ -523,7 +547,14 @@ async function pollAttention() {
     const pending = tasks.filter(t => t.status === 'pending');
     const held = tasks.filter(t => t.status === 'held');
     attentionCache = { failed, pending, held };
-    const count = failed.length + pending.length;
+
+    let healthData = { overdue: [], unassigned: [] };
+    try {
+      const hRes = await fetch('/activity/health');
+      healthData = await hRes.json();
+    } catch (e) { /* ignore */ }
+
+    const count = failed.length + pending.length + healthData.overdue.length + healthData.unassigned.length;
     bellBadge.textContent = count;
     bellBadge.classList.toggle('show', count > 0);
     bulkApproveBtn.disabled = (failed.length + pending.length) === 0;
@@ -531,7 +562,26 @@ async function pollAttention() {
     bulkDeleteBtn.disabled = (failed.length + pending.length + held.length) === 0;
 
     attentionBody.innerHTML = '';
-    attentionEmpty.style.display = (failed.length + pending.length + held.length) === 0 ? 'block' : 'none';
+    attentionEmpty.style.display = count === 0 ? 'block' : 'none';
+
+    if (healthData.overdue.length > 0) {
+      attentionBody.innerHTML += '<div class="sec-label">⏰ 기한 초과</div>';
+      healthData.overdue.forEach(t => {
+        attentionBody.innerHTML +=
+          '<div class="att-item failed"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
+          '<div class="text brief">' + esc(t.title) + ' (기한: ' + new Date(t.due_date).toLocaleString('ko-KR') + ')</div>' +
+          actionButtons(t, t.status) + '</div>';
+      });
+    }
+    if (healthData.unassigned.length > 0) {
+      attentionBody.innerHTML += '<div class="sec-label">❓ 담당자 미배정</div>';
+      healthData.unassigned.forEach(t => {
+        attentionBody.innerHTML +=
+          '<div class="att-item pending"><div class="route">' + t.from + ' → (미배정)</div>' +
+          '<div class="text brief">' + esc(t.title) + '</div>' +
+          '<div class="att-actions"><button class="act-btn delete" data-id="' + t.id + '" data-act="delete">삭제</button></div></div>';
+      });
+    }
 
     if (failed.length > 0) {
       attentionBody.innerHTML += '<div class="sec-label">⛔ 실패 — 확인 필요</div>';
@@ -585,6 +635,36 @@ document.addEventListener('click', (e) => {
 
 pollAttention();
 setInterval(pollAttention, 5000);
+
+// ── 월비용 위젯 ──────────────────────────────────────────
+const costWidget = document.getElementById('costWidget');
+const costValue = document.getElementById('costValue');
+const costPanel = document.getElementById('costPanel');
+const costBody = document.getElementById('costBody');
+const costNote = document.getElementById('costNote');
+
+async function pollCost() {
+  try {
+    const res = await fetch('/cost/summary');
+    const data = await res.json();
+    costValue.textContent = '$' + data.total_this_month.toFixed(2);
+    const diff = data.total_this_month - data.prev_month;
+    const diffStr = data.prev_month > 0 ? (diff >= 0 ? ' (+$' + diff.toFixed(2) + ')' : ' (-$' + Math.abs(diff).toFixed(2) + ')') : '';
+    costBody.innerHTML = data.by_persona.map(p =>
+      '<div class="cost-row"><span class="name">' + esc(p.persona) + '</span><span class="val">$' + p.cost.toFixed(4) + '</span></div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">집계된 사용량 없음</div>';
+    costNote.textContent = data.note + (diffStr ? (' 전월 대비' + diffStr) : '');
+  } catch (e) { costValue.textContent = '오류'; }
+}
+costWidget.addEventListener('click', (e) => {
+  e.stopPropagation();
+  costPanel.classList.toggle('show');
+});
+document.addEventListener('click', (e) => {
+  if (!costPanel.contains(e.target) && !costWidget.contains(e.target)) costPanel.classList.remove('show');
+});
+pollCost();
+setInterval(pollCost, 30000);
 
 async function poll() {
   try {
