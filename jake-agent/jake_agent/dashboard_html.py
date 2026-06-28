@@ -240,7 +240,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="header">
   <h1>ALPHA SQUAD</h1>
   <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
-  <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> 이번달</div>
+  <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> <span id="costPeriod">이번달</span></div>
   <button class="header-btn" id="projectBtn">📁 프로젝트</button>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
   <button class="header-btn" id="permBtn">🔐 권한</button>
@@ -248,8 +248,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="costPanel">
-  <h3>💰 이번 달 API 비용</h3>
+  <h3>💰 비용 현황 (<span id="costRangeLabel">—</span>)</h3>
+  <div id="costBreakdown" style="font-size:11.5px; color:#9fb4c4; margin-bottom:10px;"></div>
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:8px 0 6px;">자동 집계 — Anthropic API 토큰</div>
   <div id="costBody"></div>
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:12px 0 6px;">수동 입력 — Claude 콘솔 실청구 / Gemini / GCP VM 등</div>
+  <div id="manualCostForm" style="display:flex; gap:5px; margin-bottom:10px; flex-wrap:wrap;">
+    <input type="text" id="manualLabelInput" placeholder="항목명 (예: GCP VM)" style="flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <input type="number" id="manualAmountInput" placeholder="USD" step="0.01" style="width:70px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <input type="date" id="manualDateInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <button id="manualAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">추가</button>
+  </div>
+  <div id="manualCostBody"></div>
   <div id="costNote"></div>
 </div>
 
@@ -264,6 +274,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div id="auditPanel">
   <h3>📜 감사 로그 — 삭제 처리된 작업</h3>
+  <div id="archiveHealth" style="font-size:11px; color:#9fb4c4; background:rgba(255,255,255,0.03); border-radius:8px; padding:8px 10px; margin-bottom:10px;"></div>
+  <div id="purgeForm" style="display:flex; gap:5px; align-items:center; margin-bottom:12px; font-size:11px; color:#9fb4c4;">
+    <span>정리 기준:</span>
+    <input type="number" id="purgeDaysInput" value="180" min="30" style="width:55px; background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:4px 6px;">
+    <span>일 이전</span>
+    <button id="purgeBtn" style="background:rgba(248,113,113,0.15); color:#f87171; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; font-weight:600;">백업 후 영구삭제</button>
+  </div>
   <div id="auditBody"></div>
 </div>
 
@@ -727,6 +744,14 @@ const costValue = document.getElementById('costValue');
 const costPanel = document.getElementById('costPanel');
 const costBody = document.getElementById('costBody');
 const costNote = document.getElementById('costNote');
+const costPeriod = document.getElementById('costPeriod');
+const costRangeLabel = document.getElementById('costRangeLabel');
+const costBreakdown = document.getElementById('costBreakdown');
+const manualCostBody = document.getElementById('manualCostBody');
+const manualLabelInput = document.getElementById('manualLabelInput');
+const manualAmountInput = document.getElementById('manualAmountInput');
+const manualDateInput = document.getElementById('manualDateInput');
+const manualAddBtn = document.getElementById('manualAddBtn');
 
 async function personaAction(name, action) {
   try {
@@ -741,8 +766,12 @@ async function pollCost() {
     const res = await fetch('/cost/summary');
     const data = await res.json();
     costValue.textContent = '$' + data.total_this_month.toFixed(2);
+    costPeriod.textContent = data.period;
+    costRangeLabel.textContent = data.period;
     const diff = data.total_this_month - data.prev_month;
     const diffStr = data.prev_month > 0 ? (diff >= 0 ? ' (+$' + diff.toFixed(2) + ')' : ' (-$' + Math.abs(diff).toFixed(2) + ')') : '';
+    costBreakdown.innerHTML = 'API 자동집계: $' + data.api_total.toFixed(2) + ' · 수동입력: $' + data.manual_total.toFixed(2) + ' · 합계: $' + data.total_this_month.toFixed(2);
+
     costBody.innerHTML = data.by_persona.map(p => {
       const isJake = p.persona === '제이크';
       const btn = isJake ? '' : (p.active
@@ -751,6 +780,13 @@ async function pollCost() {
       return '<div class="cost-row' + (p.active ? '' : ' inactive') + '"><span class="name">' + esc(p.persona) + (p.active ? '' : ' (비활성)') + '</span>' +
         '<span class="val">$' + p.cost.toFixed(4) + '</span>' + btn + '</div>';
     }).join('') || '<div style="color:#34465a;font-size:11px;">집계된 사용량 없음</div>';
+
+    manualCostBody.innerHTML = data.manual_costs.map(m =>
+      '<div class="cost-row"><span class="name">' + esc(m.label) + ' (' + m.billed_date + ')' + (m.note ? ' — ' + esc(m.note) : '') + '</span>' +
+      '<span class="val">$' + m.amount_usd.toFixed(2) + '</span>' +
+      '<button class="cost-act deactivate" data-mid="' + m.id + '" style="margin-left:6px;">삭제</button></div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">수동 입력 항목 없음</div>';
+
     costNote.textContent = data.note + (diffStr ? (' 전월 대비' + diffStr) : '');
 
     costBody.querySelectorAll('.cost-act').forEach(btn => {
@@ -760,16 +796,45 @@ async function pollCost() {
         if (btn.classList.contains('deactivate')) {
           const row = btn.closest('.cost-row');
           const cost = row.querySelector('.val').textContent;
-          if (!confirm(name + '을 해임(비활성화)합니다.\\n이번달 누적 비용: ' + cost + '\\n비활성화하면 해당 페르소나는 모든 대화/위임 요청을 거부합니다. 계속할까요?')) return;
+          if (!confirm(
+            name + '을 해임(비활성화)합니다.\\n\\n' +
+            '실제 효과: ' + name + '에게 1:1 대화 요청 시 거부(403)되고, 다른 팀원이 delegate_task/consult_team/discuss_with로 업무를 위임·논의 요청해도 거부됩니다.\\n' +
+            '삭제되지 않는 것: 기존 대화기록, 처리했던 작업기록, 이번달 누적 비용(' + cost + ')은 전부 그대로 보존됩니다.\\n' +
+            '되돌리는 방법: 같은 패널의 "재고용" 버튼을 누르면 즉시 모든 기능이 복구됩니다 (데이터 손실 없음).\\n\\n계속할까요?'
+          )) return;
           personaAction(name, 'deactivate');
         } else {
-          if (!confirm(name + '을 재고용(활성화)할까요?')) return;
+          if (!confirm(name + '을 재고용(활성화)할까요? 즉시 대화/위임 요청을 다시 받습니다.')) return;
           personaAction(name, 'activate');
         }
       });
     });
+
+    manualCostBody.querySelectorAll('.cost-act').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('이 비용 항목을 삭제할까요?')) return;
+        await fetch('/cost/manual/' + btn.dataset.mid, { method: 'DELETE' });
+        pollCost();
+      });
+    });
   } catch (e) { costValue.textContent = '오류'; }
 }
+
+manualAddBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const label = manualLabelInput.value.trim();
+  const amount = parseFloat(manualAmountInput.value);
+  const date = manualDateInput.value;
+  if (!label || !amount || !date) { alert('항목명/금액/날짜를 모두 입력하세요.'); return; }
+  await fetch('/cost/manual', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ label, amount_usd: amount, billed_date: date })
+  });
+  manualLabelInput.value = ''; manualAmountInput.value = '';
+  pollCost();
+});
+
 costWidget.addEventListener('click', (e) => {
   e.stopPropagation();
   costPanel.classList.toggle('show');
@@ -887,7 +952,23 @@ const auditBtn = document.getElementById('auditBtn');
 const auditPanel = document.getElementById('auditPanel');
 const auditBody = document.getElementById('auditBody');
 
+const archiveHealthEl = document.getElementById('archiveHealth');
+const purgeDaysInput = document.getElementById('purgeDaysInput');
+const purgeBtn = document.getElementById('purgeBtn');
+
+async function pollArchiveHealth() {
+  try {
+    const res = await fetch('/admin/db_health');
+    const h = await res.json();
+    const warnTxt = h.warning ? ('<span style="color:#f87171;font-weight:700;">⚠ 정리 권장 (임계값 ' + h.warn_threshold + '건 초과)</span>') : '<span style="color:#4ade80;">정상</span>';
+    archiveHealthEl.innerHTML =
+      '보관(archived) 작업: ' + h.archived_count + '건' + (h.archived_oldest ? (' · 가장 오래된 기록: ' + new Date(h.archived_oldest).toLocaleDateString('ko-KR')) : '') + '<br>' +
+      '진행중(live) 작업: ' + h.live_count + '건 · 채팅 메시지: ' + h.chat_message_count + '건<br>' + warnTxt;
+  } catch (e) { archiveHealthEl.textContent = '상태 조회 실패'; }
+}
+
 async function pollAudit() {
+  pollArchiveHealth();
   try {
     const res = await fetch('/activity/archived');
     const data = await res.json();
@@ -898,6 +979,25 @@ async function pollAudit() {
     ).join('') || '<div style="color:#34465a;font-size:11px;">보관된 항목이 없습니다</div>';
   } catch (e) { auditBody.textContent = '불러오기 실패'; }
 }
+
+purgeBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const days = parseInt(purgeDaysInput.value, 10);
+  if (!days || days < 30) { alert('최소 30일 이전 데이터만 정리할 수 있습니다.'); return; }
+  if (!confirm(
+    days + '일보다 오래된 "보관(archived)" 작업을 서버 디스크에 JSON으로 백업한 뒤 DB에서 영구 삭제합니다.\\n' +
+    '현재 화면에 보이는 진행중 작업에는 영향이 없습니다.\\n계속할까요?'
+  )) return;
+  try {
+    const res = await fetch('/admin/purge_archived', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ older_than_days: days })
+    });
+    const data = await res.json();
+    alert(data.purged_count + '건을 백업(' + data.backup_file + ') 후 삭제했습니다.');
+    pollAudit();
+  } catch (e) { alert('정리 실패: ' + e.message); }
+});
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();

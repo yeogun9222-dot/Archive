@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -313,6 +313,50 @@ async def update_project_status_endpoint(project_id: int, req: ProjectStatusRequ
     if not ok:
         raise HTTPException(status_code=404, detail="해당 프로젝트를 찾을 수 없습니다.")
     return {"status": req.status}
+
+
+class ManualCostRequest(BaseModel):
+    label: str
+    amount_usd: float
+    billed_date: str
+    note: Optional[str] = None
+
+
+class PurgeRequest(BaseModel):
+    older_than_days: int = 180
+
+
+@app.get("/admin/db_health")
+async def admin_db_health():
+    """감사 로그 포화 감지 — 보관(archived) 데이터 규모 및 가장 오래된 기록 시점"""
+    return get_archive_stats()
+
+
+@app.post("/admin/purge_archived")
+async def admin_purge_archived(req: PurgeRequest):
+    """오래된 보관(archived) 데이터를 JSON으로 백업한 뒤 영구 삭제. archived=FALSE인 살아있는 작업은 절대 건드리지 않음."""
+    if req.older_than_days < 30:
+        raise HTTPException(status_code=400, detail="최소 30일 이전 데이터만 정리할 수 있습니다 (안전장치).")
+    return export_and_purge_archived(req.older_than_days)
+
+
+@app.get("/cost/manual")
+async def cost_manual_list():
+    return {"costs": get_manual_costs_this_month()}
+
+
+@app.post("/cost/manual")
+async def cost_manual_add(req: ManualCostRequest):
+    cost_id = create_manual_cost(req.label, req.amount_usd, req.billed_date, req.note)
+    return {"id": cost_id, "status": "created"}
+
+
+@app.delete("/cost/manual/{cost_id}")
+async def cost_manual_delete(cost_id: int):
+    ok = delete_manual_cost(cost_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="해당 항목을 찾을 수 없습니다.")
+    return {"status": "deleted"}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

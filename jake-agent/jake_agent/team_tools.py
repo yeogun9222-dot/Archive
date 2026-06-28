@@ -49,9 +49,11 @@ def consult_team(question: str, members: str) -> str:
     members: 의견을 수렴할 팀원 이름, 쉼표 구분 (예: "다인,카이,루나") 최대 3명.
     유효한 이름: 다인, 에바, 미나, 바쿠, 피오, 리리, 설리, 카이, 렉스, 루나, 제로, 사라
     """
-    member_list = [m.strip() for m in members.split(",") if m.strip() in PERSONAS][:3]
+    requested = [m.strip() for m in members.split(",") if m.strip() in PERSONAS][:3]
+    member_list = [m for m in requested if is_persona_active(m)]
+    skipped = [m for m in requested if m not in member_list]
     if not member_list:
-        return "(호출 가능한 팀원이 없습니다. 유효한 이름을 확인하세요.)"
+        return "(호출 가능한 팀원이 없습니다. 해임 상태이거나 유효하지 않은 이름입니다.)"
 
     results = []
     for member in member_list:
@@ -60,6 +62,9 @@ def consult_team(question: str, members: str) -> str:
         # 단체회의 발언을 해당 팀원 개인 채팅 기록에도 저장 → 1:1 탭에서 맥락 이어짐
         save_chat_message(member, "user", f"[Alpha Squad 회의] {question}", source="group-meeting")
         save_chat_message(member, "assistant", response, source="group-meeting")
+
+    if skipped:
+        results.append(f"[안내] {', '.join(skipped)}은(는) 현재 해임 상태라 의견 수렴에서 제외되었습니다.")
 
     return "\n\n".join(results)
 

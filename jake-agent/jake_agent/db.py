@@ -89,6 +89,16 @@ def init_db():
         )
     """)
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id)")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS manual_costs (
+            id SERIAL PRIMARY KEY,
+            label TEXT NOT NULL,
+            amount_usd NUMERIC NOT NULL,
+            billed_date DATE NOT NULL,
+            note TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -256,6 +266,65 @@ def get_archived_tasks(limit: int = 100) -> list:
     ]
 
 
+def get_archive_stats() -> dict:
+    """포화 감지용 — 보관(archived) 데이터 규모와 가장 오래된 기록 시점"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*), MIN(created_at) FROM tasks WHERE archived = TRUE")
+    arch_count, arch_oldest = cur.fetchone()
+    cur.execute("SELECT COUNT(*), MIN(created_at) FROM tasks WHERE archived = FALSE")
+    live_count, live_oldest = cur.fetchone()
+    cur.execute("SELECT COUNT(*) FROM chat_messages")
+    chat_count = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    # 임계값: 보관 row 5000건 이상이면 정리 권장 (실측 기반으로 추후 조정 가능)
+    warn = arch_count >= 5000
+    return {
+        "archived_count": arch_count,
+        "archived_oldest": arch_oldest.isoformat() if arch_oldest else None,
+        "live_count": live_count,
+        "live_oldest": live_oldest.isoformat() if live_oldest else None,
+        "chat_message_count": chat_count,
+        "warn_threshold": 5000,
+        "warning": warn,
+    }
+
+
+def export_and_purge_archived(older_than_days: int) -> dict:
+    """archived=TRUE이면서 older_than_days보다 오래된 행만 JSON으로 백업 후 영구 삭제.
+    archived=FALSE(아직 보관 처리 안 된 살아있는 작업)는 절대 건드리지 않음."""
+    import json
+    from pathlib import Path
+
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, title, instruction, assigned_to, status, result, created_at, updated_at, delegated_by, due_date
+           FROM tasks WHERE archived = TRUE AND created_at < NOW() - INTERVAL '%s days'""" % int(older_than_days)
+    )
+    rows = cur.fetchall()
+    cols = ["id", "title", "instruction", "assigned_to", "status", "result", "created_at", "updated_at", "delegated_by", "due_date"]
+    backup_rows = [
+        {c: (v.isoformat() if hasattr(v, "isoformat") else v) for c, v in zip(cols, r)}
+        for r in rows
+    ]
+
+    backup_dir = Path(__file__).resolve().parent.parent / "backups"
+    backup_dir.mkdir(exist_ok=True)
+    backup_file = backup_dir / f"archive_purge_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    with open(backup_file, "w", encoding="utf-8") as f:
+        json.dump(backup_rows, f, ensure_ascii=False, indent=2)
+
+    ids = [r[0] for r in rows]
+    if ids:
+        cur.execute("DELETE FROM tasks WHERE id = ANY(%s)", (ids,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {"purged_count": len(ids), "backup_file": str(backup_file)}
+
+
 def get_task_health() -> dict:
     """기한초과/미배정 작업 — Phase 1 핵심 알림"""
     conn = get_conn()
@@ -334,8 +403,55 @@ def get_contention_personas() -> list:
     return [{"persona": r[0], "count": r[1]} for r in rows]
 
 
+def create_manual_cost(label: str, amount_usd: float, billed_date: str, note: str = None) -> int:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO manual_costs (label, amount_usd, billed_date, note) VALUES (%s, %s, %s, %s) RETURNING id",
+        (label, amount_usd, billed_date, note)
+    )
+    cost_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return cost_id
+
+
+def get_manual_costs_this_month() -> list:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, label, amount_usd, billed_date, note FROM manual_costs
+        WHERE billed_date >= date_trunc('month', NOW())::date
+          AND billed_date < (date_trunc('month', NOW()) + INTERVAL '1 month')::date
+        ORDER BY billed_date DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [{"id": r[0], "label": r[1], "amount_usd": float(r[2]), "billed_date": r[3].isoformat(), "note": r[4] or ""} for r in rows]
+
+
+def delete_manual_cost(cost_id: int) -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM manual_costs WHERE id = %s RETURNING id", (cost_id,))
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
+
+
 def get_cost_summary() -> dict:
-    """대시보드 월비용 요약 — token_usage 기반 (루나 도구와 동일 단가: input $3/output $15 per 1M)"""
+    """대시보드 월비용 요약 — Anthropic 토큰 자동집계(input $3/output $15 per 1M) + 수동 입력 비용(Gemini/GCP VM 등) 합산.
+    기간은 모호한 '이번달'이 아니라 이번 달 1일 ~ 말일(현지 서버 기준) 정확한 날짜로 명시."""
+    import calendar
+    now = datetime.now()
+    month_start = now.replace(day=1).date()
+    last_day = calendar.monthrange(now.year, now.month)[1]
+    month_end = now.replace(day=last_day).date()
+
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -365,13 +481,21 @@ def get_cost_summary() -> dict:
          "active": active_map.get(r[0] or "제이크", True)}
         for r in rows
     ]
-    total = round(sum(p["cost"] for p in by_persona), 4)
+    api_total = round(sum(p["cost"] for p in by_persona), 4)
     prev_cost = cost(prev[0], prev[1]) if prev else 0
+
+    manual = get_manual_costs_this_month()
+    manual_total = round(sum(m["amount_usd"] for m in manual), 4)
+
     return {
-        "total_this_month": total,
+        "period": f"{month_start.isoformat()} ~ {month_end.isoformat()}",
+        "api_total": api_total,
+        "manual_total": manual_total,
+        "total_this_month": round(api_total + manual_total, 4),
         "prev_month": prev_cost,
         "by_persona": by_persona,
-        "note": "Anthropic API 토큰 비용만 집계됨. GCP 서버비/Notion/Telegram 등은 미집계 (수동 확인 필요)."
+        "manual_costs": manual,
+        "note": "by_persona는 Anthropic API 토큰 비용 자동집계. manual_costs는 Claude 콘솔 실청구/Gemini/GCP VM 등 직접 입력한 값. 자동집계가 어려운 항목은 '비용 입력'으로 직접 추가하세요."
     }
 
 
