@@ -19,12 +19,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
   .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
-  .level-members { flex-wrap: wrap; max-width: 1180px; gap: 18px 22px; margin-bottom: 28px; }
+  .level-members { flex-wrap: nowrap; max-width: none; gap: 10px; margin-bottom: 28px; }
+  .level-members .card { padding: 8px 10px; gap: 6px; }
+  .level-members .avatar { width: 28px; height: 28px; font-size: 13px; }
+  .level-members .info .name { font-size: 11px; }
+  .level-members .info .role { font-size: 8.5px; }
   .level-subteam { flex-wrap: wrap; max-width: 1180px; gap: 16px; margin-bottom: 0; }
   .level-subteam .card { padding: 9px 14px; }
   .level-subteam .avatar { width: 30px; height: 30px; font-size: 13px; }
   .level-subteam .info .name { font-size: 12px; }
   .level-subteam .info .role { font-size: 9.5px; }
+  #chart { overflow-x: auto; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
