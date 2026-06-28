@@ -74,8 +74,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cc-winbtn:hover { background: rgba(95,240,255,0.18); color: #5ff0ff; }
   .cc-winbtn.cc-close:hover { background: rgba(248,113,113,0.2); color: #f87171; }
   #cardChatBody { padding: 14px 16px 16px; overflow-y: auto; flex: 1; min-height: 0; }
-  #cardChatPanel .cstatus { font-size: 11px; color: #9fb4c4; margin: 0 0 12px; padding: 6px 9px; background: rgba(255,255,255,0.03); border-radius: 7px; }
+  #cardChatPanel .cstatus { font-size: 11px; color: #9fb4c4; margin: 0 0 8px; padding: 6px 9px; background: rgba(255,255,255,0.03); border-radius: 7px; }
   #cardChatPanel .cstatus.inactive { color: #f87171; }
+  .cc-req { border-radius: 8px; padding: 9px 11px; margin-bottom: 10px; font-size: 12px; line-height: 1.5; }
+  .cc-req.decision { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); }
+  .cc-req.stuck { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); }
+  .cc-req .label { font-size: 9.5px; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 700; }
+  .cc-req.decision .label { color: #fbbf24; }
+  .cc-req.stuck .label { color: #f87171; }
+  .cc-req .summary { color: #e6e6e6; font-weight: 600; margin-bottom: 3px; }
+  .cc-req .reason { color: #9fb4c4; }
+  .cc-req .hint { font-size: 10px; color: #6b7d8f; margin-top: 6px; }
   #cardChatInput { width: 100%; min-height: 64px; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; color: #e6e6e6; font-size: 12.5px; padding: 9px; resize: vertical; font-family: inherit; }
   #cardChatSendRow { display: flex; justify-content: flex-end; margin-top: 8px; }
   #cardChatSendBtn { background: rgba(95,240,255,0.18); color: #5ff0ff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 12px; cursor: pointer; font-weight: 600; }
@@ -275,16 +284,25 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   @keyframes barShimmer { 0% { background-position: 220% 0; } 100% { background-position: -20% 0; } }
   @keyframes barPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
-  /* 카드 좌상단 — 페르소나가 보낸 메시지/결재요청을 대표님이 아직 확인 안 했을 때 표시 */
+  /* 카드 좌상단 — 결재 대기/미해결 작업/실시간 협업 등 "결정되지 않은" 상태가 있을 때만
+     말풍선 모양 + 타이핑 도트로 은은하게 깜빡임 (확인되면 즉시 사라짐) */
   .msg-badge {
-    display: none; position: absolute; top: -9px; left: -9px; font-size: 13px;
-    width: 24px; height: 24px; border-radius: 50%; align-items: center; justify-content: center;
-    background: rgba(16,20,28,0.96); border: 1px solid rgba(95,240,255,0.5);
-    box-shadow: 0 0 10px rgba(95,240,255,0.5); z-index: 8;
-    animation: msgBadgePulse 1.6s ease-in-out infinite;
+    display: none; position: absolute; top: -10px; left: -10px; z-index: 8;
+    width: 26px; height: 19px; border-radius: 9px 9px 9px 3px;
+    background: linear-gradient(160deg, #6ff5ff, #2bb8cc);
+    box-shadow: 0 0 8px rgba(95,240,255,0.55);
+    align-items: center; justify-content: center; gap: 2.5px;
+    animation: msgBubblePulse 1.8s ease-in-out infinite;
   }
   .msg-badge.show { display: flex; }
-  @keyframes msgBadgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+  .msg-badge .dot { width: 3px; height: 3px; border-radius: 50%; background: #0a0d14; animation: msgDotBlink 1.3s infinite; }
+  .msg-badge .dot:nth-child(2) { animation-delay: 0.18s; }
+  .msg-badge .dot:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes msgDotBlink { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-1px); } }
+  @keyframes msgBubblePulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(95,240,255,0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 15px rgba(95,240,255,0.8); transform: scale(1.07); }
+  }
 
   .card.inactive-persona { opacity: 0.35; filter: grayscale(0.6); }
   .card.inactive-persona::after {
@@ -556,6 +574,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
   <div id="cardChatBody">
     <div class="cstatus" id="ccStatus"></div>
+    <div id="ccRequestBlock"></div>
     <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요..."></textarea>
     <div id="cardChatSendRow"><button id="cardChatSendBtn">전송</button></div>
     <div id="cardChatLog"></div>
@@ -578,7 +597,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="level level-coo">
     <div class="card coo" id="card-제이크">
       <div class="status-badge" id="badge-제이크"></div>
-      <div class="msg-badge" id="msgbadge-제이크">💬</div>
+      <div class="msg-badge" id="msgbadge-제이크"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
       <div class="avatar">🧠</div>
       <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
       <div class="status-bar" id="actbar-제이크"></div>
@@ -638,7 +657,7 @@ function buildCard(name, sizeClass) {
   const div = document.createElement('div');
   div.className = 'card member' + (sizeClass || '');
   div.id = 'card-' + name;
-  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="msg-badge" id="msgbadge-' + name + '">💬</div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
+  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="msg-badge" id="msgbadge-' + name + '"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
   return div;
 }
 
@@ -1227,25 +1246,41 @@ pollActivityMap();
 setInterval(pollActivityMap, 4000);
 
 // ── 💬 미확인 메시지/결재요청 배지 ──────────────────────────
-function getSeenTime(name) { return localStorage.getItem('ccSeen_' + name) || '1970-01-01T00:00:00'; }
+// 처음 접속한 페르소나는 과거 이력 전체를 "안읽음"으로 잡지 않도록, 이 세션이 시작된 시점을
+// 기준선으로 사용 — 그 이후에 새로 온 메시지만 진짜 "확인 필요"로 취급
+const SESSION_START = new Date().toISOString();
+function getSeenTime(name) { return localStorage.getItem('ccSeen_' + name) || SESSION_START; }
 function markSeen(name) { localStorage.setItem('ccSeen_' + name, new Date().toISOString()); }
+
+let pendingDecisionsCache = [];
 
 async function pollUnreadBadges() {
   try {
-    const [msgRes, decRes] = await Promise.all([
+    const [msgRes, decRes, attRes] = await Promise.all([
       fetch('/personas/last_message_map'),
       fetch('/decisions/pending'),
+      fetch('/activity/attention'),
     ]);
     const lastMessage = (await msgRes.json()).last_message || {};
-    const pendingRequesters = new Set(((await decRes.json()).decisions || []).map(d => d.requested_by));
+    pendingDecisionsCache = (await decRes.json()).decisions || [];
+    const pendingRequesters = new Set(pendingDecisionsCache.map(d => d.requested_by));
+    const attentionTasks = (await attRes.json()).tasks || [];
+    const stuckPersonas = new Set(attentionTasks.filter(t => t.status === 'failed' || t.status === 'pending').map(t => t.to));
 
     ['제이크', ...MEMBERS].forEach(name => {
       const badge = document.getElementById('msgbadge-' + name);
       if (!badge) return;
       const hasUnreadMessage = lastMessage[name] && lastMessage[name] > getSeenTime(name);
       const hasPendingRequest = pendingRequesters.has(name);
-      badge.classList.toggle('show', Boolean(hasUnreadMessage || hasPendingRequest));
-      badge.title = hasPendingRequest ? '결재 요청 대기 중' : (hasUnreadMessage ? '확인 안 한 메시지가 있습니다' : '');
+      const hasStuckTask = stuckPersonas.has(name);
+      const act = activityMapCache[name];
+      const isLiveCollab = act && (act.activity_type === 'discussing' || act.activity_type === 'delegating');
+      const needsAttention = Boolean(hasPendingRequest || hasUnreadMessage || hasStuckTask || isLiveCollab);
+      badge.classList.toggle('show', needsAttention);
+      badge.title = hasPendingRequest ? '결재 요청 대기 중 — 클릭해서 확인'
+        : hasStuckTask ? '처리되지 않은 작업이 있습니다'
+        : isLiveCollab ? (act.counterpart ? act.counterpart + '와 협업/논의 중' : '실시간 협업 중')
+        : hasUnreadMessage ? '확인하지 않은 보고가 있습니다' : '';
     });
   } catch (e) { /* ignore */ }
 }
@@ -1655,6 +1690,32 @@ async function openCardChat(name) {
     const data = await res.json();
     renderCardChatLog(data.messages || []);
   } catch (e) { cardChatLog.innerHTML = '<div style="color:#34465a;font-size:11px;">대화 기록을 불러오지 못했습니다.</div>'; }
+
+  await renderRequestBlock(name);
+}
+
+async function renderRequestBlock(name) {
+  const block = document.getElementById('ccRequestBlock');
+  let html = '';
+
+  const decisions = pendingDecisionsCache.filter(d => d.requested_by === name);
+  decisions.forEach(d => {
+    html += '<div class="cc-req decision"><div class="label">🖋 결재 요청 · ' + esc(d.category) + '</div>' +
+      '<div class="summary">' + esc(d.summary) + '</div>' +
+      (d.reason ? '<div class="reason">' + esc(d.reason) + '</div>' : '') +
+      '<div class="hint">아래에 답장을 보내면 그 내용으로 자동 결재됩니다.</div></div>';
+  });
+
+  try {
+    const res = await fetch('/activity/attention');
+    const tasks = (await res.json()).tasks || [];
+    tasks.filter(t => t.to === name && (t.status === 'failed' || t.status === 'pending')).forEach(t => {
+      html += '<div class="cc-req stuck"><div class="label">' + (t.status === 'failed' ? '⛔ 실패' : '⏳ 진행/확인 필요') + '</div>' +
+        '<div class="summary">' + esc(t.instruction || t.title) + '</div></div>';
+    });
+  } catch (e) { /* ignore */ }
+
+  block.innerHTML = html;
 }
 
 function renderCardChatLog(messages) {
@@ -1689,7 +1750,25 @@ cardChatSendBtn.addEventListener('click', async (e) => {
   cardChatInput.value = '';
   cardChatSendBtn.disabled = false; cardChatSendBtn.textContent = '전송';
   cardChatLog.scrollTop = cardChatLog.scrollHeight;
+
+  // 결재 대기 중이던 사안이 있으면, 지금 보낸 답장 내용으로 자동 결재 처리
+  const toResolve = pendingDecisionsCache.filter(d => d.requested_by === currentCardTarget);
+  for (const d of toResolve) {
+    try {
+      await fetch('/decisions/' + d.id + '/resolve', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution: message })
+      });
+    } catch (err) { /* ignore */ }
+  }
+  if (toResolve.length > 0) {
+    cardChatLog.innerHTML += '<div class="cchat-msg assistant" style="color:#fbbf24; font-size:11px;">🖋 결재 ' + toResolve.length + '건이 이 답장으로 처리되었습니다.</div>';
+    cardChatLog.scrollTop = cardChatLog.scrollHeight;
+  }
+
   pollAttention(); pollStatusMap();
+  await pollUnreadBadges();
+  await renderRequestBlock(currentCardTarget);
 });
 
 cardChatInput.addEventListener('keydown', (e) => {
