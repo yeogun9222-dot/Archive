@@ -48,16 +48,33 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   #cardChatPanel {
-    position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 380px; max-height: 70vh; overflow-y: auto;
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 380px; max-height: 70vh;
     background: rgba(12,16,24,0.98); border: 1px solid rgba(95,240,255,0.35); border-radius: 12px;
-    box-shadow: 0 10px 44px rgba(0,0,0,0.65); padding: 16px; display: none; z-index: 60;
+    box-shadow: 0 10px 44px rgba(0,0,0,0.65); z-index: 60; overflow: hidden;
+    display: none; flex-direction: column; transition: width 0.2s ease, max-height 0.2s ease;
   }
-  #cardChatPanel.show { display: block; }
-  #cardChatPanel .chead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-  #cardChatPanel .chead .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; background: linear-gradient(160deg, #3a4654, #232b35); }
-  #cardChatPanel .chead .cname { font-size: 14px; font-weight: 700; color: #5ff0ff; }
-  #cardChatPanel .chead .crole { font-size: 10.5px; color: #6b7d8f; }
-  #cardChatPanel .cstatus { font-size: 11px; color: #9fb4c4; margin: 8px 0 12px; padding: 6px 9px; background: rgba(255,255,255,0.03); border-radius: 7px; }
+  #cardChatPanel.show { display: flex; }
+  #cardChatPanel.maximized { width: 640px; max-height: 86vh; }
+  #cardChatPanel.minimized { max-height: none; }
+  #cardChatPanel.minimized #cardChatBody { display: none; }
+  #cardChatTitlebar {
+    display: flex; align-items: center; gap: 10px; padding: 12px 10px 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); cursor: default; flex-shrink: 0;
+  }
+  #cardChatTitlebar .chead { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  #cardChatTitlebar .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; background: linear-gradient(160deg, #3a4654, #232b35); flex-shrink: 0; }
+  #cardChatTitlebar .cname { font-size: 13.5px; font-weight: 700; color: #5ff0ff; }
+  #cardChatTitlebar .crole { font-size: 10px; color: #6b7d8f; }
+  #cardChatControls { display: flex; gap: 5px; flex-shrink: 0; }
+  .cc-winbtn {
+    width: 24px; height: 24px; border-radius: 6px; border: none; cursor: pointer;
+    background: rgba(255,255,255,0.05); color: #9fb4c4; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s;
+  }
+  .cc-winbtn:hover { background: rgba(95,240,255,0.18); color: #5ff0ff; }
+  .cc-winbtn.cc-close:hover { background: rgba(248,113,113,0.2); color: #f87171; }
+  #cardChatBody { padding: 14px 16px 16px; overflow-y: auto; flex: 1; min-height: 0; }
+  #cardChatPanel .cstatus { font-size: 11px; color: #9fb4c4; margin: 0 0 12px; padding: 6px 9px; background: rgba(255,255,255,0.03); border-radius: 7px; }
   #cardChatPanel .cstatus.inactive { color: #f87171; }
   #cardChatInput { width: 100%; min-height: 64px; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; color: #e6e6e6; font-size: 12.5px; padding: 9px; resize: vertical; font-family: inherit; }
   #cardChatSendRow { display: flex; justify-content: flex-end; margin-top: 8px; }
@@ -65,6 +82,37 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #cardChatSendBtn:hover { filter: brightness(1.25); }
   #cardChatSendBtn:disabled { opacity: 0.5; cursor: default; }
   #cardChatLog { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+  #cardChatPanel.maximized #cardChatLog { max-height: 56vh; }
+
+  /* 모던 스크롤바 — 다크 테마에 어울리는 얇고 은은한 스타일 (웹킷 기반 브라우저) */
+  #cardChatBody::-webkit-scrollbar, #cardChatLog::-webkit-scrollbar,
+  #projectPanel::-webkit-scrollbar, #auditPanel::-webkit-scrollbar, #permPanel::-webkit-scrollbar,
+  #perfPanel::-webkit-scrollbar, #decPanel::-webkit-scrollbar, #bnPanel::-webkit-scrollbar,
+  #legendPanel::-webkit-scrollbar, #log::-webkit-scrollbar, #events::-webkit-scrollbar {
+    width: 6px;
+  }
+  #cardChatBody::-webkit-scrollbar-track, #cardChatLog::-webkit-scrollbar-track,
+  #projectPanel::-webkit-scrollbar-track, #auditPanel::-webkit-scrollbar-track, #permPanel::-webkit-scrollbar-track,
+  #perfPanel::-webkit-scrollbar-track, #decPanel::-webkit-scrollbar-track, #bnPanel::-webkit-scrollbar-track,
+  #legendPanel::-webkit-scrollbar-track, #log::-webkit-scrollbar-track, #events::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #cardChatBody::-webkit-scrollbar-thumb, #cardChatLog::-webkit-scrollbar-thumb,
+  #projectPanel::-webkit-scrollbar-thumb, #auditPanel::-webkit-scrollbar-thumb, #permPanel::-webkit-scrollbar-thumb,
+  #perfPanel::-webkit-scrollbar-thumb, #decPanel::-webkit-scrollbar-thumb, #bnPanel::-webkit-scrollbar-thumb,
+  #legendPanel::-webkit-scrollbar-thumb, #log::-webkit-scrollbar-thumb, #events::-webkit-scrollbar-thumb {
+    background: rgba(95,240,255,0.25); border-radius: 4px;
+  }
+  #cardChatBody::-webkit-scrollbar-thumb:hover, #cardChatLog::-webkit-scrollbar-thumb:hover,
+  #projectPanel::-webkit-scrollbar-thumb:hover, #auditPanel::-webkit-scrollbar-thumb:hover, #permPanel::-webkit-scrollbar-thumb:hover,
+  #perfPanel::-webkit-scrollbar-thumb:hover, #decPanel::-webkit-scrollbar-thumb:hover, #bnPanel::-webkit-scrollbar-thumb:hover,
+  #legendPanel::-webkit-scrollbar-thumb:hover, #log::-webkit-scrollbar-thumb:hover, #events::-webkit-scrollbar-thumb:hover {
+    background: rgba(95,240,255,0.5);
+  }
+  /* 파이어폭스용 */
+  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #log, #events {
+    scrollbar-width: thin; scrollbar-color: rgba(95,240,255,0.3) transparent;
+  }
   .cchat-msg { padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
   .cchat-msg.user { background: rgba(95,240,255,0.08); color: #c5cdd6; }
   .cchat-msg.assistant { background: rgba(255,255,255,0.04); color: #c5cdd6; }
@@ -476,14 +524,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="cardChatPanel">
-  <div class="chead">
-    <div class="avatar" id="ccAvatar"></div>
-    <div><div class="cname" id="ccName"></div><div class="crole" id="ccRole"></div></div>
+  <div id="cardChatTitlebar">
+    <div class="chead">
+      <div class="avatar" id="ccAvatar"></div>
+      <div><div class="cname" id="ccName"></div><div class="crole" id="ccRole"></div></div>
+    </div>
+    <div id="cardChatControls">
+      <button class="cc-winbtn" id="ccMinimizeBtn" title="내리기">─</button>
+      <button class="cc-winbtn" id="ccMaximizeBtn" title="확대/축소">⛶</button>
+      <button class="cc-winbtn cc-close" id="ccCloseBtn" title="닫기">×</button>
+    </div>
   </div>
-  <div class="cstatus" id="ccStatus"></div>
-  <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요..."></textarea>
-  <div id="cardChatSendRow"><button id="cardChatSendBtn">전송</button></div>
-  <div id="cardChatLog"></div>
+  <div id="cardChatBody">
+    <div class="cstatus" id="ccStatus"></div>
+    <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요..."></textarea>
+    <div id="cardChatSendRow"><button id="cardChatSendBtn">전송</button></div>
+    <div id="cardChatLog"></div>
+  </div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -1499,6 +1556,19 @@ const cardChatSendBtn = document.getElementById('cardChatSendBtn');
 const cardChatLog = document.getElementById('cardChatLog');
 let currentCardTarget = null;
 
+document.getElementById('ccMinimizeBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  cardChatPanel.classList.toggle('minimized');
+});
+document.getElementById('ccMaximizeBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  cardChatPanel.classList.toggle('maximized');
+});
+document.getElementById('ccCloseBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  cardChatPanel.classList.remove('show', 'minimized', 'maximized');
+});
+
 async function openCardChat(name) {
   currentCardTarget = name;
   ccAvatar.textContent = name === '제이크' ? '🧠' : ICONS[name];
@@ -1510,6 +1580,7 @@ async function openCardChat(name) {
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
   permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  cardChatPanel.classList.remove('minimized');
   cardChatPanel.classList.add('show');
 
   const active = activeMapCache[name] !== false;
