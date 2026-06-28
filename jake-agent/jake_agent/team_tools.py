@@ -5,7 +5,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
-from .db import save_chat_message, create_task, update_task, is_persona_active
+from .db import save_chat_message, create_task, update_task, is_persona_active, set_persona_activity, clear_persona_activity
 from .telegram import notify_delegation, notify_discussion
 from .monitor import log_token_usage
 
@@ -67,9 +67,14 @@ def consult_team(question: str, members: str) -> str:
     if not member_list:
         return "(호출 가능한 팀원이 없습니다. 해임 상태이거나 유효하지 않은 이름입니다.)"
 
+    caller = current_caller.get()
     results = []
     for member in member_list:
-        response = _consult_member(member, question)
+        set_persona_activity(member, "discussing", counterpart=caller, note=question[:80])
+        try:
+            response = _consult_member(member, question)
+        finally:
+            clear_persona_activity(member)
         results.append(f"[{member}] {response}")
         # 단체회의 발언을 해당 팀원 개인 채팅 기록에도 저장 → 1:1 탭에서 맥락 이어짐
         save_chat_message(member, "user", f"[Alpha Squad 회의] {question}", source="group-meeting")
@@ -96,6 +101,8 @@ def delegate_task(member: str, task: str) -> str:
     caller = current_caller.get()
     # DB에 태스크 생성
     task_id = create_task(title=task[:100], instruction=task, assigned_to=member, delegated_by=caller)
+    set_persona_activity(caller, "delegating", counterpart=member, note=task[:80])
+    set_persona_activity(member, "working", counterpart=caller, note=task[:80])
 
     try:
         # 해당 팀원 전용 에이전트(도구 포함) 실행
@@ -115,9 +122,13 @@ def delegate_task(member: str, task: str) -> str:
         save_chat_message(member, "user", f"[위임 업무] {task}", source="delegation")
         save_chat_message(member, "assistant", response, source="delegation")
         notify_delegation(current_caller.get(), member, task, response)
+        clear_persona_activity(caller)
+        clear_persona_activity(member)
         return f"[{member} 완료 보고]\n{response}"
     except Exception as e:
         update_task(task_id, "failed", str(e))
+        clear_persona_activity(caller)
+        set_persona_activity(member, "error", counterpart=caller, note=str(e)[:150])
         return f"[{member} 위임 실패] {e}"
 
 
@@ -151,32 +162,40 @@ def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
     resolved = False
     turns_done = 0
 
-    for turn in range(1, max_turns + 1):
-        if time.monotonic() - start > timeout_s:
-            transcript.append("[시스템] 제한시간(90초) 초과로 논의를 종료합니다.")
-            break
+    set_persona_activity(caller, "discussing", counterpart=member, note=topic[:80])
+    set_persona_activity(member, "discussing", counterpart=caller, note=topic[:80])
 
-        speaker = participants[turn % 2]
-        listener = participants[(turn + 1) % 2]
+    try:
+        for turn in range(1, max_turns + 1):
+            if time.monotonic() - start > timeout_s:
+                transcript.append("[시스템] 제한시간(90초) 초과로 논의를 종료합니다.")
+                break
 
-        prompt = (
-            f"[{listener}와의 1:1 논의 — {turn}/{max_turns}번째 턴]\n"
-            f"논의 주제: {topic}\n"
-            f"직전 발언({'없음, 첫 턴' if turn == 1 else listener}): {last_message}\n\n"
-            "직전 발언에 대해 동의/반대/추가의견을 명확히 밝히세요. "
-            "더 논의할 필요가 없다고 판단되면 답변 끝에 반드시 '[합의완료]'를 붙이세요."
-        )
-        response = _consult_member(speaker, prompt)
-        transcript.append(f"[{speaker}] {response}")
-        turns_done += 1
+            speaker = participants[turn % 2]
+            listener = participants[(turn + 1) % 2]
 
-        save_chat_message(speaker, "assistant", f"(1:1 논의 · {listener}) {response}", source="discussion")
-        save_chat_message(listener, "user", f"(1:1 논의 · {speaker}) {response}", source="discussion")
+            prompt = (
+                f"[{listener}와의 1:1 논의 — {turn}/{max_turns}번째 턴]\n"
+                f"논의 주제: {topic}\n"
+                f"직전 발언({'없음, 첫 턴' if turn == 1 else listener}): {last_message}\n\n"
+                "직전 발언에 대해 동의/반대/추가의견을 명확히 밝히세요. "
+                "더 논의할 필요가 없다고 판단되면 답변 끝에 반드시 '[합의완료]'를 붙이세요."
+            )
+            response = _consult_member(speaker, prompt)
+            transcript.append(f"[{speaker}] {response}")
+            turns_done += 1
 
-        last_message = response
-        if "[합의완료]" in response:
-            resolved = True
-            break
+            save_chat_message(speaker, "assistant", f"(1:1 논의 · {listener}) {response}", source="discussion")
+            save_chat_message(listener, "user", f"(1:1 논의 · {speaker}) {response}", source="discussion")
+
+            last_message = response
+            if "[합의완료]" in response:
+                resolved = True
+                break
+    except Exception as e:
+        clear_persona_activity(caller)
+        clear_persona_activity(member)
+        return f"[{member}↔{caller} 논의 오류] {e}"
 
     status = "합의 도달" if resolved else ("최대 턴 도달" if turns_done >= max_turns else "시간 초과 종료")
     summary = "\n\n".join(transcript)
@@ -185,6 +204,8 @@ def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
     update_task(task_id, "completed", f"[{status}]\n{summary}")
 
     notify_discussion(caller, member, topic, summary, status)
+    clear_persona_activity(caller)
+    clear_persona_activity(member)
 
     return f"[{member}↔{caller} 논의 종료 — {status}]\n\n{summary}"
 

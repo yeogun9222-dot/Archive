@@ -90,6 +90,16 @@ def init_db():
     """)
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id)")
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS persona_activity (
+            persona TEXT PRIMARY KEY,
+            activity_type TEXT DEFAULT 'idle',
+            counterpart TEXT,
+            note TEXT,
+            started_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
             label TEXT NOT NULL,
@@ -406,6 +416,39 @@ def get_contention_personas() -> list:
     cur.close()
     conn.close()
     return [{"persona": r[0], "count": r[1]} for r in rows]
+
+
+def set_persona_activity(persona: str, activity_type: str, counterpart: str = None, note: str = None) -> None:
+    """카드 상태바용 — 'idle'로 갱신할 때만 started_at도 초기화, 그 외엔 갱신 시각만 업데이트"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO persona_activity (persona, activity_type, counterpart, note, started_at, updated_at)
+        VALUES (%s, %s, %s, %s, NOW(), NOW())
+        ON CONFLICT (persona) DO UPDATE SET
+            activity_type = %s, counterpart = %s, note = %s, updated_at = NOW(),
+            started_at = CASE WHEN persona_activity.activity_type != %s THEN NOW() ELSE persona_activity.started_at END
+    """, (persona, activity_type, counterpart, note, activity_type, counterpart, note, activity_type))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def clear_persona_activity(persona: str) -> None:
+    set_persona_activity(persona, "idle")
+
+
+def get_persona_activity_map() -> dict:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT persona, activity_type, counterpart, note, started_at FROM persona_activity")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {
+        r[0]: {"activity_type": r[1], "counterpart": r[2], "note": r[3] or "", "started_at": r[4].isoformat()}
+        for r in rows
+    }
 
 
 # 환율은 매일 변동하므로 정확한 USD 환산이 필요하면 직접 갱신 — 표시는 원래 입력 통화 그대로 보여주고,

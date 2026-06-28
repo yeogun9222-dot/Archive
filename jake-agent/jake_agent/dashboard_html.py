@@ -146,6 +146,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .card.active .avatar { background: radial-gradient(circle, #b7ffcf, #4ade80) !important; box-shadow: 0 0 16px rgba(74,222,128,0.6); }
   .card.active .info .name { color: #4ade80; }
+  /* 카드 하단 실시간 활동 상태바 — 말풍선/깜빡임 아이콘 대신 조용한 색상 바 하나로 표현 (리리 디자인) */
+  .status-bar {
+    position: absolute; left: 10px; right: 10px; bottom: 3px; height: 3px; border-radius: 2px;
+    background: transparent; transition: background 0.3s ease;
+  }
+  .status-bar.working {
+    background: linear-gradient(90deg, transparent, #5ff0ff 45%, #5ff0ff 55%, transparent);
+    background-size: 220% 100%; animation: barShimmer 1.3s linear infinite;
+  }
+  .status-bar.discussing { background: #a78bfa; animation: barPulse 1.8s ease-in-out infinite; }
+  .status-bar.error { background: #f87171; }
+  @keyframes barShimmer { 0% { background-position: 220% 0; } 100% { background-position: -20% 0; } }
+  @keyframes barPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
   .card.inactive-persona { opacity: 0.35; filter: grayscale(0.6); }
   .card.inactive-persona::after {
     content: '해임됨'; position: absolute; bottom: -6px; right: 8px; font-size: 8.5px;
@@ -183,12 +197,22 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   body { padding-right: 320px; }
 
-  .bell-wrap { position: absolute; top: -6px; right: -10px; cursor: pointer; z-index: 6; }
-  .bell-icon { font-size: 18px; filter: drop-shadow(0 0 4px rgba(255,215,106,0.5)); }
+  /* 카드 경계 밖으로 완전히 분리된 원형 플레이트로 띄워 겹침/뭉개짐 방지 (리리 디자인 제안) */
+  .bell-wrap {
+    position: absolute; top: -12px; right: -14px; cursor: pointer; z-index: 10;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(16,20,28,0.96); border: 1px solid rgba(255,215,106,0.35);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.55);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .bell-wrap:hover { transform: scale(1.08); border-color: rgba(255,215,106,0.7); }
+  .bell-icon { font-size: 14px; filter: none; }
   .bell-badge {
-    position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; border-radius: 8px;
+    position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; border-radius: 8px;
     background: #f87171; color: #fff; font-size: 9.5px; font-weight: 700; display: none;
     align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 0 6px rgba(248,113,113,0.7);
+    border: 1.5px solid rgba(10,13,20,0.95);
   }
   .bell-badge.show { display: flex; }
   .card { position: relative; }
@@ -330,6 +354,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div class="status-badge" id="badge-제이크"></div>
       <div class="avatar">🧠</div>
       <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
+      <div class="status-bar" id="actbar-제이크"></div>
     </div>
   </div>
 
@@ -383,7 +408,7 @@ function buildCard(name, sizeClass) {
   const div = document.createElement('div');
   div.className = 'card member' + (sizeClass || '');
   div.id = 'card-' + name;
-  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div>';
+  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
   return div;
 }
 
@@ -921,6 +946,28 @@ async function pollActiveMap() {
 }
 pollActiveMap();
 setInterval(pollActiveMap, 8000);
+
+// ── 카드 하단 실시간 활동 상태바 — 작업중/협업중/오류/대기(표시 없음) ──────
+const ACTIVITY_LABEL = { working: '작업중', delegating: '위임중', discussing: '협업중', error: '오류', idle: '' };
+async function pollActivityMap() {
+  try {
+    const res = await fetch('/personas/activity_map');
+    const data = await res.json();
+    const activity = data.activity || {};
+    ['제이크', ...MEMBERS].forEach(name => {
+      const bar = document.getElementById('actbar-' + name);
+      if (!bar) return;
+      const a = activity[name];
+      const type = a ? a.activity_type : 'idle';
+      bar.className = 'status-bar' + (type !== 'idle' ? ' ' + type : '');
+      bar.title = (a && type !== 'idle' && ACTIVITY_LABEL[type])
+        ? (ACTIVITY_LABEL[type] + (a.counterpart ? ' · ' + a.counterpart + '와' : '') + (a.note ? ' · ' + a.note : ''))
+        : '';
+    });
+  } catch (e) { /* ignore */ }
+}
+pollActivityMap();
+setInterval(pollActivityMap, 4000);
 
 // ── 프로젝트 패널 ────────────────────────────────────────
 const projectBtn = document.getElementById('projectBtn');
