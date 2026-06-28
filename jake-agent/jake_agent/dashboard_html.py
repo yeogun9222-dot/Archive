@@ -2,223 +2,211 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>ALPHA SQUAD — Live Org Chart</title>
-<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<title>ALPHA SQUAD — Org Chart</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: #050810; color: #e6e6e6; font-family: -apple-system, 'Malgun Gothic', sans-serif; overflow: hidden; height: 100%; }
-  #stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+  html, body { background: #0a0d14; color: #e6e6e6; font-family: -apple-system, 'Malgun Gothic', sans-serif; height: 100%; overflow-x: hidden; }
   #header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-    padding: 18px 22px; background: linear-gradient(180deg, rgba(5,8,16,0.95), rgba(5,8,16,0.0));
-    display: flex; align-items: baseline; gap: 14px;
+    padding: 18px 24px 10px; display: flex; align-items: baseline; gap: 14px; position: relative; z-index: 5;
   }
-  #header h1 {
-    font-size: 19px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px;
-    text-shadow: 0 0 14px rgba(95,240,255,0.7);
-  }
+  #header h1 { font-size: 20px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px; text-shadow: 0 0 14px rgba(95,240,255,0.5); }
   #header .sub { font-size: 11px; color: #5a7184; letter-spacing: 1px; }
   #header .status { font-size: 11px; color: #4a6577; margin-left: auto; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  #network { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; z-index: 1; }
+
+  #chart { position: relative; padding: 30px 20px 60px; min-height: calc(100vh - 70px); display: flex; flex-direction: column; align-items: center; }
+  svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+  .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
+  .level-members { flex-wrap: wrap; max-width: 1180px; gap: 18px 22px; margin-bottom: 0; }
+
+  .card {
+    background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
+    border: 1px solid rgba(95,240,255,0.15);
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    transition: box-shadow 0.4s ease, border-color 0.4s ease, transform 0.4s ease;
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 6px rgba(95,240,255,0.10); }
+    50%      { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 16px rgba(95,240,255,0.28); }
+  }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .info .name { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+  .info .role { font-size: 10.5px; color: #6b7d8f; }
+
+  .card.ceo { padding: 16px 26px; border-color: rgba(255,215,106,0.4); }
+  .card.ceo .avatar { width: 46px; height: 46px; background: radial-gradient(circle, #ffe9a8, #ffd76a); box-shadow: 0 0 16px rgba(255,215,106,0.5); }
+  .card.ceo .info .name { font-size: 16px; color: #ffd76a; }
+  .card.ceo .info .role { color: #b89a4e; }
+  @keyframes breatheCeo { 0%,100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 10px rgba(255,215,106,0.18); } 50% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 26px rgba(255,215,106,0.45); } }
+  .card.ceo { animation: breatheCeo 3.2s ease-in-out infinite; }
+
+  .card.coo { padding: 14px 22px; border-color: rgba(95,240,255,0.4); }
+  .card.coo .avatar { width: 42px; height: 42px; background: radial-gradient(circle, #aef6ff, #5ff0ff); box-shadow: 0 0 16px rgba(95,240,255,0.5); }
+  .card.coo .info .name { font-size: 14.5px; color: #5ff0ff; }
+  .card.coo .info .role { color: #3f9aa8; }
+
+  .card.member .avatar { background: linear-gradient(160deg, #3a4654, #232b35); border: 1px solid rgba(95,240,255,0.2); }
+  .card.member .info .role { color: #5a7184; }
+
+  .card.active {
+    border-color: #4ade80 !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 26px rgba(74,222,128,0.55) !important;
+    transform: translateY(-3px);
+    animation: none !important;
+  }
+  .card.active .avatar { background: radial-gradient(circle, #b7ffcf, #4ade80) !important; box-shadow: 0 0 16px rgba(74,222,128,0.6); }
+  .card.active .info .name { color: #4ade80; }
+
   #log {
-    position: fixed; right: 0; top: 0; bottom: 0; width: 340px; z-index: 10;
-    background: rgba(8,12,20,0.75); backdrop-filter: blur(10px);
+    position: fixed; right: 0; top: 0; bottom: 0; width: 320px; z-index: 10;
+    background: rgba(8,12,20,0.85); backdrop-filter: blur(10px);
     border-left: 1px solid rgba(95,240,255,0.15);
     overflow-y: auto; padding: 80px 14px 14px;
   }
   #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase; }
-  .event {
-    background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px;
-    padding: 11px 13px; margin-bottom: 9px; font-size: 12px;
-    animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1);
-  }
+  .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
   .event .route { color: #5ff0ff; font-weight: 700; margin-bottom: 5px; font-size: 12.5px; }
   .event .task { color: #c5cdd6; margin-bottom: 5px; line-height: 1.4; }
   .event .time { color: #44546a; font-size: 10px; }
-  .status-completed { color: #4ade80; }
-  .status-pending { color: #fbbf24; }
-  .status-failed { color: #f87171; }
+  .status-completed { color: #4ade80; } .status-pending { color: #fbbf24; } .status-failed { color: #f87171; }
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   #empty { color: #34465a; font-size: 12px; text-align: center; padding: 40px 10px; line-height: 1.6; }
-  #legend {
-    position: fixed; left: 18px; bottom: 18px; z-index: 10; font-size: 11px; color: #5a7184;
-    background: rgba(8,12,20,0.6); border: 1px solid rgba(95,240,255,0.12); border-radius: 8px; padding: 10px 14px;
-    display: flex; gap: 16px;
-  }
-  #legend span { display: flex; align-items: center; gap: 6px; }
-  #legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  body { padding-right: 320px; }
 </style>
 </head>
 <body>
-<canvas id="stars"></canvas>
 <div id="header">
   <h1>ALPHA SQUAD</h1>
   <div class="sub">LONGRISE AI ORGANIZATION · LIVE ORG CHART</div>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
-<div id="network"></div>
-<div id="legend">
-  <span><i style="background:#ffd76a;box-shadow:0 0 6px #ffd76a"></i>CEO</span>
-  <span><i style="background:#5ff0ff;box-shadow:0 0 6px #5ff0ff"></i>COO</span>
-  <span><i style="background:#6b7d8f"></i>본부장/팀장</span>
-  <span><i style="background:#4ade80;box-shadow:0 0 6px #4ade80"></i>위임 중</span>
+
+<div id="chart">
+  <svg id="lines"></svg>
+
+  <div class="level level-ceo">
+    <div class="card ceo" id="card-대표님">
+      <div class="avatar">👑</div>
+      <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
+    </div>
+  </div>
+
+  <div class="level level-coo">
+    <div class="card coo" id="card-제이크">
+      <div class="avatar">🧠</div>
+      <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
+    </div>
+  </div>
+
+  <div class="level level-members" id="members"></div>
 </div>
+
 <div id="log">
   <h2>Activity Stream</h2>
   <div id="empty">신호 대기 중...<br>팀원 간 위임이 발생하면<br>여기에 표시됩니다.</div>
   <div id="events"></div>
 </div>
-<script>
-// ── 배경 파티클 ──────────────────────────────────────────
-const starCanvas = document.getElementById('stars');
-const sctx = starCanvas.getContext('2d');
-function resizeStars() { starCanvas.width = window.innerWidth; starCanvas.height = window.innerHeight; }
-resizeStars();
-window.addEventListener('resize', resizeStars);
-const particles = Array.from({length: 90}, () => ({
-  x: Math.random() * window.innerWidth,
-  y: Math.random() * window.innerHeight,
-  vx: (Math.random() - 0.5) * 0.15,
-  vy: (Math.random() - 0.5) * 0.15,
-  r: Math.random() * 1.6 + 0.4,
-  a: Math.random() * 0.5 + 0.15
-}));
-function drawStars() {
-  sctx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-  for (const p of particles) {
-    p.x += p.vx; p.y += p.vy;
-    if (p.x < 0) p.x = starCanvas.width; if (p.x > starCanvas.width) p.x = 0;
-    if (p.y < 0) p.y = starCanvas.height; if (p.y > starCanvas.height) p.y = 0;
-    sctx.beginPath();
-    sctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    sctx.fillStyle = 'rgba(95,240,255,' + p.a + ')';
-    sctx.fill();
-  }
-  requestAnimationFrame(drawStars);
-}
-drawStars();
 
-// ── 조직도 데이터 ────────────────────────────────────────
+<script>
 const MEMBERS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","사라","미나","카이","설리","노바"];
 const ROLES = {
   "다인":"기획본부장","렉스":"AI시스템본부장","루나":"CFO","제로":"보안본부장","바쿠":"데이터본부장",
   "피오":"백엔드본부장","리리":"프론트엔드본부장","에바":"UXR본부장","사라":"UXR팀장",
   "미나":"CRO본부장","카이":"GTM본부장","설리":"QA본부장","노바":"DevOps팀장"
 };
-const ALL_NAMES = ["제이크", ...MEMBERS];
+const ALL_NAMES = ["대표님", "제이크", ...MEMBERS];
 
-const CEO_COLOR   = { background: 'rgba(40,32,10,0.95)', border: '#ffd76a' };
-const COO_COLOR   = { background: 'rgba(10,30,40,0.95)', border: '#5ff0ff' };
-const IDLE_COLOR  = { background: 'rgba(31,41,55,0.9)',  border: 'rgba(107,125,143,0.5)' };
-const ACTIVE_COLOR= { background: 'rgba(20,60,40,0.95)', border: '#4ade80' };
-
-function shadow(color, size) { return { enabled: true, color, size, x: 0, y: 0 }; }
-
-// 2줄로 13명 배치 (7 + 6) — 가로 혼잡 방지
-const ROW1 = MEMBERS.slice(0, 7);
-const ROW2 = MEMBERS.slice(7);
-const GAP_X = 165;
-
-const nodeList = [];
-
-nodeList.push({
-  id: "대표님", label: "Kade YEO\\nCEO",
-  x: 0, y: -480, shape: 'dot', size: 36,
-  color: CEO_COLOR, font: { color: '#ffd76a', size: 16, vadjust: 48 },
-  shadow: shadow('rgba(255,215,106,0.55)', 22), borderWidth: 3, fixed: { x: true, y: true },
+const membersEl = document.getElementById('members');
+MEMBERS.forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'card member';
+  div.id = 'card-' + name;
+  div.innerHTML = '<div class="avatar">👤</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div>';
+  membersEl.appendChild(div);
 });
 
-nodeList.push({
-  id: "제이크", label: "제이크\\nCOO",
-  x: 0, y: -280, shape: 'dot', size: 32,
-  color: COO_COLOR, font: { color: '#5ff0ff', size: 15, vadjust: 44 },
-  shadow: shadow('rgba(95,240,255,0.55)', 20), borderWidth: 3, fixed: { x: true, y: true },
-});
+const svg = document.getElementById('lines');
+const chart = document.getElementById('chart');
 
-function placeRow(names, y) {
-  const startX = -((names.length - 1) * GAP_X) / 2;
-  names.forEach((name, i) => {
-    nodeList.push({
-      id: name, label: name + "\\n" + ROLES[name],
-      x: startX + i * GAP_X, y, shape: 'dot', size: 22,
-      color: IDLE_COLOR, font: { color: '#9fb4c4', size: 11.5, vadjust: 30 },
-      shadow: shadow('rgba(95,240,255,0.15)', 7), borderWidth: 2, fixed: { x: true, y: true },
-    });
+function center(el) {
+  const r = el.getBoundingClientRect();
+  const c = chart.getBoundingClientRect();
+  return { x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top, top: r.top - c.top, bottom: r.bottom - c.top };
+}
+
+function elbowPath(p1, p2) {
+  const midY = (p1.bottom + p2.top) / 2;
+  return 'M ' + p1.x + ' ' + p1.bottom + ' L ' + p1.x + ' ' + midY + ' L ' + p2.x + ' ' + midY + ' L ' + p2.x + ' ' + p2.top;
+}
+
+let staticPaths = [];
+function drawStaticLines() {
+  svg.innerHTML = '';
+  const ceo = center(document.getElementById('card-대표님'));
+  const jake = center(document.getElementById('card-제이크'));
+  staticPaths = [];
+
+  const p1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p1.setAttribute('d', elbowPath(ceo, jake));
+  p1.setAttribute('stroke', 'rgba(255,215,106,0.35)');
+  p1.setAttribute('stroke-width', '1.6');
+  p1.setAttribute('fill', 'none');
+  svg.appendChild(p1);
+
+  MEMBERS.forEach(name => {
+    const m = center(document.getElementById('card-' + name));
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', elbowPath(jake, m));
+    p.setAttribute('stroke', 'rgba(95,240,255,0.16)');
+    p.setAttribute('stroke-width', '1.2');
+    p.setAttribute('fill', 'none');
+    svg.appendChild(p);
   });
 }
-placeRow(ROW1, -60);
-placeRow(ROW2, 140);
+window.addEventListener('resize', drawStaticLines);
+setTimeout(drawStaticLines, 50);
 
-const nodes = new vis.DataSet(nodeList);
+function activateCard(name) {
+  const el = document.getElementById('card-' + name);
+  if (!el) return;
+  el.classList.add('active');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('active'), 3000);
+}
 
-// 조직도 고정선 (항상 보이는 회색 라인) + 동적 위임선(분리된 edge들은 런타임에 추가)
-const staticEdges = [{ from: "대표님", to: "제이크", color: { color: 'rgba(255,215,106,0.3)' }, width: 1.5, arrows: { to: { enabled: false } }, dashes: false, smooth: false }];
-MEMBERS.forEach(name => staticEdges.push({
-  from: "제이크", to: name, color: { color: 'rgba(95,240,255,0.18)' }, width: 1, arrows: { to: { enabled: false } }, dashes: [2, 4], smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.5 }
-}));
+function flashLine(from, to) {
+  const a = document.getElementById('card-' + from), b = document.getElementById('card-' + to);
+  if (!a || !b) return;
+  const p1 = center(a), p2 = center(b);
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const midY = (p1.y + p2.y) / 2;
+  const d = p1.y < p2.y
+    ? elbowPath({x:p1.x, bottom:p1.bottom}, {x:p2.x, top:p2.top})
+    : elbowPath({x:p2.x, bottom:p2.bottom}, {x:p1.x, top:p1.top});
+  path.setAttribute('d', d);
+  path.setAttribute('stroke', '#4ade80');
+  path.setAttribute('stroke-width', '3');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('filter', 'drop-shadow(0 0 6px rgba(74,222,128,0.8))');
+  path.style.opacity = '1';
+  path.style.transition = 'opacity 1.2s ease';
+  svg.appendChild(path);
+  requestAnimationFrame(() => setTimeout(() => { path.style.opacity = '0'; }, 1500));
+  setTimeout(() => path.remove(), 3000);
+}
 
-const edges = new vis.DataSet(staticEdges.map((e, i) => ({ id: 'org' + i, ...e })));
-
-const network = new vis.Network(document.getElementById('network'), { nodes, edges }, {
-  physics: false,
-  interaction: { dragNodes: false, zoomView: true, dragView: true, hover: true },
-});
-network.once('afterDrawing', () => network.fit({ animation: false, maxZoomLevel: 1.05 }));
-setTimeout(() => network.moveTo({ position: { x: 0, y: -140 }, scale: window.innerWidth < 900 ? 0.55 : 0.85 }), 50);
-
-// ── 숨쉬기 효과 ──────────────────────────────────────────
-const activeUntil = {};
-let breathT = 0;
-setInterval(() => {
-  breathT += 0.12;
-  const pulse = (Math.sin(breathT) + 1) / 2;
-  ALL_NAMES.concat(["대표님"]).forEach(name => {
-    if (activeUntil[name] && activeUntil[name] > Date.now()) return;
-    let base = 'rgba(95,240,255,0.15)', sizeBase = 6;
-    if (name === "대표님") { base = 'rgba(255,215,106,0.5)'; sizeBase = 16; }
-    else if (name === "제이크") { base = 'rgba(95,240,255,0.5)'; sizeBase = 16; }
-    nodes.update({ id: name, shadow: shadow(base, sizeBase + pulse * 8) });
-  });
-}, 120);
-
-// ── 이벤트 처리 ──────────────────────────────────────────
 let sinceId = 0;
-let edgeCounter = 0;
 const statusEl = document.getElementById('status');
 const eventsEl = document.getElementById('events');
 const emptyEl = document.getElementById('empty');
-
-function activateNode(id) {
-  activeUntil[id] = Date.now() + 3000;
-  const isCeo = id === "대표님", isJake = id === "제이크";
-  nodes.update({ id, color: ACTIVE_COLOR, shadow: shadow('rgba(74,222,128,0.85)', isCeo || isJake ? 34 : 24), borderWidth: 3 });
-  setTimeout(() => {
-    if (activeUntil[id] <= Date.now()) {
-      const restore = isCeo ? CEO_COLOR : isJake ? COO_COLOR : IDLE_COLOR;
-      nodes.update({ id, color: restore, borderWidth: isCeo || isJake ? 3 : 2 });
-    }
-  }, 3000);
-}
-
-function addEdge(from, to) {
-  if (!ALL_NAMES.includes(from) || !ALL_NAMES.includes(to) || from === to) return;
-  const id = 'live' + (edgeCounter++);
-  edges.add({ id, from, to, color: { color: '#4ade80', opacity: 1 }, width: 4,
-    smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 },
-    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
-    shadow: { enabled: true, color: 'rgba(74,222,128,0.7)', size: 15 } });
-  activateNode(from); activateNode(to);
-  let step = 0;
-  const fade = setInterval(() => {
-    step++;
-    const opacity = Math.max(0, 1 - step * 0.12);
-    try { edges.update({ id, color: { color: '#4ade80', opacity } }); } catch(e) { clearInterval(fade); }
-    if (opacity <= 0) { clearInterval(fade); edges.remove(id); }
-  }, 200);
-}
 
 function renderEvent(ev) {
   const div = document.createElement('div');
@@ -243,7 +231,10 @@ async function poll() {
       emptyEl.style.display = 'none';
       for (const ev of newEvents) {
         sinceId = Math.max(sinceId, ev.id);
-        addEdge(ev.from, ev.to);
+        if (ALL_NAMES.includes(ev.from) && ALL_NAMES.includes(ev.to)) {
+          flashLine(ev.from, ev.to);
+          activateCard(ev.from); activateCard(ev.to);
+        }
         renderEvent(ev);
       }
     }
