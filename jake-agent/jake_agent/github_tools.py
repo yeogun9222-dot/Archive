@@ -50,6 +50,19 @@ def create_github_issue(title: str, body: str = "", repo: str = "") -> str:
 
 
 @tool
+def close_github_issue(issue_number: int, comment: str = "", repo: str = "") -> str:
+    """GitHub 이슈를 close 처리합니다. issue_number: 이슈 번호, comment: close 전 남길 코멘트(선택), repo: 'owner/repo' (미입력 시 기본 저장소)"""
+    try:
+        target = repo or GITHUB_REPO
+        if comment:
+            _gh_request(f"/repos/{target}/issues/{issue_number}/comments", method="POST", body={"body": comment})
+        result = _gh_request(f"/repos/{target}/issues/{issue_number}", method="PATCH", body={"state": "closed"})
+        return f"✅ 이슈 close 완료\n#{result['number']} {result['title']}\n링크: {result['html_url']}"
+    except Exception as e:
+        return f"오류: {e}"
+
+
+@tool
 def list_github_prs(repo: str = "", state: str = "open") -> str:
     """GitHub Pull Request 목록을 조회합니다."""
     try:
@@ -112,6 +125,7 @@ def get_all_github_tools():
     return [
         list_github_issues,
         create_github_issue,
+        close_github_issue,
         list_github_prs,
         get_github_repo_info,
         trigger_github_workflow,
