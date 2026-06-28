@@ -69,7 +69,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-left: 1px solid rgba(95,240,255,0.15);
     overflow-y: auto; padding: 80px 14px 14px;
   }
-  #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase; }
+  #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+  #streamTabs { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+  #streamTabs .tab {
+    background: rgba(95,240,255,0.06); border: 1px solid rgba(95,240,255,0.15); color: #6b7d8f;
+    border-radius: 14px; padding: 4px 10px; font-size: 10.5px; cursor: pointer; transition: all 0.2s;
+  }
+  #streamTabs .tab.active { background: rgba(95,240,255,0.18); border-color: rgba(95,240,255,0.5); color: #5ff0ff; }
+  #streamTabs .tab:hover { color: #c5cdd6; }
+  #events { max-height: 460px; overflow-y: auto; padding-right: 2px; }
   .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
   .event .route { color: #5ff0ff; font-weight: 700; margin-bottom: 5px; font-size: 12.5px; }
@@ -117,6 +125,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   #attentionPanel.show { display: block; opacity: 1; transform: translateX(-50%) translateY(0); }
   #attentionPanel h3 { font-size: 12px; color: #ffd76a; letter-spacing: 1px; margin-bottom: 10px; }
+  #bulkActions { display: flex; gap: 7px; margin-bottom: 14px; }
+  .bulk-btn { flex: 1; border: none; border-radius: 8px; padding: 8px 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .bulk-btn.approve { background: rgba(74,222,128,0.18); color: #4ade80; }
+  .bulk-btn.hold { background: rgba(148,163,184,0.18); color: #c5cdd6; }
+  .bulk-btn.delete { background: rgba(248,113,113,0.18); color: #f87171; }
+  .bulk-btn:hover { filter: brightness(1.25); }
+  .bulk-btn:disabled { opacity: 0.35; cursor: default; }
   #attentionPanel .sec-label { font-size: 10.5px; color: #5a7184; margin: 12px 0 6px; letter-spacing: 1px; }
   .att-item { border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; font-size: 12px; }
   .att-item.failed { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); }
@@ -170,12 +185,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div id="log">
   <h2>Activity Stream</h2>
+  <div id="streamTabs">
+    <button class="tab active" data-status="all">전체</button>
+    <button class="tab" data-status="pending">대기</button>
+    <button class="tab" data-status="completed">완료</button>
+    <button class="tab" data-status="failed">실패</button>
+    <button class="tab" data-status="held">보류</button>
+  </div>
   <div id="empty">신호 대기 중...<br>팀원 간 위임이 발생하면<br>여기에 표시됩니다.</div>
   <div id="events"></div>
 </div>
 
 <div id="attentionPanel">
   <h3>🔔 확인이 필요한 작업</h3>
+  <div id="bulkActions">
+    <button class="bulk-btn approve" id="bulkApprove">전체 승인</button>
+    <button class="bulk-btn hold" id="bulkHold">전체 보류</button>
+    <button class="bulk-btn delete" id="bulkDelete">전체 삭제</button>
+  </div>
   <div id="attentionEmpty">현재 미완료 작업이 없습니다</div>
   <div id="attentionBody"></div>
 </div>
@@ -280,9 +307,14 @@ const emptyEl = document.getElementById('empty');
 
 function esc(s) { return (s || '').replace(/</g,'&lt;'); }
 
-function renderEvent(ev) {
+// ── Activity Stream: 상태별 탭 필터 + 누적 저장 ──────────────
+let streamEvents = [];
+let activeTabStatus = 'all';
+const freshIds = new Set();
+
+function buildEventCard(ev, isFresh) {
   const div = document.createElement('div');
-  div.className = 'event fresh';
+  div.className = 'event' + (isFresh ? ' fresh' : '');
   const statusClass = 'status-' + ev.status;
   const hasDetail = (ev.instruction && ev.instruction.length > 0) || (ev.result && ev.result.length > 0);
   div.innerHTML =
@@ -304,9 +336,31 @@ function renderEvent(ev) {
       else { taskEl.classList.add('collapsed'); if (moreEl) moreEl.textContent = '자세히 보기 ▾'; }
     });
   }
-  eventsEl.prepend(div);
-  setTimeout(() => div.classList.remove('fresh'), 2500);
-  while (eventsEl.children.length > 30) eventsEl.removeChild(eventsEl.lastChild);
+  return div;
+}
+
+function renderStream() {
+  const filtered = activeTabStatus === 'all' ? streamEvents : streamEvents.filter(e => e.status === activeTabStatus);
+  eventsEl.innerHTML = '';
+  emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
+  filtered.forEach(ev => eventsEl.appendChild(buildEventCard(ev, freshIds.has(ev.id))));
+}
+
+document.querySelectorAll('#streamTabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#streamTabs .tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTabStatus = btn.dataset.status;
+    renderStream();
+  });
+});
+
+function renderEvent(ev) {
+  streamEvents.unshift(ev);
+  if (streamEvents.length > 100) streamEvents.length = 100;
+  freshIds.add(ev.id);
+  setTimeout(() => freshIds.delete(ev.id), 2500);
+  renderStream();
 }
 
 // ── 카드 백라이트 글로우 (상태별 색, 통일된 펄스 주기 — 리리 검수 반영) ──
@@ -334,6 +388,10 @@ const bellBadge = document.getElementById('bellBadge');
 const attentionPanel = document.getElementById('attentionPanel');
 const attentionBody = document.getElementById('attentionBody');
 const attentionEmpty = document.getElementById('attentionEmpty');
+const bulkApproveBtn = document.getElementById('bulkApprove');
+const bulkHoldBtn = document.getElementById('bulkHold');
+const bulkDeleteBtn = document.getElementById('bulkDelete');
+let attentionCache = { failed: [], pending: [], held: [] };
 
 async function taskAction(id, action, method) {
   try {
@@ -341,11 +399,36 @@ async function taskAction(id, action, method) {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       alert(err.detail || '처리 실패. 새로고침 후 다시 시도하세요.');
-      return;
+      return false;
     }
-    pollAttention(); pollStatusMap();
-  } catch (e) { alert('처리 실패: ' + e.message); }
+    return true;
+  } catch (e) { alert('처리 실패: ' + e.message); return false; }
 }
+
+async function bulkAction(items, action, method) {
+  if (items.length === 0) return;
+  await Promise.all(items.map(t => taskAction(t.id, action, method)));
+  pollAttention(); pollStatusMap();
+}
+
+bulkApproveBtn.addEventListener('click', () => {
+  const items = [...attentionCache.failed, ...attentionCache.pending];
+  if (items.length === 0) return;
+  if (!confirm(items.length + '건을 모두 승인할까요?')) return;
+  bulkAction(items, 'approve', 'POST');
+});
+bulkHoldBtn.addEventListener('click', () => {
+  const items = [...attentionCache.failed, ...attentionCache.pending];
+  if (items.length === 0) return;
+  if (!confirm(items.length + '건을 모두 보류할까요?')) return;
+  bulkAction(items, 'hold', 'POST');
+});
+bulkDeleteBtn.addEventListener('click', () => {
+  const items = [...attentionCache.failed, ...attentionCache.pending, ...attentionCache.held];
+  if (items.length === 0) return;
+  if (!confirm(items.length + '건을 모두 영구 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  bulkAction(items, '', 'DELETE');
+});
 
 function actionButtons(t, status) {
   let btns = '';
@@ -367,9 +450,13 @@ async function pollAttention() {
     const failed = tasks.filter(t => t.status === 'failed');
     const pending = tasks.filter(t => t.status === 'pending');
     const held = tasks.filter(t => t.status === 'held');
+    attentionCache = { failed, pending, held };
     const count = failed.length + pending.length;
     bellBadge.textContent = count;
     bellBadge.classList.toggle('show', count > 0);
+    bulkApproveBtn.disabled = (failed.length + pending.length) === 0;
+    bulkHoldBtn.disabled = (failed.length + pending.length) === 0;
+    bulkDeleteBtn.disabled = (failed.length + pending.length + held.length) === 0;
 
     attentionBody.innerHTML = '';
     attentionEmpty.style.display = (failed.length + pending.length + held.length) === 0 ? 'block' : 'none';
