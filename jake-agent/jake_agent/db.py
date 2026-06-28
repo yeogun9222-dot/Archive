@@ -63,6 +63,9 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_chat_messages_persona_ts
         ON chat_messages (persona, timestamp DESC)
     """)
+    # 기존 tasks 테이블에 누락된 컬럼 보강 (CREATE TABLE IF NOT EXISTS는 기존 테이블을 변경하지 않음)
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result TEXT")
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
     conn.commit()
     cur.close()
     conn.close()
