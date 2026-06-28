@@ -95,17 +95,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .bell-badge.show { display: flex; }
   .card { position: relative; }
-  .status-badge {
-    position: absolute; top: -7px; left: -7px; width: 19px; height: 19px; border-radius: 50%;
-    display: none; align-items: center; justify-content: center; font-size: 10px;
-    border: 1.5px solid #0a0d14; z-index: 4;
+  .status-badge { display: none; }
+
+  /* 상태별 백라이트 글로우 — 색만 다르고 주기/강도는 통일 (리리 검수: 산만함 방지) */
+  .card.glow-pending  { animation: glowPulse 2.4s ease-in-out infinite; --glow: 251,191,36; }
+  .card.glow-completed{ animation: glowPulse 2.4s ease-in-out infinite; --glow: 74,222,128; }
+  .card.glow-failed   { animation: glowPulse 2.4s ease-in-out infinite; --glow: 248,113,113; }
+  .card.glow-held     { animation: glowPulse 2.4s ease-in-out infinite; --glow: 148,163,184; }
+  .card.glow-approved { animation: glowPulse 2.4s ease-in-out infinite; --glow: 95,240,255; }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 10px rgba(var(--glow), 0.25), inset 0 0 14px rgba(var(--glow), 0.06); border-color: rgba(var(--glow), 0.45); }
+    50%      { box-shadow: 0 4px 18px rgba(0,0,0,0.4), 0 0 34px rgba(var(--glow), 0.65), inset 0 0 22px rgba(var(--glow), 0.16); border-color: rgba(var(--glow), 0.8); }
   }
-  .status-badge.show { display: flex; }
-  .status-badge.st-pending { background: #fbbf24; color: #2a1d00; }
-  .status-badge.st-completed { background: #4ade80; color: #052e16; }
-  .status-badge.st-failed { background: #f87171; color: #2a0a0a; }
-  .status-badge.st-held { background: #6b7d8f; color: #fff; }
-  .status-badge.st-approved { background: #5ff0ff; color: #052e30; }
 
   #attentionPanel {
     position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-10px);
@@ -308,21 +309,19 @@ function renderEvent(ev) {
   while (eventsEl.children.length > 30) eventsEl.removeChild(eventsEl.lastChild);
 }
 
-// ── 카드 상태 배지 (정적 표시, 산만한 깜빡임 없음 — 리리 검수 반영) ──
-const STATUS_ICON = { pending: '⏳', completed: '✓', failed: '!', held: '⏸', approved: '✓' };
+// ── 카드 백라이트 글로우 (상태별 색, 통일된 펄스 주기 — 리리 검수 반영) ──
+const GLOW_CLASSES = ['glow-pending', 'glow-completed', 'glow-failed', 'glow-held', 'glow-approved'];
 async function pollStatusMap() {
   try {
     const res = await fetch('/activity/status_map');
     const data = await res.json();
     const statuses = data.statuses || {};
     ALL_NAMES.forEach(name => {
-      const el = document.getElementById('badge-' + name);
+      const el = document.getElementById('card-' + name);
       if (!el) return;
+      el.classList.remove(...GLOW_CLASSES);
       const st = statuses[name];
-      if (!st) { el.classList.remove('show'); return; }
-      el.className = 'status-badge show st-' + st;
-      el.textContent = STATUS_ICON[st] || '';
-      el.title = st;
+      if (st) { el.classList.add('glow-' + st); el.title = name + ' — ' + st; }
     });
   } catch (e) { /* ignore */ }
 }
