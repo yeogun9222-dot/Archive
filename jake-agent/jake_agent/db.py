@@ -640,6 +640,20 @@ def get_persona_activity_map() -> dict:
     }
 
 
+def get_last_message_map() -> dict:
+    """카드 💬 안읽음 표시용 — 각 페르소나가 CEO에게 보낸 가장 최근 발신 시각(채널 무관)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT persona, MAX(timestamp) FROM chat_messages
+        WHERE role = 'assistant' GROUP BY persona
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {r[0]: r[1].isoformat() for r in rows}
+
+
 # 환율은 매일 변동하므로 정확한 USD 환산이 필요하면 직접 갱신 — 표시는 원래 입력 통화 그대로 보여주고,
 # 합계 집계용으로만 근사 환산 사용
 USD_PER_KRW = 1 / 1380

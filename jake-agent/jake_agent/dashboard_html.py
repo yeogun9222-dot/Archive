@@ -275,6 +275,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   @keyframes barShimmer { 0% { background-position: 220% 0; } 100% { background-position: -20% 0; } }
   @keyframes barPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
+  /* 카드 좌상단 — 페르소나가 보낸 메시지/결재요청을 대표님이 아직 확인 안 했을 때 표시 */
+  .msg-badge {
+    display: none; position: absolute; top: -9px; left: -9px; font-size: 13px;
+    width: 24px; height: 24px; border-radius: 50%; align-items: center; justify-content: center;
+    background: rgba(16,20,28,0.96); border: 1px solid rgba(95,240,255,0.5);
+    box-shadow: 0 0 10px rgba(95,240,255,0.5); z-index: 8;
+    animation: msgBadgePulse 1.6s ease-in-out infinite;
+  }
+  .msg-badge.show { display: flex; }
+  @keyframes msgBadgePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
   .card.inactive-persona { opacity: 0.35; filter: grayscale(0.6); }
   .card.inactive-persona::after {
     content: '해임됨'; position: absolute; bottom: -6px; right: 8px; font-size: 8.5px;
@@ -287,7 +298,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-left: 1px solid rgba(95,240,255,0.15);
     overflow-y: auto; padding: 80px 14px 14px;
   }
-  #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase; }
+  #log h2 { font-size: 11px; color: #4a6577; letter-spacing: 2px; text-transform: uppercase; }
+  #logHeadRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  #streamClearAllBtn {
+    font-size: 9.5px; color: #6b7d8f; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 3px 8px; cursor: pointer;
+  }
+  #streamClearAllBtn:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+  .event-dismiss {
+    position: absolute; top: 8px; right: 9px; background: none; border: none; color: #44546a;
+    font-size: 13px; cursor: pointer; padding: 2px 4px; line-height: 1;
+  }
+  .event-dismiss:hover { color: #f87171; }
+  .event { position: relative; }
   #streamTabs { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
   #streamTabs .tab {
     background: rgba(95,240,255,0.06); border: 1px solid rgba(95,240,255,0.15); color: #6b7d8f;
@@ -312,17 +335,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   body { padding-right: 320px; }
 
-  /* 카드 경계 밖으로 완전히 분리된 원형 플레이트로 띄워 겹침/뭉개짐 방지 (리리 디자인 제안) */
-  .bell-wrap {
-    position: absolute; top: -12px; right: -14px; cursor: pointer; z-index: 10;
-    width: 30px; height: 30px; border-radius: 50%;
-    background: rgba(16,20,28,0.96); border: 1px solid rgba(255,215,106,0.35);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.55);
-    transition: transform 0.15s ease, border-color 0.15s ease;
+  /* 종 알림은 카드 위가 아니라 헤더의 다른 버튼들과 같은 줄에 — 겹침 없이, 확인이 필요한
+     항목들과 시각적으로 한 그룹으로 묶임. 강조를 위해 amber 톤만 다르게 줌 */
+  .header-btn-alert {
+    background: rgba(255,215,106,0.1); border-color: rgba(255,215,106,0.35); color: #ffd76a;
   }
-  .bell-wrap:hover { transform: scale(1.08); border-color: rgba(255,215,106,0.7); }
-  .bell-icon { font-size: 14px; filter: none; }
+  .header-btn-alert:hover { background: rgba(255,215,106,0.2); }
   .bell-badge {
     position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; border-radius: 8px;
     background: #f87171; color: #fff; font-size: 9.5px; font-weight: 700; display: none;
@@ -389,6 +407,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="header">
   <h1>ALPHA SQUAD</h1>
   <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
+  <button class="header-btn header-btn-alert" id="bellWrap" style="position:relative;">🔔 확인필요 <span id="bellBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
   <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> <span id="costPeriod">이번달</span></div>
   <button class="header-btn" id="projectBtn">📁 프로젝트</button>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
@@ -550,10 +569,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   <div class="level level-ceo">
     <div class="card ceo" id="card-대표님">
-      <div class="bell-wrap" id="bellWrap">
-        <span class="bell-icon">🔔</span>
-        <span class="bell-badge" id="bellBadge">0</span>
-      </div>
       <div class="status-badge" id="badge-대표님"></div>
       <div class="avatar">🧑‍💼</div>
       <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
@@ -563,6 +578,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="level level-coo">
     <div class="card coo" id="card-제이크">
       <div class="status-badge" id="badge-제이크"></div>
+      <div class="msg-badge" id="msgbadge-제이크">💬</div>
       <div class="avatar">🧠</div>
       <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
       <div class="status-bar" id="actbar-제이크"></div>
@@ -574,7 +590,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="log">
-  <h2>Activity Stream</h2>
+  <div id="logHeadRow">
+    <h2>Activity Stream</h2>
+    <button id="streamClearAllBtn" title="전체 삭제">🗑 전체삭제</button>
+  </div>
   <div id="streamTabs">
     <button class="tab active" data-status="all">전체</button>
     <button class="tab" data-status="pending">대기</button>
@@ -619,7 +638,7 @@ function buildCard(name, sizeClass) {
   const div = document.createElement('div');
   div.className = 'card member' + (sizeClass || '');
   div.id = 'card-' + name;
-  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
+  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="msg-badge" id="msgbadge-' + name + '">💬</div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
   return div;
 }
 
@@ -762,6 +781,7 @@ function buildEventCard(ev, isFresh) {
   const statusClass = 'status-' + ev.status;
   const hasDetail = (ev.instruction && ev.instruction.length > 0) || (ev.result && ev.result.length > 0);
   div.innerHTML =
+    '<button class="event-dismiss" data-id="' + ev.id + '" title="삭제">×</button>' +
     '<div class="route">' + ev.from + ' → ' + ev.to + '</div>' +
     '<div class="task collapsed">' + esc(ev.title) + '</div>' +
     (hasDetail ? '<div class="more">자세히 보기 ▾</div>' : '') +
@@ -780,6 +800,11 @@ function buildEventCard(ev, isFresh) {
       else { taskEl.classList.add('collapsed'); if (moreEl) moreEl.textContent = '자세히 보기 ▾'; }
     });
   }
+  div.querySelector('.event-dismiss').addEventListener('click', (e) => {
+    e.stopPropagation();
+    streamEvents = streamEvents.filter(x => x.id !== ev.id);
+    renderStream();
+  });
   return div;
 }
 
@@ -789,6 +814,13 @@ function renderStream() {
   emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
   filtered.forEach(ev => eventsEl.appendChild(buildEventCard(ev, freshIds.has(ev.id))));
 }
+
+document.getElementById('streamClearAllBtn').addEventListener('click', () => {
+  if (streamEvents.length === 0) return;
+  if (!confirm('Activity Stream에 표시된 항목 ' + streamEvents.length + '건을 화면에서 전부 지울까요? (실제 작업 데이터는 삭제되지 않습니다)')) return;
+  streamEvents = [];
+  renderStream();
+});
 
 document.querySelectorAll('#streamTabs .tab').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1045,7 +1077,6 @@ async function pollCost() {
     const res = await fetch('/cost/summary');
     const data = await res.json();
     costValue.textContent = '$' + data.total_this_month.toFixed(2);
-    costPeriod.textContent = data.period;
     costRangeLabel.textContent = data.period;
     const diff = data.total_this_month - data.prev_month;
     const diffStr = data.prev_month > 0 ? (diff >= 0 ? ' (+$' + diff.toFixed(2) + ')' : ' (-$' + Math.abs(diff).toFixed(2) + ')') : '';
@@ -1194,6 +1225,32 @@ async function pollActivityMap() {
 }
 pollActivityMap();
 setInterval(pollActivityMap, 4000);
+
+// ── 💬 미확인 메시지/결재요청 배지 ──────────────────────────
+function getSeenTime(name) { return localStorage.getItem('ccSeen_' + name) || '1970-01-01T00:00:00'; }
+function markSeen(name) { localStorage.setItem('ccSeen_' + name, new Date().toISOString()); }
+
+async function pollUnreadBadges() {
+  try {
+    const [msgRes, decRes] = await Promise.all([
+      fetch('/personas/last_message_map'),
+      fetch('/decisions/pending'),
+    ]);
+    const lastMessage = (await msgRes.json()).last_message || {};
+    const pendingRequesters = new Set(((await decRes.json()).decisions || []).map(d => d.requested_by));
+
+    ['제이크', ...MEMBERS].forEach(name => {
+      const badge = document.getElementById('msgbadge-' + name);
+      if (!badge) return;
+      const hasUnreadMessage = lastMessage[name] && lastMessage[name] > getSeenTime(name);
+      const hasPendingRequest = pendingRequesters.has(name);
+      badge.classList.toggle('show', Boolean(hasUnreadMessage || hasPendingRequest));
+      badge.title = hasPendingRequest ? '결재 요청 대기 중' : (hasUnreadMessage ? '확인 안 한 메시지가 있습니다' : '');
+    });
+  } catch (e) { /* ignore */ }
+}
+pollUnreadBadges();
+setInterval(pollUnreadBadges, 5000);
 
 // ── 프로젝트 패널 ────────────────────────────────────────
 const projectBtn = document.getElementById('projectBtn');
@@ -1571,6 +1628,9 @@ document.getElementById('ccCloseBtn').addEventListener('click', (e) => {
 
 async function openCardChat(name) {
   currentCardTarget = name;
+  markSeen(name);
+  const ownBadge = document.getElementById('msgbadge-' + name);
+  if (ownBadge) ownBadge.classList.remove('show');
   ccAvatar.textContent = name === '제이크' ? '🧠' : ICONS[name];
   ccName.textContent = name;
   ccRole.textContent = name === '제이크' ? 'COO' : ROLES[name];
