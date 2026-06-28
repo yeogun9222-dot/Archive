@@ -70,16 +70,51 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     overflow-y: auto; padding: 80px 14px 14px;
   }
   #log h2 { font-size: 11px; color: #4a6577; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase; }
-  .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); }
+  .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
   .event .route { color: #5ff0ff; font-weight: 700; margin-bottom: 5px; font-size: 12.5px; }
   .event .task { color: #c5cdd6; margin-bottom: 5px; line-height: 1.4; }
+  .event .task.collapsed { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .event .detail { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(95,240,255,0.1); color: #9fb4c4; font-size: 11.5px; line-height: 1.5; }
+  .event.expanded .detail { display: block; }
+  .event .detail .label { color: #5a7184; font-size: 10px; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .event .more { color: #3f9aa8; font-size: 10.5px; margin-top: 2px; }
   .event .time { color: #44546a; font-size: 10px; }
   .status-completed { color: #4ade80; } .status-pending { color: #fbbf24; } .status-failed { color: #f87171; }
   @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
   #empty { color: #34465a; font-size: 12px; text-align: center; padding: 40px 10px; line-height: 1.6; }
 
   body { padding-right: 320px; }
+
+  .bell-wrap { position: absolute; top: -6px; right: -10px; cursor: pointer; z-index: 6; }
+  .bell-icon { font-size: 18px; filter: drop-shadow(0 0 4px rgba(255,215,106,0.5)); }
+  .bell-badge {
+    position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; border-radius: 8px;
+    background: #f87171; color: #fff; font-size: 9.5px; font-weight: 700; display: none;
+    align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 0 6px rgba(248,113,113,0.7);
+  }
+  .bell-badge.show { display: flex; }
+  .card.ceo { position: relative; }
+
+  #attentionPanel {
+    position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    width: 420px; max-height: 60vh; overflow-y: auto; z-index: 50;
+    background: rgba(12,16,24,0.97); border: 1px solid rgba(255,215,106,0.3); border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 16px; display: none; opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #attentionPanel.show { display: block; opacity: 1; transform: translateX(-50%) translateY(0); }
+  #attentionPanel h3 { font-size: 12px; color: #ffd76a; letter-spacing: 1px; margin-bottom: 10px; }
+  #attentionPanel .sec-label { font-size: 10.5px; color: #5a7184; margin: 12px 0 6px; letter-spacing: 1px; }
+  .att-item { border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; font-size: 12px; }
+  .att-item.failed { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); }
+  .att-item.pending { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); }
+  .att-item .route { font-weight: 700; margin-bottom: 4px; font-size: 11.5px; }
+  .att-item.failed .route { color: #f87171; }
+  .att-item.pending .route { color: #fbbf24; }
+  .att-item .text { color: #c5cdd6; line-height: 1.4; }
+  .att-item .text.brief { color: #9fb4c4; font-size: 11px; }
+  #attentionEmpty { color: #34465a; font-size: 12px; text-align: center; padding: 20px 0; }
 </style>
 </head>
 <body>
@@ -94,6 +129,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   <div class="level level-ceo">
     <div class="card ceo" id="card-대표님">
+      <div class="bell-wrap" id="bellWrap">
+        <span class="bell-icon">🔔</span>
+        <span class="bell-badge" id="bellBadge">0</span>
+      </div>
       <div class="avatar">👑</div>
       <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
     </div>
@@ -113,6 +152,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h2>Activity Stream</h2>
   <div id="empty">신호 대기 중...<br>팀원 간 위임이 발생하면<br>여기에 표시됩니다.</div>
   <div id="events"></div>
+</div>
+
+<div id="attentionPanel">
+  <h3>🔔 확인이 필요한 작업</h3>
+  <div id="attentionEmpty">현재 미완료 작업이 없습니다</div>
+  <div id="attentionBody"></div>
 </div>
 
 <script>
@@ -208,19 +253,87 @@ const statusEl = document.getElementById('status');
 const eventsEl = document.getElementById('events');
 const emptyEl = document.getElementById('empty');
 
+function esc(s) { return (s || '').replace(/</g,'&lt;'); }
+
 function renderEvent(ev) {
   const div = document.createElement('div');
   div.className = 'event fresh';
   const statusClass = 'status-' + ev.status;
+  const hasDetail = (ev.instruction && ev.instruction.length > 0) || (ev.result && ev.result.length > 0);
   div.innerHTML =
     '<div class="route">' + ev.from + ' → ' + ev.to + '</div>' +
-    '<div class="task">' + ev.title.replace(/</g,'&lt;') + '</div>' +
+    '<div class="task collapsed">' + esc(ev.title) + '</div>' +
+    (hasDetail ? '<div class="more">자세히 보기 ▾</div>' : '') +
+    '<div class="detail">' +
+      (ev.instruction ? '<div class="label">요청 내용</div><div style="margin-bottom:8px;">' + esc(ev.instruction) + '</div>' : '') +
+      (ev.result ? '<div class="label">결과</div><div>' + esc(ev.result) + '</div>' : '') +
+    '</div>' +
     '<div class="time">' + new Date(ev.timestamp).toLocaleTimeString('ko-KR') +
     ' · <span class="' + statusClass + '">' + ev.status + '</span></div>';
+  if (hasDetail) {
+    div.addEventListener('click', () => {
+      div.classList.toggle('expanded');
+      const moreEl = div.querySelector('.more');
+      const taskEl = div.querySelector('.task');
+      if (div.classList.contains('expanded')) { taskEl.classList.remove('collapsed'); if (moreEl) moreEl.textContent = '접기 ▴'; }
+      else { taskEl.classList.add('collapsed'); if (moreEl) moreEl.textContent = '자세히 보기 ▾'; }
+    });
+  }
   eventsEl.prepend(div);
   setTimeout(() => div.classList.remove('fresh'), 2500);
   while (eventsEl.children.length > 30) eventsEl.removeChild(eventsEl.lastChild);
 }
+
+// ── 종 아이콘: 미완료(failed/pending) 작업 ──────────────────
+const bellWrap = document.getElementById('bellWrap');
+const bellBadge = document.getElementById('bellBadge');
+const attentionPanel = document.getElementById('attentionPanel');
+const attentionBody = document.getElementById('attentionBody');
+const attentionEmpty = document.getElementById('attentionEmpty');
+
+async function pollAttention() {
+  try {
+    const res = await fetch('/activity/attention');
+    const data = await res.json();
+    const tasks = data.tasks || [];
+    const failed = tasks.filter(t => t.status === 'failed');
+    const pending = tasks.filter(t => t.status === 'pending');
+    const count = failed.length + pending.length;
+    bellBadge.textContent = count;
+    bellBadge.classList.toggle('show', count > 0);
+
+    attentionBody.innerHTML = '';
+    attentionEmpty.style.display = count === 0 ? 'block' : 'none';
+
+    if (failed.length > 0) {
+      attentionBody.innerHTML += '<div class="sec-label">⛔ 실패 — 확인 필요</div>';
+      failed.forEach(t => {
+        attentionBody.innerHTML +=
+          '<div class="att-item failed"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
+          '<div class="text">' + esc(t.result || t.title) + '</div></div>';
+      });
+    }
+    if (pending.length > 0) {
+      attentionBody.innerHTML += '<div class="sec-label">⏳ 진행 중</div>';
+      pending.forEach(t => {
+        attentionBody.innerHTML +=
+          '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
+          '<div class="text brief">' + esc(t.title) + '</div></div>';
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+bellWrap.addEventListener('click', (e) => {
+  e.stopPropagation();
+  attentionPanel.classList.toggle('show');
+});
+document.addEventListener('click', (e) => {
+  if (!attentionPanel.contains(e.target) && !bellWrap.contains(e.target)) attentionPanel.classList.remove('show');
+});
+
+pollAttention();
+setInterval(pollAttention, 5000);
 
 async function poll() {
   try {

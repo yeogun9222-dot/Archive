@@ -104,7 +104,7 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, title, assigned_to, delegated_by, status, result, created_at
+        """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
            FROM tasks WHERE id > %s ORDER BY id DESC LIMIT %s""",
         (since_id, limit)
     )
@@ -114,7 +114,8 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
     return [
         {
             "id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크",
-            "status": r[4], "result": (r[5] or "")[:300], "timestamp": r[6].isoformat()
+            "status": r[4], "result": r[5] or "", "timestamp": r[6].isoformat(),
+            "instruction": r[7] or ""
         }
         for r in rows
     ]
@@ -140,6 +141,28 @@ def log_conversation(agent: str, message: str, task_id: int = None):
     conn.commit()
     cur.close()
     conn.close()
+
+def get_attention_tasks(limit: int = 50) -> list:
+    """대시보드 종 아이콘용 — 미완료(failed/pending) 작업 전체 조회 (since_id 무관)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
+           FROM tasks WHERE status IN ('failed', 'pending') ORDER BY id DESC LIMIT %s""",
+        (limit,)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {
+            "id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크",
+            "status": r[4], "result": r[5] or "", "timestamp": r[6].isoformat(),
+            "instruction": r[7] or ""
+        }
+        for r in rows
+    ]
+
 
 def get_pending_tasks():
     conn = get_conn()

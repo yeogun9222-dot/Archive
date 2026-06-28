@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
@@ -191,6 +191,12 @@ async def delete_persona_history(persona_name: str):
 async def activity_recent(since_id: int = 0):
     """대시보드용 — 최근 위임 활동 폴링 엔드포인트"""
     return {"events": get_recent_activity(since_id=since_id, limit=50)}
+
+
+@app.get("/activity/attention")
+async def activity_attention():
+    """대시보드 종 아이콘용 — 미완료(failed/pending) 작업 목록"""
+    return {"tasks": get_attention_tasks(limit=50)}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
