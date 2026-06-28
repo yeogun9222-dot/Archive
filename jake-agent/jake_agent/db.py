@@ -803,7 +803,6 @@ def get_cost_summary() -> dict:
         "prev_month": prev_cost,
         "by_persona": by_persona,
         "manual_costs": manual,
-        "note": f"by_persona는 jake-agent 전용 Anthropic API 키(콘솔 과금) 사용량을 모델별 단가(Sonnet $3/$15, Haiku $1/$5 per 1M)로 자동 환산한 추정치 — 'anthropic_auto'가 available이면 Cost Report API의 실제 청구액으로 합계를 대체함. Claude Code Pro/Gemini Pro 등 별도 구독료는 manual_costs에 정기 항목으로 직접 추가하세요(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환산). 'gcp_auto'가 available이면 GCP 실사용량이 BigQuery에서 자동집계되어 manual_costs의 GCP 항목 대신 사용됨."
     }
 
 

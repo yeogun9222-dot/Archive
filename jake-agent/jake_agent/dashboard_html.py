@@ -1354,7 +1354,7 @@ async function pollCost() {
         '<button class="cost-act deactivate" data-mid="' + m.id + '" style="margin-left:6px;">삭제</button></div>';
     }).join('') || '<div style="color:#34465a;font-size:11px;">수동 입력 항목 없음</div>';
 
-    costNote.textContent = data.note + (diffStr ? (' 전월 대비' + diffStr) : '');
+    costNote.textContent = diffStr ? ('전월 대비' + diffStr) : '';
 
     costBody.querySelectorAll('.cost-act').forEach(btn => {
       btn.addEventListener('click', (e) => {
