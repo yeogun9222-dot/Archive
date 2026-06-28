@@ -77,6 +77,18 @@ def init_db():
             updated_by TEXT
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS projects (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            owner TEXT,
+            status TEXT DEFAULT 'active',
+            due_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id)")
     conn.commit()
     cur.close()
     conn.close()
@@ -361,6 +373,59 @@ def get_cost_summary() -> dict:
         "by_persona": by_persona,
         "note": "Anthropic API 토큰 비용만 집계됨. GCP 서버비/Notion/Telegram 등은 미집계 (수동 확인 필요)."
     }
+
+
+def create_project(name: str, owner: str = None, due_date: str = None) -> int:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO projects (name, owner, due_date) VALUES (%s, %s, %s) RETURNING id",
+        (name, owner, due_date)
+    )
+    project_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return project_id
+
+
+def get_projects() -> list:
+    """프로젝트 목록 + 소속 작업 진행률 (완료/전체)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT p.id, p.name, p.owner, p.status, p.due_date, p.created_at,
+               COUNT(t.id) AS total,
+               COUNT(t.id) FILTER (WHERE t.status IN ('completed', 'approved')) AS done
+        FROM projects p
+        LEFT JOIN tasks t ON t.project_id = p.id AND t.archived = FALSE
+        GROUP BY p.id ORDER BY p.id DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {
+            "id": r[0], "name": r[1], "owner": r[2] or "제이크", "status": r[3],
+            "due_date": r[4].isoformat() if r[4] else None, "created_at": r[5].isoformat(),
+            "total_tasks": r[6], "done_tasks": r[7]
+        }
+        for r in rows
+    ]
+
+
+def update_project_status(project_id: int, status: str) -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE projects SET status=%s, updated_at=NOW() WHERE id=%s RETURNING id",
+        (status, project_id)
+    )
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
 
 
 def get_pending_tasks():

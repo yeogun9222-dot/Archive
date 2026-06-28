@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -284,6 +284,35 @@ async def activate_persona(persona_name: str):
 async def activity_contention():
     """워크플로 충돌 감지 — 동일 인물에게 미해결 작업 2건 이상 쌓인 경우"""
     return {"contention": get_contention_personas()}
+
+
+class ProjectCreateRequest(BaseModel):
+    name: str
+    owner: Optional[str] = None
+    due_date: Optional[str] = None
+
+
+class ProjectStatusRequest(BaseModel):
+    status: str
+
+
+@app.get("/projects")
+async def list_projects():
+    return {"projects": get_projects()}
+
+
+@app.post("/projects")
+async def create_project_endpoint(req: ProjectCreateRequest):
+    project_id = create_project(req.name, req.owner, req.due_date)
+    return {"id": project_id, "status": "created"}
+
+
+@app.patch("/projects/{project_id}/status")
+async def update_project_status_endpoint(project_id: int, req: ProjectStatusRequest):
+    ok = update_project_status(project_id, req.status)
+    if not ok:
+        raise HTTPException(status_code=404, detail="해당 프로젝트를 찾을 수 없습니다.")
+    return {"status": req.status}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

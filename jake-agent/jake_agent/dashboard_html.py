@@ -34,6 +34,47 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cost-act.deactivate { background: rgba(248,113,113,0.18); color: #f87171; }
   .cost-act.activate { background: rgba(74,222,128,0.18); color: #4ade80; }
 
+  .header-btn {
+    font-size: 11px; color: #9fb4c4; background: rgba(95,240,255,0.06);
+    border: 1px solid rgba(95,240,255,0.2); border-radius: 14px; padding: 4px 11px;
+    cursor: pointer; margin-left: 8px;
+  }
+  .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
+
+  #projectPanel, #auditPanel, #permPanel {
+    position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
+    background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
+  }
+  #projectPanel.show, #auditPanel.show, #permPanel.show { display: block; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+
+  #projectForm { display: flex; gap: 6px; margin-bottom: 12px; }
+  #projectForm input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 6px; color: #e6e6e6; font-size: 11.5px; padding: 6px 8px; }
+  #projectForm button { background: rgba(95,240,255,0.18); color: #5ff0ff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11.5px; cursor: pointer; font-weight: 600; }
+  #projectForm button:hover { filter: brightness(1.25); }
+
+  .proj-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 12px; }
+  .proj-row .top { display: flex; justify-content: space-between; align-items: center; }
+  .proj-row .name { color: #c5cdd6; font-weight: 700; }
+  .proj-row .meta { color: #5a7184; font-size: 10.5px; margin-top: 3px; }
+  .proj-row .prog { color: #4ade80; font-size: 10.5px; }
+  .proj-status { border: none; border-radius: 10px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; }
+  .proj-status.active { background: rgba(95,240,255,0.15); color: #5ff0ff; }
+  .proj-status.done { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .proj-status.paused { background: rgba(148,163,184,0.15); color: #c5cdd6; }
+
+  .audit-row { background: rgba(20,28,40,0.6); border: 1px solid rgba(95,240,255,0.1); border-radius: 9px; padding: 8px 10px; margin-bottom: 7px; font-size: 11.5px; color: #9fb4c4; }
+  .audit-row .route { color: #6b7d8f; font-weight: 700; font-size: 11.5px; margin-bottom: 3px; }
+  .audit-row .time { color: #44546a; font-size: 10px; }
+
+  #permTable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  #permTable th { text-align: left; color: #5a7184; font-size: 9.5px; letter-spacing: 0.5px; padding: 5px 4px; border-bottom: 1px solid rgba(95,240,255,0.15); }
+  #permTable td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cdd6; }
+  #permTable .pname { font-weight: 700; }
+  #permTable .pname.inactive { color: #f87171; text-decoration: line-through; }
+  #permNote { font-size: 10px; color: #5a7184; margin-top: 10px; line-height: 1.5; }
+
   #contentionBanner {
     display: none; max-width: 1300px; margin: 0 auto 14px; padding: 8px 14px;
     background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); border-radius: 8px;
@@ -200,6 +241,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h1>ALPHA SQUAD</h1>
   <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
   <div class="cost-widget" id="costWidget">💰 <span id="costValue">—</span> 이번달</div>
+  <button class="header-btn" id="projectBtn">📁 프로젝트</button>
+  <button class="header-btn" id="auditBtn">📜 감사로그</button>
+  <button class="header-btn" id="permBtn">🔐 권한</button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -207,6 +251,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h3>💰 이번 달 API 비용</h3>
   <div id="costBody"></div>
   <div id="costNote"></div>
+</div>
+
+<div id="projectPanel">
+  <h3>📁 프로젝트</h3>
+  <div id="projectForm">
+    <input type="text" id="projectNameInput" placeholder="새 프로젝트명">
+    <button id="projectAddBtn">생성</button>
+  </div>
+  <div id="projectBody"></div>
+</div>
+
+<div id="auditPanel">
+  <h3>📜 감사 로그 — 삭제 처리된 작업</h3>
+  <div id="auditBody"></div>
+</div>
+
+<div id="permPanel">
+  <h3>🔐 권한 매트릭스</h3>
+  <table id="permTable">
+    <thead><tr><th>페르소나</th><th>보고대상</th><th>위임 가능</th><th>상태</th></tr></thead>
+    <tbody id="permBody"></tbody>
+  </table>
+  <div id="permNote">현재 모든 활성 페르소나는 다른 모든 활성 페르소나에게 업무를 위임할 수 있습니다(부서간 제한 없음). 해임된 페르소나는 대화/위임 요청을 모두 거부합니다.</div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -731,20 +798,148 @@ pollContention();
 setInterval(pollContention, 6000);
 
 // ── 해임된 페르소나 카드 표시 ──────────────────────────────
+let activeMapCache = {};
 async function pollActiveMap() {
   try {
     const res = await fetch('/personas/active_map');
     const data = await res.json();
-    const active = data.active || {};
+    activeMapCache = data.active || {};
     MEMBERS.forEach(name => {
       const el = document.getElementById('card-' + name);
       if (!el) return;
-      el.classList.toggle('inactive-persona', active[name] === false);
+      el.classList.toggle('inactive-persona', activeMapCache[name] === false);
     });
+    if (permPanel.classList.contains('show')) renderPermTable();
   } catch (e) { /* ignore */ }
 }
 pollActiveMap();
 setInterval(pollActiveMap, 8000);
+
+// ── 프로젝트 패널 ────────────────────────────────────────
+const projectBtn = document.getElementById('projectBtn');
+const projectPanel = document.getElementById('projectPanel');
+const projectBody = document.getElementById('projectBody');
+const projectNameInput = document.getElementById('projectNameInput');
+const projectAddBtn = document.getElementById('projectAddBtn');
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('ko-KR');
+}
+
+async function pollProjects() {
+  try {
+    const res = await fetch('/projects');
+    const data = await res.json();
+    const list = data.projects || [];
+    projectBody.innerHTML = list.map(p => {
+      const pct = p.total_tasks > 0 ? Math.round(p.done_tasks / p.total_tasks * 100) : 0;
+      return '<div class="proj-row" data-id="' + p.id + '">' +
+        '<div class="top"><span class="name">' + esc(p.name) + '</span>' +
+        '<select class="proj-status ' + p.status + '" data-id="' + p.id + '">' +
+        '<option value="active"' + (p.status === 'active' ? ' selected' : '') + '>진행중</option>' +
+        '<option value="paused"' + (p.status === 'paused' ? ' selected' : '') + '>보류</option>' +
+        '<option value="done"' + (p.status === 'done' ? ' selected' : '') + '>완료</option>' +
+        '</select></div>' +
+        '<div class="meta">담당: ' + esc(p.owner) + (p.due_date ? ' · 마감: ' + fmtDate(p.due_date) : '') + '</div>' +
+        '<div class="prog">진행률: ' + p.done_tasks + '/' + p.total_tasks + ' (' + pct + '%)</div>' +
+        '</div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">등록된 프로젝트가 없습니다</div>';
+
+    projectBody.querySelectorAll('.proj-status').forEach(sel => {
+      sel.addEventListener('change', async (e) => {
+        e.stopPropagation();
+        await fetch('/projects/' + sel.dataset.id + '/status', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: sel.value })
+        });
+        pollProjects();
+      });
+    });
+  } catch (e) { projectBody.textContent = '불러오기 실패'; }
+}
+
+projectAddBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const name = projectNameInput.value.trim();
+  if (!name) return;
+  await fetch('/projects', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, owner: '제이크' })
+  });
+  projectNameInput.value = '';
+  pollProjects();
+});
+
+projectBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show');
+  projectPanel.classList.toggle('show');
+  if (projectPanel.classList.contains('show')) pollProjects();
+});
+document.addEventListener('click', (e) => {
+  if (!projectPanel.contains(e.target) && !projectBtn.contains(e.target)) projectPanel.classList.remove('show');
+});
+setInterval(() => { if (projectPanel.classList.contains('show')) pollProjects(); }, 15000);
+
+// ── 감사 로그 패널 ───────────────────────────────────────
+const auditBtn = document.getElementById('auditBtn');
+const auditPanel = document.getElementById('auditPanel');
+const auditBody = document.getElementById('auditBody');
+
+async function pollAudit() {
+  try {
+    const res = await fetch('/activity/archived');
+    const data = await res.json();
+    const list = data.tasks || [];
+    auditBody.innerHTML = list.map(t =>
+      '<div class="audit-row"><div class="route">' + esc(t.from) + ' → ' + esc(t.to || '미배정') + '</div>' +
+      esc(t.title) + '<div class="time">' + new Date(t.timestamp).toLocaleString('ko-KR') + ' · 삭제 처리됨 (status: ' + t.status + ')</div></div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">보관된 항목이 없습니다</div>';
+  } catch (e) { auditBody.textContent = '불러오기 실패'; }
+}
+
+auditBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show');
+  auditPanel.classList.toggle('show');
+  if (auditPanel.classList.contains('show')) pollAudit();
+});
+document.addEventListener('click', (e) => {
+  if (!auditPanel.contains(e.target) && !auditBtn.contains(e.target)) auditPanel.classList.remove('show');
+});
+
+// ── 권한 매트릭스 패널 ───────────────────────────────────
+const permBtn = document.getElementById('permBtn');
+const permPanel = document.getElementById('permPanel');
+const permBody = document.getElementById('permBody');
+
+function reportsTo(name) {
+  if (name === '제이크') return 'CEO';
+  if (SUB_REPORTS[name]) return SUB_REPORTS[name];
+  return '제이크';
+}
+
+function renderPermTable() {
+  const names = ['제이크', ...MEMBERS];
+  permBody.innerHTML = names.map(name => {
+    const active = activeMapCache[name] !== false;
+    return '<tr><td class="pname' + (active ? '' : ' inactive') + '">' + esc(name) + '</td>' +
+      '<td>' + esc(reportsTo(name)) + '</td>' +
+      '<td>' + (active ? '전체 활성 페르소나' : '—') + '</td>' +
+      '<td>' + (active ? '✅ 활성' : '🚫 해임') + '</td></tr>';
+  }).join('');
+}
+
+permBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
+  permPanel.classList.toggle('show');
+  if (permPanel.classList.contains('show')) renderPermTable();
+});
+document.addEventListener('click', (e) => {
+  if (!permPanel.contains(e.target) && !permBtn.contains(e.target)) permPanel.classList.remove('show');
+});
 
 async function poll() {
   try {
