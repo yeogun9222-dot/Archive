@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -98,8 +98,9 @@ class PersonaChatRequest(BaseModel):
 async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
     """VSCode 확장에서 특정 페르소나와 직접 대화하는 엔드포인트"""
     if persona_name not in PERSONAS:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+    if not is_persona_active(persona_name):
+        raise HTTPException(status_code=403, detail=f"{persona_name}은(는) 현재 비활성화(해임) 상태입니다. 대시보드에서 재고용 처리가 필요합니다.")
 
     history = get_chat_history(persona_name, limit=20)
     messages_history = [{"role": m["role"], "content": m["content"]} for m in history]
@@ -255,6 +256,34 @@ async def activity_health():
 async def cost_summary():
     """월비용 대시보드 — 토큰 비용만 집계 (GCP 등 미포함, 명시적 안내)"""
     return get_cost_summary()
+
+
+@app.get("/personas/active_map")
+async def personas_active_map():
+    return {"active": get_persona_active_map()}
+
+
+@app.post("/personas/{persona_name}/deactivate")
+async def deactivate_persona(persona_name: str):
+    """비용 승인 게이트 — 페르소나 비활성화(해임). 프론트에서 비용 확인 후 호출."""
+    if persona_name not in PERSONAS:
+        raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+    set_persona_active(persona_name, False, updated_by="대표님")
+    return {"status": "deactivated", "persona": persona_name}
+
+
+@app.post("/personas/{persona_name}/activate")
+async def activate_persona(persona_name: str):
+    if persona_name not in PERSONAS:
+        raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
+    set_persona_active(persona_name, True, updated_by="대표님")
+    return {"status": "activated", "persona": persona_name}
+
+
+@app.get("/activity/contention")
+async def activity_contention():
+    """워크플로 충돌 감지 — 동일 인물에게 미해결 작업 2건 이상 쌓인 경우"""
+    return {"contention": get_contention_personas()}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

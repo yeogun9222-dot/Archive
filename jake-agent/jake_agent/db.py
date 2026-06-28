@@ -69,6 +69,14 @@ def init_db():
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS delegated_by TEXT")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS persona_status (
+            persona TEXT PRIMARY KEY,
+            active BOOLEAN DEFAULT TRUE,
+            updated_at TIMESTAMP DEFAULT NOW(),
+            updated_by TEXT
+        )
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -266,6 +274,54 @@ def get_task_health() -> dict:
     return {"overdue": overdue, "unassigned": unassigned}
 
 
+def is_persona_active(persona: str) -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT active FROM persona_status WHERE persona = %s", (persona,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row[0] if row else True  # 등록 안 된 페르소나는 기본 활성
+
+
+def set_persona_active(persona: str, active: bool, updated_by: str = "대표님") -> None:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO persona_status (persona, active, updated_at, updated_by) VALUES (%s, %s, NOW(), %s)
+        ON CONFLICT (persona) DO UPDATE SET active = %s, updated_at = NOW(), updated_by = %s
+    """, (persona, active, updated_by, active, updated_by))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_persona_active_map() -> dict:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT persona, active FROM persona_status")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
+def get_contention_personas() -> list:
+    """워크플로 충돌 감지 — 동일 페르소나에게 미해결(pending/failed) 작업이 2건 이상 쌓인 경우"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT assigned_to, COUNT(*) FROM tasks
+        WHERE archived = FALSE AND status IN ('pending', 'failed') AND assigned_to IS NOT NULL
+        GROUP BY assigned_to HAVING COUNT(*) >= 2
+        ORDER BY COUNT(*) DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [{"persona": r[0], "count": r[1]} for r in rows]
+
+
 def get_cost_summary() -> dict:
     """대시보드 월비용 요약 — token_usage 기반 (루나 도구와 동일 단가: input $3/output $15 per 1M)"""
     conn = get_conn()
@@ -291,7 +347,12 @@ def get_cost_summary() -> dict:
     def cost(inp, out):
         return round((inp / 1_000_000 * 3) + (out / 1_000_000 * 15), 4)
 
-    by_persona = [{"persona": r[0] or "제이크", "input_tokens": r[1], "output_tokens": r[2], "cost": cost(r[1], r[2])} for r in rows]
+    active_map = get_persona_active_map()
+    by_persona = [
+        {"persona": r[0] or "제이크", "input_tokens": r[1], "output_tokens": r[2], "cost": cost(r[1], r[2]),
+         "active": active_map.get(r[0] or "제이크", True)}
+        for r in rows
+    ]
     total = round(sum(p["cost"] for p in by_persona), 4)
     prev_cost = cost(prev[0], prev[1]) if prev else 0
     return {

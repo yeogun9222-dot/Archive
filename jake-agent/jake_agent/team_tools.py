@@ -4,7 +4,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
-from .db import save_chat_message, create_task, update_task
+from .db import save_chat_message, create_task, update_task, is_persona_active
 from .telegram import notify_delegation
 
 # 현재 도구를 호출 중인 페르소나 — graph.py의 tool_exec_node에서 매 호출 전 설정
@@ -72,6 +72,8 @@ def delegate_task(member: str, task: str) -> str:
     """
     if member not in PERSONAS:
         return f"[위임 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
+    if not is_persona_active(member):
+        return f"[위임 불가] {member}은(는) 현재 비활성화(해임) 상태입니다."
 
     caller = current_caller.get()
     # DB에 태스크 생성

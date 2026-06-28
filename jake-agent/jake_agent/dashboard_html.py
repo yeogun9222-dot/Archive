@@ -27,8 +27,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #costPanel.show { display: block; }
   #costPanel h3 { font-size: 12px; color: #ffd76a; margin-bottom: 10px; }
   .cost-row { display: flex; justify-content: space-between; font-size: 12px; color: #c5cdd6; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .cost-row .name { color: #9fb4c4; }
+  .cost-row .name { color: #9fb4c4; flex: 1; }
   .cost-row .val { color: #ffd76a; font-weight: 600; }
+  .cost-row.inactive { opacity: 0.5; }
+  .cost-act { margin-left: 8px; border: none; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor: pointer; font-weight: 600; }
+  .cost-act.deactivate { background: rgba(248,113,113,0.18); color: #f87171; }
+  .cost-act.activate { background: rgba(74,222,128,0.18); color: #4ade80; }
+
+  #contentionBanner {
+    display: none; max-width: 1300px; margin: 0 auto 14px; padding: 8px 14px;
+    background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); border-radius: 8px;
+    font-size: 12px; color: #fbbf24; text-align: center; position: relative; z-index: 4;
+  }
+  #contentionBanner.show { display: block; }
   #costNote { font-size: 10px; color: #5a7184; margin-top: 10px; line-height: 1.5; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -86,6 +97,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .card.active .avatar { background: radial-gradient(circle, #b7ffcf, #4ade80) !important; box-shadow: 0 0 16px rgba(74,222,128,0.6); }
   .card.active .info .name { color: #4ade80; }
+  .card.inactive-persona { opacity: 0.35; filter: grayscale(0.6); }
+  .card.inactive-persona::after {
+    content: '해임됨'; position: absolute; bottom: -6px; right: 8px; font-size: 8.5px;
+    color: #f87171; background: rgba(8,12,20,0.9); padding: 1px 5px; border-radius: 4px;
+  }
 
   #log {
     position: fixed; right: 0; top: 0; bottom: 0; width: 320px; z-index: 10;
@@ -192,6 +208,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="costBody"></div>
   <div id="costNote"></div>
 </div>
+
+<div id="contentionBanner"></div>
 
 <div id="chart">
   <svg id="lines"></svg>
@@ -643,6 +661,14 @@ const costPanel = document.getElementById('costPanel');
 const costBody = document.getElementById('costBody');
 const costNote = document.getElementById('costNote');
 
+async function personaAction(name, action) {
+  try {
+    const res = await fetch('/personas/' + name + '/' + action, { method: 'POST' });
+    if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.detail || '처리 실패'); return; }
+    pollCost(); pollStatusMap();
+  } catch (e) { alert('처리 실패: ' + e.message); }
+}
+
 async function pollCost() {
   try {
     const res = await fetch('/cost/summary');
@@ -650,10 +676,31 @@ async function pollCost() {
     costValue.textContent = '$' + data.total_this_month.toFixed(2);
     const diff = data.total_this_month - data.prev_month;
     const diffStr = data.prev_month > 0 ? (diff >= 0 ? ' (+$' + diff.toFixed(2) + ')' : ' (-$' + Math.abs(diff).toFixed(2) + ')') : '';
-    costBody.innerHTML = data.by_persona.map(p =>
-      '<div class="cost-row"><span class="name">' + esc(p.persona) + '</span><span class="val">$' + p.cost.toFixed(4) + '</span></div>'
-    ).join('') || '<div style="color:#34465a;font-size:11px;">집계된 사용량 없음</div>';
+    costBody.innerHTML = data.by_persona.map(p => {
+      const isJake = p.persona === '제이크';
+      const btn = isJake ? '' : (p.active
+        ? '<button class="cost-act deactivate" data-name="' + p.persona + '">해임</button>'
+        : '<button class="cost-act activate" data-name="' + p.persona + '">재고용</button>');
+      return '<div class="cost-row' + (p.active ? '' : ' inactive') + '"><span class="name">' + esc(p.persona) + (p.active ? '' : ' (비활성)') + '</span>' +
+        '<span class="val">$' + p.cost.toFixed(4) + '</span>' + btn + '</div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">집계된 사용량 없음</div>';
     costNote.textContent = data.note + (diffStr ? (' 전월 대비' + diffStr) : '');
+
+    costBody.querySelectorAll('.cost-act').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const name = btn.dataset.name;
+        if (btn.classList.contains('deactivate')) {
+          const row = btn.closest('.cost-row');
+          const cost = row.querySelector('.val').textContent;
+          if (!confirm(name + '을 해임(비활성화)합니다.\n이번달 누적 비용: ' + cost + '\n비활성화하면 해당 페르소나는 모든 대화/위임 요청을 거부합니다. 계속할까요?')) return;
+          personaAction(name, 'deactivate');
+        } else {
+          if (!confirm(name + '을 재고용(활성화)할까요?')) return;
+          personaAction(name, 'activate');
+        }
+      });
+    });
   } catch (e) { costValue.textContent = '오류'; }
 }
 costWidget.addEventListener('click', (e) => {
@@ -665,6 +712,39 @@ document.addEventListener('click', (e) => {
 });
 pollCost();
 setInterval(pollCost, 30000);
+
+// ── 워크플로 충돌 우선순위 배너 ──────────────────────────────
+const contentionBanner = document.getElementById('contentionBanner');
+async function pollContention() {
+  try {
+    const res = await fetch('/activity/contention');
+    const data = await res.json();
+    const list = data.contention || [];
+    if (list.length === 0) { contentionBanner.classList.remove('show'); return; }
+    contentionBanner.innerHTML = '⚠️ 업무 과부하 — ' +
+      list.map(c => c.persona + '(' + c.count + '건 대기)').join(', ') +
+      ' — 처리 순서를 검토해주세요.';
+    contentionBanner.classList.add('show');
+  } catch (e) { /* ignore */ }
+}
+pollContention();
+setInterval(pollContention, 6000);
+
+// ── 해임된 페르소나 카드 표시 ──────────────────────────────
+async function pollActiveMap() {
+  try {
+    const res = await fetch('/personas/active_map');
+    const data = await res.json();
+    const active = data.active || {};
+    MEMBERS.forEach(name => {
+      const el = document.getElementById('card-' + name);
+      if (!el) return;
+      el.classList.toggle('inactive-persona', active[name] === false);
+    });
+  } catch (e) { /* ignore */ }
+}
+pollActiveMap();
+setInterval(pollActiveMap, 8000);
 
 async function poll() {
   try {
