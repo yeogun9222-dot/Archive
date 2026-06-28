@@ -777,7 +777,12 @@ async function pollCost() {
     costRangeLabel.textContent = data.period;
     const diff = data.total_this_month - data.prev_month;
     const diffStr = data.prev_month > 0 ? (diff >= 0 ? ' (+$' + diff.toFixed(2) + ')' : ' (-$' + Math.abs(diff).toFixed(2) + ')') : '';
-    costBreakdown.innerHTML = 'API 자동집계: $' + data.api_total.toFixed(2) + ' · 수동입력: $' + data.manual_total.toFixed(2) + ' · 합계: $' + data.total_this_month.toFixed(2);
+    const gcp = data.gcp_auto || {};
+    const gcpStr = gcp.available
+      ? ('GCP 실사용량(BigQuery 자동집계): $' + gcp.net_cost_usd.toFixed(2))
+      : ('GCP 자동집계 대기 중 (' + (gcp.reason || '미설정') + ')');
+    costBreakdown.innerHTML = 'API 자동집계: $' + data.api_total.toFixed(2) + ' · 수동입력: $' + data.manual_total.toFixed(2) +
+      ' · 합계: $' + data.total_this_month.toFixed(2) + '<br><span style="font-size:10.5px;">' + esc(gcpStr) + '</span>';
 
     costBody.innerHTML = data.by_persona.map(p => {
       const isJake = p.persona === '제이크';

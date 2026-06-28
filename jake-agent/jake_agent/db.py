@@ -529,17 +529,28 @@ def get_cost_summary() -> dict:
     prev_cost = round(sum(cost(inp, out, model) for model, inp, out in prev_rows), 4)
 
     manual = get_manual_costs_this_month()
-    manual_total = round(sum(m["amount_usd"] for m in manual), 4)
+
+    # GCP 실사용량이 BigQuery로 자동집계되면, 추정값인 manual_costs의 "GCP" 항목은
+    # 이중집계를 막기 위해 합계에서 제외하고 실제 자동집계값으로 대체
+    from .gcp_billing import get_gcp_billing_cost_this_month
+    gcp_auto = get_gcp_billing_cost_this_month()
+    if gcp_auto.get("available"):
+        manual_for_total = [m for m in manual if "GCP" not in m["label"].upper()]
+    else:
+        manual_for_total = manual
+    manual_total = round(sum(m["amount_usd"] for m in manual_for_total), 4)
+    gcp_auto_cost = gcp_auto.get("net_cost_usd", 0) if gcp_auto.get("available") else 0
 
     return {
         "period": f"{month_start.isoformat()} ~ {month_end.isoformat()}",
         "api_total": api_total,
         "manual_total": manual_total,
-        "total_this_month": round(api_total + manual_total, 4),
+        "gcp_auto": gcp_auto,
+        "total_this_month": round(api_total + manual_total + gcp_auto_cost, 4),
         "prev_month": prev_cost,
         "by_persona": by_persona,
         "manual_costs": manual,
-        "note": f"by_persona는 jake-agent 전용 Anthropic API 키(콘솔 과금) 사용량을 모델별 단가(Sonnet $3/$15, Haiku $1/$5 per 1M)로 자동 환산한 추정치 — 실제 청구서와 약간 다를 수 있어 정확한 값은 console.anthropic.com에서 확인 후 manual_costs로 보정 가능. Claude Code Pro/Gemini Pro 등 별도 구독료는 자동집계 대상이 아니므로 manual_costs에 정기 항목으로 직접 추가하세요(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환산). '정기' 항목은 매달 자동 합산됨."
+        "note": f"by_persona는 jake-agent 전용 Anthropic API 키(콘솔 과금) 사용량을 모델별 단가(Sonnet $3/$15, Haiku $1/$5 per 1M)로 자동 환산한 추정치 — 실제 청구서와 약간 다를 수 있어 정확한 값은 console.anthropic.com에서 확인 후 manual_costs로 보정 가능. Claude Code Pro/Gemini Pro 등 별도 구독료는 자동집계 대상이 아니므로 manual_costs에 정기 항목으로 직접 추가하세요(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환산). 'gcp_auto'가 available이면 GCP 실사용량이 BigQuery에서 자동집계되어 manual_costs의 GCP 항목 대신 사용됨."
     }
 
 
