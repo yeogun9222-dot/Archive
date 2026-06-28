@@ -47,6 +47,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background-color: #161c26; color: #e6e6e6;
   }
 
+  #cardChatPanel {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%); width: 380px; max-height: 70vh; overflow-y: auto;
+    background: rgba(12,16,24,0.98); border: 1px solid rgba(95,240,255,0.35); border-radius: 12px;
+    box-shadow: 0 10px 44px rgba(0,0,0,0.65); padding: 16px; display: none; z-index: 60;
+  }
+  #cardChatPanel.show { display: block; }
+  #cardChatPanel .chead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  #cardChatPanel .chead .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; background: linear-gradient(160deg, #3a4654, #232b35); }
+  #cardChatPanel .chead .cname { font-size: 14px; font-weight: 700; color: #5ff0ff; }
+  #cardChatPanel .chead .crole { font-size: 10.5px; color: #6b7d8f; }
+  #cardChatPanel .cstatus { font-size: 11px; color: #9fb4c4; margin: 8px 0 12px; padding: 6px 9px; background: rgba(255,255,255,0.03); border-radius: 7px; }
+  #cardChatPanel .cstatus.inactive { color: #f87171; }
+  #cardChatInput { width: 100%; min-height: 64px; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; color: #e6e6e6; font-size: 12.5px; padding: 9px; resize: vertical; font-family: inherit; }
+  #cardChatSendRow { display: flex; justify-content: flex-end; margin-top: 8px; }
+  #cardChatSendBtn { background: rgba(95,240,255,0.18); color: #5ff0ff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  #cardChatSendBtn:hover { filter: brightness(1.25); }
+  #cardChatSendBtn:disabled { opacity: 0.5; cursor: default; }
+  #cardChatLog { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+  .cchat-msg { padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
+  .cchat-msg.user { background: rgba(95,240,255,0.08); color: #c5cdd6; }
+  .cchat-msg.assistant { background: rgba(255,255,255,0.04); color: #c5cdd6; }
+  .cchat-msg .who { font-size: 10px; color: #5a7184; margin-bottom: 3px; }
+
   #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
@@ -165,6 +188,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
   .info .name { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
   .info .role { font-size: 10.5px; color: #6b7d8f; }
+
+  .card.coo, .card.member { cursor: pointer; }
+  .card.coo:hover, .card.member:hover { border-color: rgba(95,240,255,0.45); }
 
   .card.ceo { padding: 16px 26px; border-color: rgba(255,215,106,0.4); }
   .card.ceo .avatar { width: 46px; height: 46px; background: radial-gradient(circle, #ffe9a8, #ffd76a); box-shadow: 0 0 16px rgba(255,215,106,0.5); }
@@ -439,6 +465,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="legend-row"><span class="legend-swatch lg-inactive"></span>흐릿한 회색조 + "해임됨" — 비활성화된 페르소나</div>
   </div>
   <div id="legendNote" style="font-size:10px; color:#5a7184; margin-top:6px; line-height:1.5;">①과 ②는 서로 다른 신호입니다 — ①은 "지금 일하는지", ②는 "쌓여서 확인이 필요한 게 있는지"를 의미합니다.</div>
+</div>
+
+<div id="cardChatPanel">
+  <div class="chead">
+    <div class="avatar" id="ccAvatar"></div>
+    <div><div class="cname" id="ccName"></div><div class="crole" id="ccRole"></div></div>
+  </div>
+  <div class="cstatus" id="ccStatus"></div>
+  <textarea id="cardChatInput" placeholder="지금 바로 1:1 업무 지시를 입력하세요..."></textarea>
+  <div id="cardChatSendRow"><button id="cardChatSendBtn">전송</button></div>
+  <div id="cardChatLog"></div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -1071,11 +1108,13 @@ setInterval(pollActiveMap, 8000);
 
 // ── 카드 하단 실시간 활동 상태바 — 작업중/협업중/오류/대기(표시 없음) ──────
 const ACTIVITY_LABEL = { working: '작업중', delegating: '위임중', discussing: '협업중', error: '오류', idle: '' };
+let activityMapCache = {};
 async function pollActivityMap() {
   try {
     const res = await fetch('/personas/activity_map');
     const data = await res.json();
     const activity = data.activity || {};
+    activityMapCache = activity;
     ['제이크', ...MEMBERS].forEach(name => {
       const bar = document.getElementById('actbar-' + name);
       if (!bar) return;
@@ -1149,7 +1188,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -1212,7 +1251,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -1244,7 +1283,7 @@ function renderPermTable() {
 
 permBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   permPanel.classList.toggle('show');
   if (permPanel.classList.contains('show')) renderPermTable();
 });
@@ -1301,7 +1340,7 @@ document.getElementById('perfTabAll').addEventListener('click', (e) => {
 
 perfBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   perfPanel.classList.toggle('show');
   if (perfPanel.classList.contains('show')) pollPerformance();
 });
@@ -1345,7 +1384,7 @@ document.getElementById('decAddBtn').addEventListener('click', async (e) => {
 
 decBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   decPanel.classList.toggle('show');
   if (decPanel.classList.contains('show')) pollDecisions();
 });
@@ -1374,7 +1413,7 @@ async function pollBottlenecks() {
 
 bnBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   bnPanel.classList.toggle('show');
   if (bnPanel.classList.contains('show')) pollBottlenecks();
 });
@@ -1389,14 +1428,104 @@ const legendArrow = document.getElementById('legendArrow');
 
 legendBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   legendPanel.classList.toggle('show');
   legendArrow.textContent = legendPanel.classList.contains('show') ? '▴' : '▾';
 });
 document.addEventListener('click', (e) => {
   if (!legendPanel.contains(e.target) && !legendBtn.contains(e.target)) {
-    legendPanel.classList.remove('show');
+    legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
     legendArrow.textContent = '▾';
+  }
+});
+
+// ── 카드 클릭 → 1:1 즉시 메시지 패널 ──────────────────────
+const cardChatPanel = document.getElementById('cardChatPanel');
+const ccAvatar = document.getElementById('ccAvatar');
+const ccName = document.getElementById('ccName');
+const ccRole = document.getElementById('ccRole');
+const ccStatus = document.getElementById('ccStatus');
+const cardChatInput = document.getElementById('cardChatInput');
+const cardChatSendBtn = document.getElementById('cardChatSendBtn');
+const cardChatLog = document.getElementById('cardChatLog');
+let currentCardTarget = null;
+
+async function openCardChat(name) {
+  currentCardTarget = name;
+  ccAvatar.textContent = name === '제이크' ? '🧠' : ICONS[name];
+  ccName.textContent = name;
+  ccRole.textContent = name === '제이크' ? 'COO' : ROLES[name];
+  cardChatInput.value = '';
+  cardChatLog.innerHTML = '<div style="color:#34465a;font-size:11px;">불러오는 중...</div>';
+
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
+  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
+  cardChatPanel.classList.add('show');
+
+  const active = activeMapCache[name] !== false;
+  const act = activityMapCache[name];
+  ccStatus.className = 'cstatus' + (active ? '' : ' inactive');
+  ccStatus.textContent = active
+    ? ('활성' + (act && act.activity_type !== 'idle' ? (' · ' + (ACTIVITY_LABEL[act.activity_type] || act.activity_type) + (act.counterpart ? ' (' + act.counterpart + '와)' : '')) : ' · 대기 중'))
+    : '비활성화(해임) 상태 — 메시지를 보내도 응답을 거부합니다.';
+
+  try {
+    const res = await fetch('/history/' + name + '?limit=10');
+    const data = await res.json();
+    renderCardChatLog(data.messages || []);
+  } catch (e) { cardChatLog.innerHTML = '<div style="color:#34465a;font-size:11px;">대화 기록을 불러오지 못했습니다.</div>'; }
+}
+
+function renderCardChatLog(messages) {
+  cardChatLog.innerHTML = messages.map(m =>
+    '<div class="cchat-msg ' + m.role + '"><div class="who">' + (m.role === 'user' ? '대표님' : currentCardTarget) + ' · ' + new Date(m.timestamp).toLocaleString('ko-KR') + '</div>' + esc(m.content) + '</div>'
+  ).join('') || '<div style="color:#34465a;font-size:11px;">대화 기록 없음</div>';
+  cardChatLog.scrollTop = cardChatLog.scrollHeight;
+}
+
+cardChatSendBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const message = cardChatInput.value.trim();
+  if (!message || !currentCardTarget) return;
+  cardChatSendBtn.disabled = true; cardChatSendBtn.textContent = '전송 중...';
+  cardChatLog.innerHTML += '<div class="cchat-msg user"><div class="who">대표님</div>' + esc(message) + '</div>';
+  cardChatLog.scrollTop = cardChatLog.scrollHeight;
+  try {
+    const res = await fetch('/chat/persona/' + currentCardTarget, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, persona: currentCardTarget, source: 'dashboard' })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      cardChatLog.innerHTML += '<div class="cchat-msg assistant" style="color:#f87171;">' + esc(err.detail || '응답 실패') + '</div>';
+    } else {
+      const data = await res.json();
+      cardChatLog.innerHTML += '<div class="cchat-msg assistant"><div class="who">' + currentCardTarget + '</div>' + esc(data.response) + '</div>';
+    }
+  } catch (e) {
+    cardChatLog.innerHTML += '<div class="cchat-msg assistant" style="color:#f87171;">전송 실패: ' + e.message + '</div>';
+  }
+  cardChatInput.value = '';
+  cardChatSendBtn.disabled = false; cardChatSendBtn.textContent = '전송';
+  cardChatLog.scrollTop = cardChatLog.scrollHeight;
+  pollAttention(); pollStatusMap();
+});
+
+cardChatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) cardChatSendBtn.click();
+});
+
+chart.addEventListener('click', (e) => {
+  const cardEl = e.target.closest('.card.member, .card.coo');
+  if (!cardEl) return;
+  const name = cardEl.id.replace('card-', '');
+  openCardChat(name);
+});
+
+document.addEventListener('click', (e) => {
+  if (!cardChatPanel.contains(e.target) && !e.target.closest('.card.member, .card.coo')) {
+    cardChatPanel.classList.remove('show');
   }
 });
 
