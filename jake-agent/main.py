@@ -10,7 +10,8 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row
+from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
@@ -197,6 +198,45 @@ async def activity_recent(since_id: int = 0):
 async def activity_attention():
     """대시보드 종 아이콘용 — 미완료(failed/pending) 작업 목록"""
     return {"tasks": get_attention_tasks(limit=50)}
+
+
+@app.get("/activity/status_map")
+async def activity_status_map():
+    """대시보드 카드 배지용 — 각 페르소나의 최신 작업 상태"""
+    return {"statuses": get_persona_statuses()}
+
+
+@app.post("/activity/{task_id}/approve")
+async def approve_task(task_id: int):
+    ok = update_task_status_guarded(task_id, "approved", ["pending", "completed", "failed", "held"])
+    if not ok:
+        raise HTTPException(status_code=409, detail="상태가 이미 변경되어 승인할 수 없습니다. 새로고침 후 다시 시도하세요.")
+    return {"status": "approved"}
+
+
+@app.post("/activity/{task_id}/hold")
+async def hold_task(task_id: int):
+    ok = update_task_status_guarded(task_id, "held", ["pending", "failed"])
+    if not ok:
+        raise HTTPException(status_code=409, detail="상태가 이미 변경되어 보류할 수 없습니다. 새로고침 후 다시 시도하세요.")
+    return {"status": "held"}
+
+
+@app.post("/activity/{task_id}/resume")
+async def resume_task(task_id: int):
+    """보류 해제 — 다시 pending으로"""
+    ok = update_task_status_guarded(task_id, "pending", ["held"])
+    if not ok:
+        raise HTTPException(status_code=409, detail="보류 상태가 아니라 재개할 수 없습니다.")
+    return {"status": "pending"}
+
+
+@app.delete("/activity/{task_id}")
+async def delete_task_endpoint(task_id: int):
+    ok = delete_task_row(task_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
+    return {"status": "deleted"}
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

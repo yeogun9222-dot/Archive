@@ -94,7 +94,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 0 6px rgba(248,113,113,0.7);
   }
   .bell-badge.show { display: flex; }
-  .card.ceo { position: relative; }
+  .card { position: relative; }
+  .status-badge {
+    position: absolute; top: -7px; left: -7px; width: 19px; height: 19px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center; font-size: 10px;
+    border: 1.5px solid #0a0d14; z-index: 4;
+  }
+  .status-badge.show { display: flex; }
+  .status-badge.st-pending { background: #fbbf24; color: #2a1d00; }
+  .status-badge.st-completed { background: #4ade80; color: #052e16; }
+  .status-badge.st-failed { background: #f87171; color: #2a0a0a; }
+  .status-badge.st-held { background: #6b7d8f; color: #fff; }
+  .status-badge.st-approved { background: #5ff0ff; color: #052e30; }
 
   #attentionPanel {
     position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-10px);
@@ -115,6 +126,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .att-item .text { color: #c5cdd6; line-height: 1.4; }
   .att-item .text.brief { color: #9fb4c4; font-size: 11px; }
   #attentionEmpty { color: #34465a; font-size: 12px; text-align: center; padding: 20px 0; }
+  .att-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .act-btn { border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  .act-btn.approve { background: rgba(74,222,128,0.18); color: #4ade80; }
+  .act-btn.hold { background: rgba(107,125,143,0.25); color: #c5cdd6; }
+  .act-btn.delete { background: rgba(248,113,113,0.15); color: #f87171; margin-left: auto; }
+  .act-btn:hover { filter: brightness(1.3); }
 </style>
 </head>
 <body>
@@ -133,13 +150,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <span class="bell-icon">🔔</span>
         <span class="bell-badge" id="bellBadge">0</span>
       </div>
-      <div class="avatar">👑</div>
+      <div class="status-badge" id="badge-대표님"></div>
+      <div class="avatar">🧑‍💼</div>
       <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
     </div>
   </div>
 
   <div class="level level-coo">
     <div class="card coo" id="card-제이크">
+      <div class="status-badge" id="badge-제이크"></div>
       <div class="avatar">🧠</div>
       <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
     </div>
@@ -167,6 +186,11 @@ const ROLES = {
   "피오":"백엔드본부장","리리":"프론트엔드본부장","에바":"UXR본부장","사라":"UXR팀장",
   "미나":"CRO본부장","카이":"GTM본부장","설리":"QA본부장","노바":"DevOps팀장"
 };
+const ICONS = {
+  "다인":"📋","렉스":"🤖","루나":"💰","제로":"🛡️","바쿠":"📊",
+  "피오":"🛠️","리리":"🎨","에바":"🔬","사라":"🧪",
+  "미나":"📈","카이":"🚀","설리":"🔎","노바":"⚙️"
+};
 const ALL_NAMES = ["대표님", "제이크", ...MEMBERS];
 
 const membersEl = document.getElementById('members');
@@ -174,7 +198,7 @@ MEMBERS.forEach(name => {
   const div = document.createElement('div');
   div.className = 'card member';
   div.id = 'card-' + name;
-  div.innerHTML = '<div class="avatar">👤</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div>';
+  div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div>';
   membersEl.appendChild(div);
 });
 
@@ -284,12 +308,57 @@ function renderEvent(ev) {
   while (eventsEl.children.length > 30) eventsEl.removeChild(eventsEl.lastChild);
 }
 
-// ── 종 아이콘: 미완료(failed/pending) 작업 ──────────────────
+// ── 카드 상태 배지 (정적 표시, 산만한 깜빡임 없음 — 리리 검수 반영) ──
+const STATUS_ICON = { pending: '⏳', completed: '✓', failed: '!', held: '⏸', approved: '✓' };
+async function pollStatusMap() {
+  try {
+    const res = await fetch('/activity/status_map');
+    const data = await res.json();
+    const statuses = data.statuses || {};
+    ALL_NAMES.forEach(name => {
+      const el = document.getElementById('badge-' + name);
+      if (!el) return;
+      const st = statuses[name];
+      if (!st) { el.classList.remove('show'); return; }
+      el.className = 'status-badge show st-' + st;
+      el.textContent = STATUS_ICON[st] || '';
+      el.title = st;
+    });
+  } catch (e) { /* ignore */ }
+}
+pollStatusMap();
+setInterval(pollStatusMap, 4000);
+
+// ── 종 아이콘: 미완료(failed/pending/held) 작업 ─────────────
 const bellWrap = document.getElementById('bellWrap');
 const bellBadge = document.getElementById('bellBadge');
 const attentionPanel = document.getElementById('attentionPanel');
 const attentionBody = document.getElementById('attentionBody');
 const attentionEmpty = document.getElementById('attentionEmpty');
+
+async function taskAction(id, action, method) {
+  try {
+    const res = await fetch('/activity/' + id + (action ? '/' + action : ''), { method });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || '처리 실패. 새로고침 후 다시 시도하세요.');
+      return;
+    }
+    pollAttention(); pollStatusMap();
+  } catch (e) { alert('처리 실패: ' + e.message); }
+}
+
+function actionButtons(t, status) {
+  let btns = '';
+  if (status === 'failed' || status === 'pending') {
+    btns += '<button class="act-btn approve" data-id="' + t.id + '" data-act="approve">승인</button>';
+    btns += '<button class="act-btn hold" data-id="' + t.id + '" data-act="hold">보류</button>';
+  } else if (status === 'held') {
+    btns += '<button class="act-btn approve" data-id="' + t.id + '" data-act="resume">재개</button>';
+  }
+  btns += '<button class="act-btn delete" data-id="' + t.id + '" data-act="delete">삭제</button>';
+  return '<div class="att-actions">' + btns + '</div>';
+}
 
 async function pollAttention() {
   try {
@@ -298,19 +367,20 @@ async function pollAttention() {
     const tasks = data.tasks || [];
     const failed = tasks.filter(t => t.status === 'failed');
     const pending = tasks.filter(t => t.status === 'pending');
+    const held = tasks.filter(t => t.status === 'held');
     const count = failed.length + pending.length;
     bellBadge.textContent = count;
     bellBadge.classList.toggle('show', count > 0);
 
     attentionBody.innerHTML = '';
-    attentionEmpty.style.display = count === 0 ? 'block' : 'none';
+    attentionEmpty.style.display = (failed.length + pending.length + held.length) === 0 ? 'block' : 'none';
 
     if (failed.length > 0) {
       attentionBody.innerHTML += '<div class="sec-label">⛔ 실패 — 확인 필요</div>';
       failed.forEach(t => {
         attentionBody.innerHTML +=
           '<div class="att-item failed"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text">' + esc(t.result || t.title) + '</div></div>';
+          '<div class="text">' + esc(t.result || t.title) + '</div>' + actionButtons(t, 'failed') + '</div>';
       });
     }
     if (pending.length > 0) {
@@ -318,9 +388,30 @@ async function pollAttention() {
       pending.forEach(t => {
         attentionBody.innerHTML +=
           '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text brief">' + esc(t.title) + '</div></div>';
+          '<div class="text brief">' + esc(t.title) + '</div>' + actionButtons(t, 'pending') + '</div>';
       });
     }
+    if (held.length > 0) {
+      attentionBody.innerHTML += '<div class="sec-label">⏸ 보류 중</div>';
+      held.forEach(t => {
+        attentionBody.innerHTML +=
+          '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
+          '<div class="text brief">' + esc(t.title) + '</div>' + actionButtons(t, 'held') + '</div>';
+      });
+    }
+
+    attentionBody.querySelectorAll('.act-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id, act = btn.dataset.act;
+        if (act === 'delete') {
+          if (!confirm('이 작업을 영구적으로 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+          taskAction(id, '', 'DELETE');
+        } else {
+          taskAction(id, act, 'POST');
+        }
+      });
+    });
   } catch (e) { /* ignore */ }
 }
 

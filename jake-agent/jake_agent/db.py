@@ -143,12 +143,12 @@ def log_conversation(agent: str, message: str, task_id: int = None):
     conn.close()
 
 def get_attention_tasks(limit: int = 50) -> list:
-    """대시보드 종 아이콘용 — 미완료(failed/pending) 작업 전체 조회 (since_id 무관)"""
+    """대시보드 종 아이콘용 — 미완료/보류(failed/pending/held) 작업 전체 조회 (since_id 무관)"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
         """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
-           FROM tasks WHERE status IN ('failed', 'pending') ORDER BY id DESC LIMIT %s""",
+           FROM tasks WHERE status IN ('failed', 'pending', 'held') ORDER BY id DESC LIMIT %s""",
         (limit,)
     )
     rows = cur.fetchall()
@@ -162,6 +162,50 @@ def get_attention_tasks(limit: int = 50) -> list:
         }
         for r in rows
     ]
+
+
+def get_persona_statuses() -> dict:
+    """각 페르소나의 가장 최근 작업 상태 (대시보드 카드 배지용)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DISTINCT ON (persona) persona, status, id FROM (
+            SELECT assigned_to AS persona, status, id FROM tasks WHERE assigned_to IS NOT NULL
+            UNION ALL
+            SELECT delegated_by AS persona, status, id FROM tasks WHERE delegated_by IS NOT NULL
+        ) t
+        ORDER BY persona, id DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
+def update_task_status_guarded(task_id: int, new_status: str, expected_statuses: list) -> bool:
+    """동시 변경 충돌 방지 — 현재 상태가 expected_statuses 중 하나일 때만 갱신"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE tasks SET status=%s, updated_at=NOW() WHERE id=%s AND status = ANY(%s) RETURNING id",
+        (new_status, task_id, expected_statuses)
+    )
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
+
+
+def delete_task_row(task_id: int) -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM tasks WHERE id = %s RETURNING id", (task_id,))
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
 
 
 def get_pending_tasks():
