@@ -100,6 +100,17 @@ def init_db():
         )
     """)
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS decision_log (
+            id SERIAL PRIMARY KEY,
+            category TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            reason TEXT,
+            decided_by TEXT,
+            related_task_id INTEGER,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
             label TEXT NOT NULL,
@@ -411,6 +422,41 @@ def get_persona_performance(period: str = "month") -> list:
     return result
 
 
+def create_decision(category: str, summary: str, reason: str = None, decided_by: str = "대표님", related_task_id: int = None) -> int:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO decision_log (category, summary, reason, decided_by, related_task_id)
+           VALUES (%s, %s, %s, %s, %s) RETURNING id""",
+        (category, summary, reason, decided_by, related_task_id)
+    )
+    decision_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return decision_id
+
+
+def get_decisions(limit: int = 100) -> list:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, category, summary, reason, decided_by, related_task_id, created_at
+           FROM decision_log ORDER BY id DESC LIMIT %s""",
+        (limit,)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {
+            "id": r[0], "category": r[1], "summary": r[2], "reason": r[3] or "",
+            "decided_by": r[4] or "대표님", "related_task_id": r[5], "created_at": r[6].isoformat()
+        }
+        for r in rows
+    ]
+
+
 def is_persona_active(persona: str) -> bool:
     conn = get_conn()
     cur = conn.cursor()
@@ -689,6 +735,16 @@ def update_project_status(project_id: int, status: str) -> bool:
     cur.close()
     conn.close()
     return row is not None
+
+
+def get_project_name(project_id: int) -> str:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM projects WHERE id = %s", (project_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row[0] if row else f"#{project_id}"
 
 
 def get_pending_tasks():

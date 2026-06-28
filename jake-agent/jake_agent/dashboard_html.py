@@ -41,13 +41,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel {
+  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show { display: block; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show { display: block; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .dec-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 11.5px; }
+  .dec-row .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .dec-row .cat { font-size: 9.5px; color: #5ff0ff; background: rgba(95,240,255,0.12); border-radius: 8px; padding: 1px 7px; }
+  .dec-row .time { color: #44546a; font-size: 10px; }
+  .dec-row .summary { color: #c5cdd6; font-weight: 700; margin-bottom: 3px; }
+  .dec-row .reason { color: #9fb4c4; line-height: 1.4; }
+  .dec-row .by { color: #5a7184; font-size: 10px; margin-top: 4px; }
 
   #projectForm { display: flex; gap: 6px; margin-bottom: 12px; }
   #projectForm input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 6px; color: #e6e6e6; font-size: 11.5px; padding: 6px 8px; }
@@ -280,6 +288,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
   <button class="header-btn" id="permBtn">🔐 권한</button>
   <button class="header-btn" id="perfBtn">📊 성과</button>
+  <button class="header-btn" id="decBtn">📝 의사결정</button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -347,6 +356,25 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <tbody id="perfBody"></tbody>
   </table>
   <div id="perfNote" style="font-size:10px; color:#5a7184; margin-top:10px; line-height:1.5;">완료율=완료/전체, 기한준수율=완료된 작업 중 due_date 이내 처리 비율(기한 없는 작업은 제외), 실패율=재작업 발생 지표.</div>
+</div>
+
+<div id="decPanel">
+  <h3>📝 의사결정 이력</h3>
+  <div id="decForm" style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+    <div style="display:flex; gap:6px;">
+      <select id="decCategoryInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px 8px;">
+        <option value="전략">전략</option>
+        <option value="예산">예산</option>
+        <option value="인사">인사</option>
+        <option value="프로젝트">프로젝트</option>
+        <option value="기타">기타</option>
+      </select>
+      <input type="text" id="decSummaryInput" placeholder="결정 내용" style="flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px 8px;">
+    </div>
+    <textarea id="decReasonInput" placeholder="이유/맥락 (선택)" rows="2" style="background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px 8px; resize:vertical;"></textarea>
+    <button id="decAddBtn" style="background:rgba(95,240,255,0.18); color:#5ff0ff; border:none; border-radius:6px; padding:6px 11px; font-size:11px; cursor:pointer; font-weight:600; align-self:flex-end;">기록</button>
+  </div>
+  <div id="decBody"></div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -827,9 +855,12 @@ const manualAmountInput = document.getElementById('manualAmountInput');
 const manualDateInput = document.getElementById('manualDateInput');
 const manualAddBtn = document.getElementById('manualAddBtn');
 
-async function personaAction(name, action) {
+async function personaAction(name, action, reason) {
   try {
-    const res = await fetch('/personas/' + name + '/' + action, { method: 'POST' });
+    const res = await fetch('/personas/' + name + '/' + action, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || null })
+    });
     if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.detail || '처리 실패'); return; }
     pollCost(); pollStatusMap();
   } catch (e) { alert('처리 실패: ' + e.message); }
@@ -883,10 +914,12 @@ async function pollCost() {
             '삭제되지 않는 것: 기존 대화기록, 처리했던 작업기록, 이번달 누적 비용(' + cost + ')은 전부 그대로 보존됩니다.\\n' +
             '되돌리는 방법: 같은 패널의 "재고용" 버튼을 누르면 즉시 모든 기능이 복구됩니다 (데이터 손실 없음).\\n\\n계속할까요?'
           )) return;
-          personaAction(name, 'deactivate');
+          const deactivateReason = prompt('해임 이유를 입력하세요 (의사결정 이력에 기록됩니다, 비워두면 미기록)', '') || '';
+          personaAction(name, 'deactivate', deactivateReason);
         } else {
           if (!confirm(name + '을 재고용(활성화)할까요? 즉시 대화/위임 요청을 다시 받습니다.')) return;
-          personaAction(name, 'activate');
+          const activateReason = prompt('재고용 이유를 입력하세요 (선택)', '') || '';
+          personaAction(name, 'activate', activateReason);
         }
       });
     });
@@ -1044,7 +1077,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -1107,7 +1140,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -1139,7 +1172,7 @@ function renderPermTable() {
 
 permBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   permPanel.classList.toggle('show');
   if (permPanel.classList.contains('show')) renderPermTable();
 });
@@ -1196,12 +1229,56 @@ document.getElementById('perfTabAll').addEventListener('click', (e) => {
 
 perfBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show');
   perfPanel.classList.toggle('show');
   if (perfPanel.classList.contains('show')) pollPerformance();
 });
 document.addEventListener('click', (e) => {
   if (!perfPanel.contains(e.target) && !perfBtn.contains(e.target)) perfPanel.classList.remove('show');
+});
+
+// ── 의사결정 이력 패널 ───────────────────────────────────
+const decBtn = document.getElementById('decBtn');
+const decPanel = document.getElementById('decPanel');
+const decBody = document.getElementById('decBody');
+
+async function pollDecisions() {
+  try {
+    const res = await fetch('/decisions');
+    const data = await res.json();
+    const list = data.decisions || [];
+    decBody.innerHTML = list.map(d =>
+      '<div class="dec-row"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
+      '<div class="summary">' + esc(d.summary) + '</div>' +
+      (d.reason ? '<div class="reason">' + esc(d.reason) + '</div>' : '') +
+      '<div class="by">결정: ' + esc(d.decided_by) + '</div></div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">기록된 의사결정이 없습니다</div>';
+  } catch (e) { decBody.textContent = '불러오기 실패'; }
+}
+
+document.getElementById('decAddBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const category = document.getElementById('decCategoryInput').value;
+  const summary = document.getElementById('decSummaryInput').value.trim();
+  const reason = document.getElementById('decReasonInput').value.trim();
+  if (!summary) { alert('결정 내용을 입력하세요.'); return; }
+  await fetch('/decisions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category, summary, reason: reason || null })
+  });
+  document.getElementById('decSummaryInput').value = '';
+  document.getElementById('decReasonInput').value = '';
+  pollDecisions();
+});
+
+decBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show');
+  decPanel.classList.toggle('show');
+  if (decPanel.classList.contains('show')) pollDecisions();
+});
+document.addEventListener('click', (e) => {
+  if (!decPanel.contains(e.target) && !decBtn.contains(e.target)) decPanel.classList.remove('show');
 });
 
 async function poll() {

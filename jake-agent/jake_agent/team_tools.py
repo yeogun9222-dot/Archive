@@ -5,7 +5,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
-from .db import save_chat_message, create_task, update_task, is_persona_active, set_persona_activity, clear_persona_activity
+from .db import save_chat_message, create_task, update_task, is_persona_active, set_persona_activity, clear_persona_activity, create_decision
 from .telegram import notify_delegation, notify_discussion
 from .monitor import log_token_usage
 
@@ -202,6 +202,9 @@ def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
 
     task_id = create_task(title=f"{member}↔{caller} 1:1 논의: {topic[:60]}", instruction=topic, assigned_to=member, delegated_by=caller)
     update_task(task_id, "completed", f"[{status}]\n{summary}")
+
+    if resolved:
+        create_decision("협업합의", f"{member}↔{caller}: {topic[:80]}", summary[:1500], decided_by=f"{member},{caller}", related_task_id=task_id)
 
     notify_discussion(caller, member, topic, summary, status)
     clear_persona_activity(caller)

@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -275,20 +275,44 @@ async def personas_performance(period: str = "month"):
     return {"performance": get_persona_performance(period)}
 
 
+class DecisionRequest(BaseModel):
+    category: str
+    summary: str
+    reason: Optional[str] = None
+
+
+@app.get("/decisions")
+async def list_decisions(limit: int = 100):
+    """의사결정 이력 — 해임/재고용/프로젝트 상태변경은 자동 기록, 그 외는 수동 기록"""
+    return {"decisions": get_decisions(limit)}
+
+
+@app.post("/decisions")
+async def add_decision(req: DecisionRequest):
+    decision_id = create_decision(req.category, req.summary, req.reason, decided_by="대표님")
+    return {"id": decision_id, "status": "created"}
+
+
+class PersonaStatusRequest(BaseModel):
+    reason: Optional[str] = None
+
+
 @app.post("/personas/{persona_name}/deactivate")
-async def deactivate_persona(persona_name: str):
+async def deactivate_persona(persona_name: str, req: PersonaStatusRequest = PersonaStatusRequest()):
     """비용 승인 게이트 — 페르소나 비활성화(해임). 프론트에서 비용 확인 후 호출."""
     if persona_name not in PERSONAS:
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
     set_persona_active(persona_name, False, updated_by="대표님")
+    create_decision("인사", f"{persona_name} 해임(비활성화)", req.reason, decided_by="대표님")
     return {"status": "deactivated", "persona": persona_name}
 
 
 @app.post("/personas/{persona_name}/activate")
-async def activate_persona(persona_name: str):
+async def activate_persona(persona_name: str, req: PersonaStatusRequest = PersonaStatusRequest()):
     if persona_name not in PERSONAS:
         raise HTTPException(status_code=404, detail=f"페르소나 없음: {persona_name}")
     set_persona_active(persona_name, True, updated_by="대표님")
+    create_decision("인사", f"{persona_name} 재고용(활성화)", req.reason, decided_by="대표님")
     return {"status": "activated", "persona": persona_name}
 
 
@@ -324,6 +348,10 @@ async def update_project_status_endpoint(project_id: int, req: ProjectStatusRequ
     ok = update_project_status(project_id, req.status)
     if not ok:
         raise HTTPException(status_code=404, detail="해당 프로젝트를 찾을 수 없습니다.")
+    if req.status in ("done", "paused"):
+        name = get_project_name(project_id)
+        label = "완료" if req.status == "done" else "보류"
+        create_decision("프로젝트", f"'{name}' 프로젝트 {label} 처리", decided_by="대표님")
     return {"status": req.status}
 
 
