@@ -205,6 +205,7 @@ def tool_exec_node(state: JakeState) -> JakeState:
     loop_msgs = state["loop_msgs"]
     last_msg = loop_msgs[-1]
     tool_results = []
+    persona = state.get("persona", "제이크")
 
     for tc in last_msg.tool_calls:
         tool_name = tc["name"]
@@ -213,6 +214,9 @@ def tool_exec_node(state: JakeState) -> JakeState:
 
         if tool_name in TOOL_MAP:
             try:
+                if tool_name == "delegate_task":
+                    from .team_tools import current_caller
+                    current_caller.set(persona)
                 result = TOOL_MAP[tool_name].invoke(tool_args)
                 result_str = str(result)
             except Exception as e:

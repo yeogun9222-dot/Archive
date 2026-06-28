@@ -37,6 +37,14 @@ def notify_jake_response(user_input: str, jake_reply: str, tasks: list):
     )
     return send_message(message)
 
+def notify_delegation(from_member: str, to_member: str, task: str, response: str):
+    message = (
+        f"🔄 *팀원 간 위임* {from_member} → {to_member}\n\n"
+        f"📌 *요청:*\n{task[:200]}\n\n"
+        f"💬 *{to_member} 응답:*\n{response[:500]}{'...' if len(response) > 500 else ''}"
+    )
+    return send_message(message)
+
 def notify_startup():
     message = (
         "✅ *Jake Orchestrator 시작됨*\n\n"

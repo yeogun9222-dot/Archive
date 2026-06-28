@@ -1,9 +1,14 @@
 import os
+from contextvars import ContextVar
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
 from .db import save_chat_message, create_task, update_task
+from .telegram import notify_delegation
+
+# 현재 도구를 호출 중인 페르소나 — graph.py의 tool_exec_node에서 매 호출 전 설정
+current_caller: ContextVar[str] = ContextVar("current_caller", default="제이크")
 
 
 def _consult_member(member_name: str, question: str) -> str:
@@ -88,6 +93,7 @@ def delegate_task(member: str, task: str) -> str:
         update_task(task_id, "completed", response)
         save_chat_message(member, "user", f"[위임 업무] {task}", source="delegation")
         save_chat_message(member, "assistant", response, source="delegation")
+        notify_delegation(current_caller.get(), member, task, response)
         return f"[{member} 완료 보고]\n{response}"
     except Exception as e:
         update_task(task_id, "failed", str(e))
