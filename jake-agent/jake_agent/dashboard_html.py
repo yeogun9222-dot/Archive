@@ -1103,8 +1103,14 @@ async function pollCost() {
     const gcpStr = gcp.available
       ? ('GCP 실사용량(BigQuery 자동집계): $' + gcp.net_cost_usd.toFixed(2))
       : ('GCP 자동집계 대기 중 (' + (gcp.reason || '미설정') + ')');
-    costBreakdown.innerHTML = 'API 자동집계: $' + data.api_total.toFixed(2) + ' · 수동입력: $' + data.manual_total.toFixed(2) +
-      ' · 합계: $' + data.total_this_month.toFixed(2) + '<br><span style="font-size:10.5px;">' + esc(gcpStr) + '</span>';
+    const anth = data.anthropic_auto || {};
+    const anthStr = anth.available
+      ? ('Anthropic 실제 청구액(Cost Report 자동집계): $' + anth.actual_cost_usd.toFixed(2) + ' — 합계에 추정치 대신 이 값 사용 중')
+      : ('Anthropic 실청구 자동집계 대기 중 (' + (anth.reason || '미설정') + ') — 현재는 토큰 추정치 사용');
+    costBreakdown.innerHTML = 'API 자동집계(추정): $' + data.api_total.toFixed(2) + ' · 수동입력: $' + data.manual_total.toFixed(2) +
+      ' · 합계: $' + data.total_this_month.toFixed(2) +
+      '<br><span style="font-size:10.5px;">' + esc(anthStr) + '</span>' +
+      '<br><span style="font-size:10.5px;">' + esc(gcpStr) + '</span>';
 
     costBody.innerHTML = data.by_persona.map(p => {
       const isJake = p.persona === '제이크';
