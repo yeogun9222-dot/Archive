@@ -43,21 +43,21 @@ def _get_persona_tools(persona: str) -> list:
 
     mapping = {
         "제이크": notion + web + external + team + google + github + luna + zero + rex,
-        "렉스":   rex + zero + web + github,
-        "루나":   luna + web,
-        "제로":   zero + web + rex,
-        "다인":   notion + web + google,
-        "바쿠":   luna + web,
-        "피오":   github + web + luna,
-        "리리":   github + web,
-        "에바":   notion + web,
-        "사라":   notion + web,
-        "미나":   web + luna,
-        "카이":   web,
-        "설리":   github + web + rex,
-        "노바":   rex + github + web,
+        "렉스":   rex + zero + web + github + team,
+        "루나":   luna + web + team,
+        "제로":   zero + web + rex + team,
+        "다인":   notion + web + google + team,
+        "바쿠":   luna + web + team,
+        "피오":   github + web + luna + team,
+        "리리":   github + web + team,
+        "에바":   notion + web + team,
+        "사라":   notion + web + team,
+        "미나":   web + luna + team,
+        "카이":   web + team,
+        "설리":   github + web + rex + team,
+        "노바":   rex + github + web + team,
     }
-    return mapping.get(persona, web)
+    return mapping.get(persona, web + team)
 
 
 class JakeState(TypedDict):
