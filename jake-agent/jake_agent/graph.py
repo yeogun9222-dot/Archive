@@ -172,6 +172,7 @@ def agent_node(state: JakeState) -> JakeState:
             persona,
             response.usage_metadata.get("input_tokens", 0),
             response.usage_metadata.get("output_tokens", 0),
+            model="claude-sonnet-4-6",
         )
 
     tasks_created = state.get("tasks_created", [])

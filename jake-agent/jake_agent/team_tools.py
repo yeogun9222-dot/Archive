@@ -7,6 +7,9 @@ from langchain_core.tools import tool
 from .personas import PERSONAS
 from .db import save_chat_message, create_task, update_task, is_persona_active
 from .telegram import notify_delegation, notify_discussion
+from .monitor import log_token_usage
+
+HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
 # 현재 도구를 호출 중인 페르소나 — graph.py의 tool_exec_node에서 매 호출 전 설정
 current_caller: ContextVar[str] = ContextVar("current_caller", default="제이크")
@@ -31,7 +34,7 @@ def _consult_member(member_name: str, question: str) -> str:
     system_prompt = persona_info["system"] + consult_instruction
 
     llm = ChatAnthropic(
-        model="claude-haiku-4-5-20251001",
+        model=HAIKU_MODEL,
         api_key=os.getenv("ANTHROPIC_API_KEY"),
         max_tokens=400,
     )
@@ -39,6 +42,15 @@ def _consult_member(member_name: str, question: str) -> str:
         SystemMessage(content=system_prompt),
         HumanMessage(content=question),
     ])
+    # 그룹회의(consult_team)/1:1논의(discuss_with)는 별도 그래프 없이 여기서 직접 호출하므로
+    # graph.py의 자동 토큰 기록 경로를 타지 않음 — 누락되지 않도록 여기서 직접 기록
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        log_token_usage(
+            member_name,
+            response.usage_metadata.get("input_tokens", 0),
+            response.usage_metadata.get("output_tokens", 0),
+            model=HAIKU_MODEL,
+        )
     return response.content.strip()
 
 

@@ -472,7 +472,7 @@ def delete_manual_cost(cost_id: int) -> bool:
 
 
 def get_cost_summary() -> dict:
-    """대시보드 월비용 요약 — Anthropic 토큰 자동집계(input $3/output $15 per 1M) + 수동 입력 비용(Gemini/GCP VM 등) 합산.
+    """대시보드 월비용 요약 — Anthropic 토큰 자동집계(모델별 단가 적용) + 수동 입력 비용(구독료/GCP VM 등) 합산.
     기간은 모호한 '이번달'이 아니라 이번 달 1일 ~ 말일(현지 서버 기준) 정확한 날짜로 명시."""
     import calendar
     now = datetime.now()
@@ -480,37 +480,53 @@ def get_cost_summary() -> dict:
     last_day = calendar.monthrange(now.year, now.month)[1]
     month_end = now.replace(day=last_day).date()
 
+    # 모델별 단가(1M 토큰당, USD) — Sonnet 4.6: $3/$15, Haiku 4.5: $1/$5
+    # consult_team/discuss_with(그룹회의·1:1논의)는 Haiku를 쓰므로 Sonnet 단가를 그대로 적용하면 과대 산정됨
+    MODEL_RATES = {
+        "claude-sonnet-4-6": (3, 15),
+        "claude-haiku-4-5-20251001": (1, 5),
+    }
+    DEFAULT_RATE = (3, 15)
+
+    def cost(inp, out, model=None):
+        rate_in, rate_out = MODEL_RATES.get(model, DEFAULT_RATE)
+        return round((inp / 1_000_000 * rate_in) + (out / 1_000_000 * rate_out), 4)
+
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT agent, COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+        SELECT agent, model, COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
         FROM token_usage
         WHERE created_at >= date_trunc('month', NOW())
-        GROUP BY agent ORDER BY SUM(input_tokens + output_tokens) DESC
+        GROUP BY agent, model
     """)
     rows = cur.fetchall()
 
     cur.execute("""
-        SELECT COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+        SELECT model, COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
         FROM token_usage
         WHERE created_at >= date_trunc('month', NOW() - INTERVAL '1 month')
           AND created_at < date_trunc('month', NOW())
+        GROUP BY model
     """)
-    prev = cur.fetchone()
+    prev_rows = cur.fetchall()
     cur.close()
     conn.close()
 
-    def cost(inp, out):
-        return round((inp / 1_000_000 * 3) + (out / 1_000_000 * 15), 4)
-
     active_map = get_persona_active_map()
-    by_persona = [
-        {"persona": r[0] or "제이크", "input_tokens": r[1], "output_tokens": r[2], "cost": cost(r[1], r[2]),
-         "active": active_map.get(r[0] or "제이크", True)}
-        for r in rows
-    ]
+    persona_agg = {}
+    for agent, model, inp, out in rows:
+        name = agent or "제이크"
+        entry = persona_agg.setdefault(name, {"persona": name, "input_tokens": 0, "output_tokens": 0, "cost": 0.0})
+        entry["input_tokens"] += inp
+        entry["output_tokens"] += out
+        entry["cost"] = round(entry["cost"] + cost(inp, out, model), 4)
+    by_persona = sorted(
+        [{**v, "active": active_map.get(v["persona"], True)} for v in persona_agg.values()],
+        key=lambda p: p["cost"], reverse=True
+    )
     api_total = round(sum(p["cost"] for p in by_persona), 4)
-    prev_cost = cost(prev[0], prev[1]) if prev else 0
+    prev_cost = round(sum(cost(inp, out, model) for model, inp, out in prev_rows), 4)
 
     manual = get_manual_costs_this_month()
     manual_total = round(sum(m["amount_usd"] for m in manual), 4)
@@ -523,7 +539,7 @@ def get_cost_summary() -> dict:
         "prev_month": prev_cost,
         "by_persona": by_persona,
         "manual_costs": manual,
-        "note": f"by_persona는 Anthropic API 토큰 비용 자동집계. manual_costs는 Claude 콘솔 실청구/Gemini/GCP VM 등 직접 입력한 값(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환율로 환산, 실제 환율과 다를 수 있음). '정기' 항목은 매달 자동 합산됨."
+        "note": f"by_persona는 jake-agent 전용 Anthropic API 키(콘솔 과금) 사용량을 모델별 단가(Sonnet $3/$15, Haiku $1/$5 per 1M)로 자동 환산한 추정치 — 실제 청구서와 약간 다를 수 있어 정확한 값은 console.anthropic.com에서 확인 후 manual_costs로 보정 가능. Claude Code Pro/Gemini Pro 등 별도 구독료는 자동집계 대상이 아니므로 manual_costs에 정기 항목으로 직접 추가하세요(원화 입력 시 1USD={round(1/USD_PER_KRW)}원 근사 환산). '정기' 항목은 매달 자동 합산됨."
     }
 
 

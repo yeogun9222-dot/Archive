@@ -84,19 +84,20 @@ def ensure_token_table():
                 api_error TEXT
             )
         """)
+        cur.execute("ALTER TABLE token_usage ADD COLUMN IF NOT EXISTS model TEXT DEFAULT 'claude-sonnet-4-6'")
         conn.commit()
         cur.close()
         conn.close()
     except Exception:
         pass
 
-def log_token_usage(agent: str, input_tokens: int, output_tokens: int, error: str = None):
+def log_token_usage(agent: str, input_tokens: int, output_tokens: int, error: str = None, model: str = "claude-sonnet-4-6"):
     try:
         conn = get_conn()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO token_usage (agent, input_tokens, output_tokens, api_error) VALUES (%s, %s, %s, %s)",
-            (agent, input_tokens, output_tokens, error)
+            "INSERT INTO token_usage (agent, input_tokens, output_tokens, api_error, model) VALUES (%s, %s, %s, %s, %s)",
+            (agent, input_tokens, output_tokens, error, model)
         )
         conn.commit()
         cur.close()
