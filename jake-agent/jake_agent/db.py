@@ -370,6 +370,47 @@ def get_task_health() -> dict:
     return {"overdue": overdue, "unassigned": unassigned}
 
 
+def get_persona_performance(period: str = "month") -> list:
+    """성과 추적 — 완료율/기한준수율/실패율(재작업 지표)/평균 처리시간.
+    archived 여부와 무관하게 이력 전체를 집계 대상으로 함(평가는 영구 기록이어야 함)."""
+    period_clause = "AND created_at >= date_trunc('month', NOW())" if period == "month" else ""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(f"""
+        SELECT
+            assigned_to,
+            COUNT(*) AS total,
+            COUNT(*) FILTER (WHERE status IN ('completed', 'approved')) AS completed,
+            COUNT(*) FILTER (WHERE status = 'failed') AS failed,
+            COUNT(*) FILTER (WHERE status IN ('completed', 'approved') AND due_date IS NOT NULL AND updated_at <= due_date) AS on_time,
+            COUNT(*) FILTER (WHERE status IN ('completed', 'approved') AND due_date IS NOT NULL AND updated_at > due_date) AS late,
+            AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600.0) FILTER (WHERE status IN ('completed', 'approved')) AS avg_hours
+        FROM tasks
+        WHERE assigned_to IS NOT NULL {period_clause}
+        GROUP BY assigned_to
+        ORDER BY total DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    result = []
+    for r in rows:
+        persona, total, completed, failed, on_time, late, avg_hours = r
+        deadline_total = on_time + late
+        result.append({
+            "persona": persona,
+            "total": total,
+            "completed": completed,
+            "failed": failed,
+            "completion_rate": round(completed / total, 3) if total else 0,
+            "failure_rate": round(failed / total, 3) if total else 0,
+            "deadline_adherence": round(on_time / deadline_total, 3) if deadline_total else None,
+            "avg_hours": round(float(avg_hours), 2) if avg_hours is not None else None,
+        })
+    return result
+
+
 def is_persona_active(persona: str) -> bool:
     conn = get_conn()
     cur = conn.cursor()

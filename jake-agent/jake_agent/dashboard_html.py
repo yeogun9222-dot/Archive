@@ -41,13 +41,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
 
-  #projectPanel, #auditPanel, #permPanel {
+  #projectPanel, #auditPanel, #permPanel, #perfPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show { display: block; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show { display: block; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
 
   #projectForm { display: flex; gap: 6px; margin-bottom: 12px; }
   #projectForm input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(95,240,255,0.2); border-radius: 6px; color: #e6e6e6; font-size: 11.5px; padding: 6px 8px; }
@@ -68,12 +68,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .audit-row .route { color: #6b7d8f; font-weight: 700; font-size: 11.5px; margin-bottom: 3px; }
   .audit-row .time { color: #44546a; font-size: 10px; }
 
-  #permTable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
-  #permTable th { text-align: left; color: #5a7184; font-size: 9.5px; letter-spacing: 0.5px; padding: 5px 4px; border-bottom: 1px solid rgba(95,240,255,0.15); }
-  #permTable td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cdd6; }
+  #permTable, #perfTable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  #permTable th, #perfTable th { text-align: left; color: #5a7184; font-size: 9.5px; letter-spacing: 0.5px; padding: 5px 4px; border-bottom: 1px solid rgba(95,240,255,0.15); }
+  #permTable td, #perfTable td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cdd6; }
   #permTable .pname { font-weight: 700; }
   #permTable .pname.inactive { color: #f87171; text-decoration: line-through; }
   #permNote { font-size: 10px; color: #5a7184; margin-top: 10px; line-height: 1.5; }
+  #perfTable .perf-bad { color: #f87171; }
+  #perfTable .perf-warn { color: #fbbf24; }
+  #perfTable .perf-good { color: #4ade80; }
 
   #contentionBanner {
     display: none; max-width: 1300px; margin: 0 auto 14px; padding: 8px 14px;
@@ -276,6 +279,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="projectBtn">📁 프로젝트</button>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
   <button class="header-btn" id="permBtn">🔐 권한</button>
+  <button class="header-btn" id="perfBtn">📊 성과</button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -330,6 +334,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <tbody id="permBody"></tbody>
   </table>
   <div id="permNote">현재 모든 활성 페르소나는 다른 모든 활성 페르소나에게 업무를 위임할 수 있습니다(부서간 제한 없음). 해임된 페르소나는 대화/위임 요청을 모두 거부합니다.</div>
+</div>
+
+<div id="perfPanel">
+  <h3>📊 성과 추적</h3>
+  <div id="perfTabs" style="display:flex; gap:5px; margin-bottom:10px;">
+    <button class="tab active" data-period="month" id="perfTabMonth">이번달</button>
+    <button class="tab" data-period="all" id="perfTabAll">전체기간</button>
+  </div>
+  <table id="perfTable">
+    <thead><tr><th>페르소나</th><th>총건수</th><th>완료율</th><th>기한준수율</th><th>실패율</th><th>평균처리(h)</th></tr></thead>
+    <tbody id="perfBody"></tbody>
+  </table>
+  <div id="perfNote" style="font-size:10px; color:#5a7184; margin-top:10px; line-height:1.5;">완료율=완료/전체, 기한준수율=완료된 작업 중 due_date 이내 처리 비율(기한 없는 작업은 제외), 실패율=재작업 발생 지표.</div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -1027,7 +1044,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -1090,7 +1107,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -1122,12 +1139,69 @@ function renderPermTable() {
 
 permBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show');
   permPanel.classList.toggle('show');
   if (permPanel.classList.contains('show')) renderPermTable();
 });
 document.addEventListener('click', (e) => {
   if (!permPanel.contains(e.target) && !permBtn.contains(e.target)) permPanel.classList.remove('show');
+});
+
+// ── 성과 추적 패널 ───────────────────────────────────────
+const perfBtn = document.getElementById('perfBtn');
+const perfPanel = document.getElementById('perfPanel');
+const perfBody = document.getElementById('perfBody');
+let perfPeriod = 'month';
+
+function perfClass(val, goodMin, warnMin) {
+  if (val === null || val === undefined) return '';
+  if (val >= goodMin) return 'perf-good';
+  if (val >= warnMin) return 'perf-warn';
+  return 'perf-bad';
+}
+
+async function pollPerformance() {
+  try {
+    const res = await fetch('/personas/performance?period=' + perfPeriod);
+    const data = await res.json();
+    const list = data.performance || [];
+    perfBody.innerHTML = list.map(p => {
+      const compPct = Math.round(p.completion_rate * 100);
+      const failPct = Math.round(p.failure_rate * 100);
+      const deadlinePct = p.deadline_adherence === null ? '—' : Math.round(p.deadline_adherence * 100) + '%';
+      const deadlineClass = p.deadline_adherence === null ? '' : perfClass(p.deadline_adherence, 0.85, 0.6);
+      return '<tr><td class="pname">' + esc(p.persona) + '</td><td>' + p.total + '</td>' +
+        '<td class="' + perfClass(p.completion_rate, 0.85, 0.6) + '">' + compPct + '%</td>' +
+        '<td class="' + deadlineClass + '">' + deadlinePct + '</td>' +
+        '<td class="' + perfClass(1 - p.failure_rate, 0.85, 0.6) + '">' + failPct + '%</td>' +
+        '<td>' + (p.avg_hours === null ? '—' : p.avg_hours) + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="color:#34465a;">집계된 작업이 없습니다</td></tr>';
+  } catch (e) { perfBody.innerHTML = '<tr><td colspan="6">불러오기 실패</td></tr>'; }
+}
+
+document.getElementById('perfTabMonth').addEventListener('click', (e) => {
+  e.stopPropagation();
+  perfPeriod = 'month';
+  document.querySelectorAll('#perfTabs .tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('perfTabMonth').classList.add('active');
+  pollPerformance();
+});
+document.getElementById('perfTabAll').addEventListener('click', (e) => {
+  e.stopPropagation();
+  perfPeriod = 'all';
+  document.querySelectorAll('#perfTabs .tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('perfTabAll').classList.add('active');
+  pollPerformance();
+});
+
+perfBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show');
+  perfPanel.classList.toggle('show');
+  if (perfPanel.classList.contains('show')) pollPerformance();
+});
+document.addEventListener('click', (e) => {
+  if (!perfPanel.contains(e.target) && !perfBtn.contains(e.target)) perfPanel.classList.remove('show');
 });
 
 async function poll() {
