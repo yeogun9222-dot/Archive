@@ -34,6 +34,13 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.env.openExternal(uri);
     })
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jakeSquad.openDashboard', async () => {
+      const base = vscode.workspace.getConfiguration('jakeSquad').get<string>('apiBaseUrl', 'http://localhost:8000');
+      await vscode.commands.executeCommand('simpleBrowser.show', `${base}/dashboard`);
+    })
+  );
 }
 
 export function deactivate() {}

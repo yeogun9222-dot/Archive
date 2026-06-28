@@ -2,7 +2,7 @@
   "name": "jake-squad",
   "displayName": "Jake Squad",
   "description": "Alpha Squad 13인 팀원 채팅 패널",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "longrise",
   "engines": {
     "vscode": "^1.80.0"
@@ -43,6 +43,11 @@
         "command": "jakeSquad.openGroupChat",
         "title": "전체 회의",
         "icon": "$(organization)"
+      },
+      {
+        "command": "jakeSquad.openDashboard",
+        "title": "대시보드 보기",
+        "icon": "$(pulse)"
       }
     ],
     "menus": {
@@ -54,6 +59,11 @@
         },
         {
           "command": "jakeSquad.openGroupChat",
+          "when": "view == jakeSquadTeam",
+          "group": "navigation"
+        },
+        {
+          "command": "jakeSquad.openDashboard",
           "when": "view == jakeSquadTeam",
           "group": "navigation"
         }

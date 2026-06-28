@@ -54,5 +54,9 @@ function activate(context) {
         const uri = vscode.Uri.parse(`vscode://anthropic.claude-code/open?prompt=${encodeURIComponent('/알파스쿼드 ')}`);
         vscode.env.openExternal(uri);
     }));
+    context.subscriptions.push(vscode.commands.registerCommand('jakeSquad.openDashboard', async () => {
+        const base = vscode.workspace.getConfiguration('jakeSquad').get('apiBaseUrl', 'http://localhost:8000');
+        await vscode.commands.executeCommand('simpleBrowser.show', `${base}/dashboard`);
+    }));
 }
 function deactivate() { }
