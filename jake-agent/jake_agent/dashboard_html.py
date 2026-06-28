@@ -85,6 +85,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; display: inline-block; margin-right: 5px; animation: blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
+  /* 신호선: 점선이 경로(d)를 따라 출발지→도착지 방향으로 흘러가는 효과.
+     stroke-dashoffset을 음수로 진행시키면 path가 그려진 순서(p1→p2) 방향으로 흐름 */
+  .signal-flow {
+    stroke-dasharray: 9 13;
+    animation: flowSignal 0.55s linear infinite;
+  }
+  @keyframes flowSignal { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -44; } }
+
   #chart { position: relative; padding: 30px 20px 60px; min-height: calc(100vh - 70px); display: flex; flex-direction: column; align-items: center; }
   svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
@@ -399,6 +407,13 @@ function elbowPath(p1, p2) {
   return 'M ' + p1.x + ' ' + p1.bottom + ' L ' + p1.x + ' ' + midY + ' L ' + p2.x + ' ' + midY + ' L ' + p2.x + ' ' + p2.top;
 }
 
+// 임의의 두 점(x1,y1)→(x2,y2) 사이를 잇는 엘보 경로 — 시작/끝 순서를 그대로 보존해
+// stroke-dashoffset 흐름 애니메이션이 항상 from→to 방향으로 흐르도록 함
+function directedElbow(x1, y1, x2, y2) {
+  const midY = (y1 + y2) / 2;
+  return 'M ' + x1 + ' ' + y1 + ' L ' + x1 + ' ' + midY + ' L ' + x2 + ' ' + midY + ' L ' + x2 + ' ' + y2;
+}
+
 function positionSubteam() {
   const subteamEl2 = document.getElementById('subteam');
   const subRect = subteamEl2.getBoundingClientRect();
@@ -466,21 +481,31 @@ function flashLine(from, to) {
   const a = document.getElementById('card-' + from), b = document.getElementById('card-' + to);
   if (!a || !b) return;
   const p1 = center(a), p2 = center(b);
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const midY = (p1.y + p2.y) / 2;
-  const d = p1.y < p2.y
-    ? elbowPath({x:p1.x, bottom:p1.bottom}, {x:p2.x, top:p2.top})
-    : elbowPath({x:p2.x, bottom:p2.bottom}, {x:p1.x, top:p1.top});
-  path.setAttribute('d', d);
-  path.setAttribute('stroke', '#4ade80');
-  path.setAttribute('stroke-width', '3');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('filter', 'drop-shadow(0 0 6px rgba(74,222,128,0.8))');
-  path.style.opacity = '1';
-  path.style.transition = 'opacity 1.2s ease';
-  svg.appendChild(path);
-  requestAnimationFrame(() => setTimeout(() => { path.style.opacity = '0'; }, 1500));
-  setTimeout(() => path.remove(), 3000);
+  // 항상 출발지(from)의 카드 가장자리에서 시작해 도착지(to)의 카드 가장자리에서 끝나도록
+  // 좌표 순서를 보존 — 위/아래/좌/우 어떤 배치든 흐름 애니메이션이 올바른 방향으로 흐름
+  const startY = p1.y <= p2.y ? p1.bottom : p1.top;
+  const endY = p1.y <= p2.y ? p2.top : p2.bottom;
+  const d = directedElbow(p1.x, startY, p2.x, endY);
+
+  // 흐릿한 레일(고정 경로) + 그 위를 흐르는 점선 신호, 두 겹으로 표현
+  const rail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  rail.setAttribute('d', d);
+  rail.setAttribute('stroke', 'rgba(74,222,128,0.18)');
+  rail.setAttribute('stroke-width', '3');
+  rail.setAttribute('fill', 'none');
+  svg.appendChild(rail);
+
+  const signal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  signal.setAttribute('d', d);
+  signal.setAttribute('stroke', '#4ade80');
+  signal.setAttribute('stroke-width', '3');
+  signal.setAttribute('fill', 'none');
+  signal.setAttribute('stroke-linecap', 'round');
+  signal.setAttribute('filter', 'drop-shadow(0 0 6px rgba(74,222,128,0.85))');
+  signal.classList.add('signal-flow');
+  svg.appendChild(signal);
+
+  setTimeout(() => { rail.remove(); signal.remove(); }, 1600);
 }
 
 let sinceId = 0;
