@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision
 from jake_agent.team_tools import run_delegation
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
@@ -315,6 +315,24 @@ async def list_decisions(limit: int = 100):
 async def add_decision(req: DecisionRequest):
     decision_id = create_decision(req.category, req.summary, req.reason, decided_by="대표님")
     return {"id": decision_id, "status": "created"}
+
+
+@app.get("/decisions/pending")
+async def list_pending_decisions():
+    """14인이 올린, 대표님 결재가 필요한 사안 목록"""
+    return {"decisions": get_pending_decisions()}
+
+
+class ResolveDecisionRequest(BaseModel):
+    resolution: str
+
+
+@app.post("/decisions/{decision_id}/resolve")
+async def resolve_decision_endpoint(decision_id: int, req: ResolveDecisionRequest):
+    ok = resolve_decision(decision_id, req.resolution, decided_by="대표님")
+    if not ok:
+        raise HTTPException(status_code=409, detail="이미 결재되었거나 존재하지 않는 사안입니다.")
+    return {"status": "resolved"}
 
 
 class PersonaStatusRequest(BaseModel):

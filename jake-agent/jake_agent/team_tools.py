@@ -5,8 +5,8 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 from .personas import PERSONAS
-from .db import save_chat_message, create_task, update_task, is_persona_active, set_persona_activity, clear_persona_activity, create_decision
-from .telegram import notify_delegation, notify_discussion
+from .db import save_chat_message, create_task, update_task, is_persona_active, set_persona_activity, clear_persona_activity, create_decision, request_decision
+from .telegram import notify_delegation, notify_discussion, notify_decision_request
 from .monitor import log_token_usage
 
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
@@ -217,5 +217,19 @@ def discuss_with(member: str, topic: str, max_turns: int = 4) -> str:
     return f"[{member}↔{caller} 논의 종료 — {status}]\n\n{summary}"
 
 
+@tool
+def request_ceo_decision(category: str, summary: str, reason: str) -> str:
+    """대표님(CEO)의 직접 판단/결재가 필요한 사안을 올립니다. 본인 권한으로 결정할 수 없는 예산·인사·전략 사안일 때 사용하세요.
+    단순 업무 위임이나 의견 수렴에는 절대 사용하지 마세요 — delegate_task/consult_team과 혼동하지 마세요.
+    category: 전략, 예산, 인사, 프로젝트, 기타 중 하나
+    summary: 결정이 필요한 사안 (한 줄, 구체적으로)
+    reason: 왜 CEO 판단이 필요한지 배경/맥락
+    """
+    requester = current_caller.get()
+    decision_id = request_decision(category, summary, reason, requested_by=requester)
+    notify_decision_request(requester, category, summary, reason)
+    return f"[결재 요청 등록됨 #{decision_id}] 대표님의 의사결정 패널에 올라갔습니다. 결정이 나면 알려드리겠습니다."
+
+
 def get_all_team_tools():
-    return [consult_team, delegate_task, discuss_with]
+    return [consult_team, delegate_task, discuss_with, request_ceo_decision]

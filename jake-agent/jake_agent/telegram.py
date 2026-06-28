@@ -53,6 +53,15 @@ def notify_discussion(member_a: str, member_b: str, topic: str, transcript: str,
     )
     return send_message(message)
 
+def notify_decision_request(requester: str, category: str, summary: str, reason: str):
+    message = (
+        f"🗳 *결재 요청* — {requester} ({category})\n\n"
+        f"📌 *사안:*\n{summary[:200]}\n\n"
+        f"💬 *배경:*\n{reason[:400]}{'...' if len(reason) > 400 else ''}\n\n"
+        f"대시보드 '📝 의사결정' 패널에서 결재해주세요."
+    )
+    return send_message(message)
+
 def notify_startup():
     message = (
         "✅ *Jake Orchestrator 시작됨*\n\n"

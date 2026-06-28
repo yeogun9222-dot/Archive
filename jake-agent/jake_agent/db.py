@@ -107,9 +107,17 @@ def init_db():
             reason TEXT,
             decided_by TEXT,
             related_task_id INTEGER,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP DEFAULT NOW(),
+            status TEXT DEFAULT 'resolved',
+            requested_by TEXT,
+            resolution TEXT,
+            resolved_at TIMESTAMP
         )
     """)
+    cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'resolved'")
+    cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS requested_by TEXT")
+    cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS resolution TEXT")
+    cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
@@ -435,11 +443,12 @@ def get_persona_performance(period: str = "month") -> list:
 
 
 def create_decision(category: str, summary: str, reason: str = None, decided_by: str = "대표님", related_task_id: int = None) -> int:
+    """이미 결정된 사실을 기록(자동로그/CEO 수동기록) — status는 곧바로 resolved"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO decision_log (category, summary, reason, decided_by, related_task_id)
-           VALUES (%s, %s, %s, %s, %s) RETURNING id""",
+        """INSERT INTO decision_log (category, summary, reason, decided_by, related_task_id, status, resolved_at)
+           VALUES (%s, %s, %s, %s, %s, 'resolved', NOW()) RETURNING id""",
         (category, summary, reason, decided_by, related_task_id)
     )
     decision_id = cur.fetchone()[0]
@@ -449,12 +458,60 @@ def create_decision(category: str, summary: str, reason: str = None, decided_by:
     return decision_id
 
 
-def get_decisions(limit: int = 100) -> list:
+def request_decision(category: str, summary: str, reason: str, requested_by: str, related_task_id: int = None) -> int:
+    """팀원이 CEO의 판단이 필요한 사안을 올림 — status는 pending, CEO가 resolve_decision으로 결재해야 종료됨"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, category, summary, reason, decided_by, related_task_id, created_at
-           FROM decision_log ORDER BY id DESC LIMIT %s""",
+        """INSERT INTO decision_log (category, summary, reason, requested_by, related_task_id, status)
+           VALUES (%s, %s, %s, %s, %s, 'pending') RETURNING id""",
+        (category, summary, reason, requested_by, related_task_id)
+    )
+    decision_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return decision_id
+
+
+def resolve_decision(decision_id: int, resolution: str, decided_by: str = "대표님") -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """UPDATE decision_log SET status='resolved', resolution=%s, decided_by=%s, resolved_at=NOW()
+           WHERE id=%s AND status='pending' RETURNING id""",
+        (resolution, decided_by, decision_id)
+    )
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
+
+
+def get_pending_decisions() -> list:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, category, summary, reason, requested_by, created_at
+           FROM decision_log WHERE status='pending' ORDER BY id ASC"""
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {"id": r[0], "category": r[1], "summary": r[2], "reason": r[3] or "", "requested_by": r[4] or "제이크", "created_at": r[5].isoformat()}
+        for r in rows
+    ]
+
+
+def get_decisions(limit: int = 100) -> list:
+    """결재 완료(resolved)된 결정 이력만 — 대기 중인 항목은 get_pending_decisions로 따로 조회"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT id, category, summary, reason, decided_by, related_task_id, created_at, requested_by, resolution
+           FROM decision_log WHERE status='resolved' ORDER BY id DESC LIMIT %s""",
         (limit,)
     )
     rows = cur.fetchall()
@@ -463,7 +520,8 @@ def get_decisions(limit: int = 100) -> list:
     return [
         {
             "id": r[0], "category": r[1], "summary": r[2], "reason": r[3] or "",
-            "decided_by": r[4] or "대표님", "related_task_id": r[5], "created_at": r[6].isoformat()
+            "decided_by": r[4] or "대표님", "related_task_id": r[5], "created_at": r[6].isoformat(),
+            "requested_by": r[7], "resolution": r[8] or ""
         }
         for r in rows
     ]

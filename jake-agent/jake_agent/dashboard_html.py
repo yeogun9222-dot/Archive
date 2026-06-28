@@ -346,7 +346,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="auditBtn">📜 감사로그</button>
   <button class="header-btn" id="permBtn">🔐 권한</button>
   <button class="header-btn" id="perfBtn">📊 성과</button>
-  <button class="header-btn" id="decBtn">📝 의사결정</button>
+  <button class="header-btn" id="decBtn" style="position:relative;">📝 의사결정 <span id="decBadge" class="bell-badge" style="position:absolute; top:-7px; right:-7px;">0</span></button>
   <button class="header-btn" id="bnBtn">🚧 병목</button>
   <button class="header-btn" id="legendBtn">ℹ️ 범례 <span id="legendArrow">▾</span></button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
@@ -419,7 +419,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="decPanel">
-  <h3>📝 의사결정 이력</h3>
+  <h3>📝 의사결정</h3>
+  <div class="sec-label" style="font-size:10.5px; color:#fbbf24; margin-bottom:6px;">⏳ 결재 대기</div>
+  <div id="decPendingBody"></div>
+
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:14px 0 6px;">✍️ 직접 기록 (이미 결정된 사안)</div>
   <div id="decForm" style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
     <div style="display:flex; gap:6px;">
       <select id="decCategoryInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px 8px;">
@@ -434,6 +438,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <textarea id="decReasonInput" placeholder="이유/맥락 (선택)" rows="2" style="background:rgba(255,255,255,0.04); border:1px solid rgba(95,240,255,0.2); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px 8px; resize:vertical;"></textarea>
     <button id="decAddBtn" style="background:rgba(95,240,255,0.18); color:#5ff0ff; border:none; border-radius:6px; padding:6px 11px; font-size:11px; cursor:pointer; font-weight:600; align-self:flex-end;">기록</button>
   </div>
+
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:14px 0 6px;">📜 결정 이력</div>
   <div id="decBody"></div>
 </div>
 
@@ -1352,6 +1358,9 @@ document.addEventListener('click', (e) => {
 const decBtn = document.getElementById('decBtn');
 const decPanel = document.getElementById('decPanel');
 const decBody = document.getElementById('decBody');
+const decPendingBody = document.getElementById('decPendingBody');
+
+const decBadge = document.getElementById('decBadge');
 
 async function pollDecisions() {
   try {
@@ -1361,11 +1370,49 @@ async function pollDecisions() {
     decBody.innerHTML = list.map(d =>
       '<div class="dec-row"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
       '<div class="summary">' + esc(d.summary) + '</div>' +
-      (d.reason ? '<div class="reason">' + esc(d.reason) + '</div>' : '') +
-      '<div class="by">결정: ' + esc(d.decided_by) + '</div></div>'
+      (d.requested_by ? '<div class="reason">요청: ' + esc(d.requested_by) + '</div>' : '') +
+      (d.reason ? '<div class="reason">배경: ' + esc(d.reason) + '</div>' : '') +
+      (d.resolution ? '<div class="reason" style="color:#5ff0ff;">결정: ' + esc(d.resolution) + '</div>' : '') +
+      '<div class="by">결재: ' + esc(d.decided_by) + '</div></div>'
     ).join('') || '<div style="color:#34465a;font-size:11px;">기록된 의사결정이 없습니다</div>';
   } catch (e) { decBody.textContent = '불러오기 실패'; }
 }
+
+async function pollPendingDecisions() {
+  try {
+    const res = await fetch('/decisions/pending');
+    const data = await res.json();
+    const list = data.decisions || [];
+    decBadge.textContent = list.length;
+    decBadge.classList.toggle('show', list.length > 0);
+    decPendingBody.innerHTML = list.map(d =>
+      '<div class="dec-row" style="border-color:rgba(251,191,36,0.35);"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
+      '<div class="summary">' + esc(d.summary) + '</div>' +
+      '<div class="reason">' + esc(d.requested_by) + '의 요청 — ' + esc(d.reason) + '</div>' +
+      '<textarea class="dec-resolve-input" data-id="' + d.id + '" placeholder="결정 내용을 입력하세요" rows="2" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(251,191,36,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px; resize:vertical;"></textarea>' +
+      '<button class="dec-resolve-btn" data-id="' + d.id + '" style="margin-top:6px; background:rgba(251,191,36,0.18); color:#fbbf24; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">결재하기</button>' +
+      '</div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">결재 대기 중인 사안이 없습니다</div>';
+
+    decPendingBody.querySelectorAll('.dec-resolve-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const textarea = decPendingBody.querySelector('.dec-resolve-input[data-id="' + id + '"]');
+        const resolution = textarea.value.trim();
+        if (!resolution) { alert('결정 내용을 입력하세요.'); return; }
+        btn.disabled = true; btn.textContent = '처리 중...';
+        await fetch('/decisions/' + id + '/resolve', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolution })
+        });
+        pollPendingDecisions(); pollDecisions();
+      });
+    });
+  } catch (e) { decPendingBody.textContent = '불러오기 실패'; }
+}
+pollPendingDecisions();
+setInterval(pollPendingDecisions, 6000);
 
 document.getElementById('decAddBtn').addEventListener('click', async (e) => {
   e.stopPropagation();
@@ -1386,7 +1433,7 @@ decBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   decPanel.classList.toggle('show');
-  if (decPanel.classList.contains('show')) pollDecisions();
+  if (decPanel.classList.contains('show')) { pollDecisions(); pollPendingDecisions(); }
 });
 document.addEventListener('click', (e) => {
   if (!decPanel.contains(e.target) && !decBtn.contains(e.target)) decPanel.classList.remove('show');
