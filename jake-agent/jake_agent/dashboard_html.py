@@ -6,9 +6,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <title>ALPHA SQUAD — Org Chart</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: #0a0d14; color: #e6e6e6; font-family: -apple-system, 'Malgun Gothic', sans-serif; height: 100%; overflow-x: hidden; }
+  html, body { background: #0a0d14; color: #e6e6e6; font-family: -apple-system, 'Malgun Gothic', sans-serif; height: 100%; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
   #header {
-    padding: 18px 24px 10px; display: flex; align-items: baseline; gap: 14px; position: relative; z-index: 5;
+    padding: 18px 24px 10px; display: flex; align-items: baseline; gap: 14px; position: relative; z-index: 5; flex-shrink: 0;
   }
   #header h1 { font-size: 20px; font-weight: 800; color: #5ff0ff; letter-spacing: 1.5px; text-shadow: 0 0 14px rgba(95,240,255,0.5); }
   #header .sub { font-size: 11px; color: #5a7184; letter-spacing: 1px; }
@@ -252,8 +253,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   @keyframes flowSignal { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -44; } }
 
-  #chart { position: relative; padding: 30px 20px 60px; min-height: calc(100vh - 70px); display: flex; flex-direction: column; align-items: center; }
+  /* 조직도 영역 — 마우스 드래그/휠 및 손가락 드래그/핀치로 좌우상하 이동 + 확대축소 가능한 패닝 뷰포트 */
+  #chartViewport {
+    flex: 1; min-height: 0; position: relative; overflow: hidden;
+    touch-action: none; cursor: grab; background: radial-gradient(circle at 50% 0%, rgba(95,240,255,0.04), transparent 60%);
+  }
+  #chartViewport.dragging { cursor: grabbing; }
+  #chart {
+    position: absolute; top: 0; left: 0; width: max-content; min-height: 480px;
+    padding: 30px 40px 60px; display: flex; flex-direction: column; align-items: center;
+    transform-origin: 0 0; will-change: transform;
+  }
   svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  #chartZoomCtrl {
+    position: absolute; right: 14px; bottom: 14px; z-index: 6; display: flex; flex-direction: column; gap: 6px;
+  }
+  #chartZoomCtrl button {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(95,240,255,0.25);
+    background: rgba(10,14,22,0.85); color: #5ff0ff; font-size: 15px; cursor: pointer; font-weight: 700;
+  }
+  #chartZoomCtrl button:hover { background: rgba(95,240,255,0.18); }
 
   .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
   .level-members { flex-wrap: nowrap; max-width: none; gap: 10px; margin-bottom: 28px; }
@@ -268,7 +287,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .level-subteam .info .role { font-size: 9.5px; }
   .level-members .info .name, .level-members .info .role,
   .level-subteam .info .name, .level-subteam .info .role { white-space: nowrap; }
-  #chart { overflow-x: visible; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
@@ -475,7 +493,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     #header .sub { display: none; }
     #header .status { margin-left: 0; }
 
-    #chart { padding: 14px 8px 50px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #chart { padding: 14px 16px 50px; }
     .level { gap: 12px; }
     .level-members { gap: 8px; }
     .card { padding: 9px 12px; }
@@ -683,29 +701,36 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div id="contentionBanner"></div>
 
-<div id="chart">
-  <svg id="lines"></svg>
+<div id="chartViewport">
+  <div id="chart">
+    <svg id="lines"></svg>
 
-  <div class="level level-ceo">
-    <div class="card ceo" id="card-대표님">
-      <div class="status-badge" id="badge-대표님"></div>
-      <div class="avatar">🧑‍💼</div>
-      <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
+    <div class="level level-ceo">
+      <div class="card ceo" id="card-대표님">
+        <div class="status-badge" id="badge-대표님"></div>
+        <div class="avatar">🧑‍💼</div>
+        <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="level level-coo">
-    <div class="card coo" id="card-제이크">
-      <div class="status-badge" id="badge-제이크"></div>
-      <div class="msg-badge" id="msgbadge-제이크"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-      <div class="avatar">🧠</div>
-      <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
-      <div class="status-bar" id="actbar-제이크"></div>
+    <div class="level level-coo">
+      <div class="card coo" id="card-제이크">
+        <div class="status-badge" id="badge-제이크"></div>
+        <div class="msg-badge" id="msgbadge-제이크"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+        <div class="avatar">🧠</div>
+        <div class="info"><div class="name">제이크</div><div class="role">COO</div></div>
+        <div class="status-bar" id="actbar-제이크"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="level level-members" id="members"></div>
-  <div class="level level-subteam" id="subteam"></div>
+    <div class="level level-members" id="members"></div>
+    <div class="level level-subteam" id="subteam"></div>
+  </div>
+  <div id="chartZoomCtrl">
+    <button id="chartZoomIn" title="확대">+</button>
+    <button id="chartZoomOut" title="축소">−</button>
+    <button id="chartZoomReset" title="초기화">⤾</button>
+  </div>
 </div>
 
 <div id="log">
@@ -770,11 +795,21 @@ Object.keys(SUB_REPORTS).forEach(name => subteamEl.appendChild(buildCard(name)))
 
 const svg = document.getElementById('lines');
 const chart = document.getElementById('chart');
+const chartViewport = document.getElementById('chartViewport');
 
+// offsetLeft/offsetTop은 CSS transform(패닝/확대축소)의 영향을 받지 않는 "레이아웃 좌표"라서,
+// 줌 레벨이 바뀌어도 선(line) 계산이 항상 정확하게 유지된다.
+function relPos(el) {
+  let x = 0, y = 0, node = el;
+  while (node && node !== chart) {
+    x += node.offsetLeft; y += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return { x, y };
+}
 function center(el) {
-  const r = el.getBoundingClientRect();
-  const c = chart.getBoundingClientRect();
-  return { x: r.left + r.width / 2 - c.left, y: r.top + r.height / 2 - c.top, top: r.top - c.top, bottom: r.bottom - c.top };
+  const p = relPos(el);
+  return { x: p.x + el.offsetWidth / 2, y: p.y + el.offsetHeight / 2, top: p.y, bottom: p.y + el.offsetHeight };
 }
 
 function elbowPath(p1, p2) {
@@ -791,14 +826,13 @@ function directedElbow(x1, y1, x2, y2) {
 
 function positionSubteam() {
   const subteamEl2 = document.getElementById('subteam');
-  const subRect = subteamEl2.getBoundingClientRect();
-  const chartRect = chart.getBoundingClientRect();
+  const subPos = relPos(subteamEl2);
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
     const parentCard = document.getElementById('card-' + parent);
     const childCard = document.getElementById('card-' + name);
     if (!parentCard || !childCard) return;
-    const pRect = parentCard.getBoundingClientRect();
-    const parentCenterX = pRect.left + pRect.width / 2 - subRect.left;
+    const parentPos = relPos(parentCard);
+    const parentCenterX = parentPos.x + parentCard.offsetWidth / 2 - subPos.x;
     childCard.style.left = parentCenterX + 'px';
   });
 }
@@ -843,6 +877,96 @@ function drawStaticLines() {
 }
 window.addEventListener('resize', drawStaticLines);
 setTimeout(drawStaticLines, 50);
+
+// ── 조직도 패닝/줌 — 마우스 드래그+휠, 손가락 드래그+핀치 모두 지원 ──────────
+let panX = 0, panY = 0, chartScale = 1, dragMoved = false;
+const MIN_SCALE = 0.35, MAX_SCALE = 2.2;
+
+function applyChartTransform() {
+  chart.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + chartScale + ')';
+}
+function zoomAt(cx, cy, factor) {
+  const prev = chartScale;
+  chartScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, chartScale * factor));
+  panX = cx - (cx - panX) * (chartScale / prev);
+  panY = cy - (cy - panY) * (chartScale / prev);
+  applyChartTransform();
+}
+function centerChart() {
+  const vw = chartViewport.clientWidth, vh = chartViewport.clientHeight;
+  panX = Math.max(20, (vw - chart.offsetWidth * chartScale) / 2);
+  panY = 24;
+  applyChartTransform();
+}
+setTimeout(centerChart, 60);
+window.addEventListener('resize', centerChart);
+
+let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+chartViewport.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  isPanning = true; dragMoved = false;
+  panStartX = e.clientX; panStartY = e.clientY; panOrigX = panX; panOrigY = panY;
+  chartViewport.classList.add('dragging');
+});
+window.addEventListener('mousemove', (e) => {
+  if (!isPanning) return;
+  const dx = e.clientX - panStartX, dy = e.clientY - panStartY;
+  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+  panX = panOrigX + dx; panY = panOrigY + dy;
+  applyChartTransform();
+});
+window.addEventListener('mouseup', () => {
+  if (isPanning) { isPanning = false; chartViewport.classList.remove('dragging'); }
+});
+chartViewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = chartViewport.getBoundingClientRect();
+  zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+}, { passive: false });
+
+function touchDist(t) { const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.hypot(dx, dy); }
+let touchMode = null, lastTouchX = 0, lastTouchY = 0, lastPinchDist = 0;
+chartViewport.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    touchMode = 'pan'; dragMoved = false;
+    lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    touchMode = 'pinch'; lastPinchDist = touchDist(e.touches);
+  }
+}, { passive: true });
+chartViewport.addEventListener('touchmove', (e) => {
+  if (touchMode === 'pan' && e.touches.length === 1) {
+    e.preventDefault();
+    const t = e.touches[0];
+    const dx = t.clientX - lastTouchX, dy = t.clientY - lastTouchY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+    panX += dx; panY += dy;
+    lastTouchX = t.clientX; lastTouchY = t.clientY;
+    applyChartTransform();
+  } else if (touchMode === 'pinch' && e.touches.length === 2) {
+    e.preventDefault();
+    const dist = touchDist(e.touches);
+    const rect = chartViewport.getBoundingClientRect();
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+    zoomAt(midX, midY, dist / lastPinchDist);
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+chartViewport.addEventListener('touchend', () => { touchMode = null; });
+
+document.getElementById('chartZoomIn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  zoomAt(chartViewport.clientWidth / 2, chartViewport.clientHeight / 2, 1.25);
+});
+document.getElementById('chartZoomOut').addEventListener('click', (e) => {
+  e.stopPropagation();
+  zoomAt(chartViewport.clientWidth / 2, chartViewport.clientHeight / 2, 1 / 1.25);
+});
+document.getElementById('chartZoomReset').addEventListener('click', (e) => {
+  e.stopPropagation();
+  chartScale = 1; centerChart();
+});
 
 function activateCard(name) {
   const el = document.getElementById('card-' + name);
@@ -1883,6 +2007,7 @@ cardChatInput.addEventListener('keydown', (e) => {
 });
 
 chart.addEventListener('click', (e) => {
+  if (dragMoved) { dragMoved = false; return; }
   const cardEl = e.target.closest('.card.member, .card.coo');
   if (!cardEl) return;
   const name = cardEl.id.replace('card-', '');
