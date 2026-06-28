@@ -85,7 +85,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <body>
 <div id="header">
   <h1>ALPHA SQUAD</h1>
-  <div class="sub">LONGRISE AI ORGANIZATION · LIVE ORG CHART</div>
+  <div class="sub">ALPHA SQUAD KADE COMPANY · LIVE ORG CHART</div>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
