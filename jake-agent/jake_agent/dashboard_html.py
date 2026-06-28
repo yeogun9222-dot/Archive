@@ -2,6 +2,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=1300, initial-scale=0.3, minimum-scale=0.15, maximum-scale=4, user-scalable=yes">
 <title>ALPHA SQUAD — Org Chart</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,12 +25,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .level-members .avatar { width: 28px; height: 28px; font-size: 13px; }
   .level-members .info .name { font-size: 11px; }
   .level-members .info .role { font-size: 8.5px; }
-  .level-subteam { flex-wrap: wrap; max-width: 1180px; gap: 16px; margin-bottom: 0; }
-  .level-subteam .card { padding: 9px 14px; }
+  .level-subteam { position: relative; height: 56px; width: 100%; margin-bottom: 0; }
+  .level-subteam .card { position: absolute; top: 0; transform: translateX(-50%); padding: 9px 14px; white-space: nowrap; }
   .level-subteam .avatar { width: 30px; height: 30px; font-size: 13px; }
   .level-subteam .info .name { font-size: 12px; }
   .level-subteam .info .role { font-size: 9.5px; }
-  #chart { overflow-x: auto; }
+  .level-members .info .name, .level-members .info .role,
+  .level-subteam .info .name, .level-subteam .info .role { white-space: nowrap; }
+  #chart { overflow-x: visible; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
@@ -263,8 +266,23 @@ function elbowPath(p1, p2) {
   return 'M ' + p1.x + ' ' + p1.bottom + ' L ' + p1.x + ' ' + midY + ' L ' + p2.x + ' ' + midY + ' L ' + p2.x + ' ' + p2.top;
 }
 
+function positionSubteam() {
+  const subteamEl2 = document.getElementById('subteam');
+  const subRect = subteamEl2.getBoundingClientRect();
+  const chartRect = chart.getBoundingClientRect();
+  Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
+    const parentCard = document.getElementById('card-' + parent);
+    const childCard = document.getElementById('card-' + name);
+    if (!parentCard || !childCard) return;
+    const pRect = parentCard.getBoundingClientRect();
+    const parentCenterX = pRect.left + pRect.width / 2 - subRect.left;
+    childCard.style.left = parentCenterX + 'px';
+  });
+}
+
 let staticPaths = [];
 function drawStaticLines() {
+  positionSubteam();
   svg.innerHTML = '';
   const ceo = center(document.getElementById('card-대표님'));
   const jake = center(document.getElementById('card-제이크'));
