@@ -85,6 +85,20 @@ def create_task(title: str, instruction: str, assigned_to: str, delegated_by: st
     return task_id
 
 
+def log_ceo_instruction(persona: str, instruction: str, result: str):
+    """대표님이 팀원에게 직접 보낸 지시도 대시보드 활동으로 기록"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO tasks (title, instruction, assigned_to, status, result, delegated_by)
+           VALUES (%s, %s, %s, 'completed', %s, '대표님')""",
+        (instruction[:100], instruction, persona, result)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
     """대시보드용 — 최근 위임 활동 (id > since_id)"""
     conn = get_conn()

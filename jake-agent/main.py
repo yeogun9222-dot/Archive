@@ -10,7 +10,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
@@ -71,6 +71,7 @@ async def chat_with_jake(req: ChatRequest):
     # 대화 기록 저장
     save_chat_message(persona, "user", req.message, source=req.source)
     save_chat_message(persona, "assistant", result["jake_response"], source=req.source)
+    log_ceo_instruction(persona, req.message, result["jake_response"])
 
     # 텔레그램 발신 시 알림 중복 방지
     if req.source != "telegram":
@@ -115,6 +116,7 @@ async def chat_with_persona(persona_name: str, req: PersonaChatRequest):
 
     save_chat_message(persona_name, "user", req.message, source=req.source)
     save_chat_message(persona_name, "assistant", result["jake_response"], source=req.source)
+    log_ceo_instruction(persona_name, req.message, result["jake_response"])
 
     return ChatResponse(
         response=result["jake_response"],
