@@ -180,6 +180,18 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
         for r in rows
     ]
 
+def get_task_by_id(task_id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT id, title, instruction, assigned_to, delegated_by, status FROM tasks WHERE id = %s", (task_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return None
+    return {"id": row[0], "title": row[1], "instruction": row[2], "assigned_to": row[3], "delegated_by": row[4], "status": row[5]}
+
+
 def update_task(task_id: int, status: str, result: str = None):
     conn = get_conn()
     cur = conn.cursor()

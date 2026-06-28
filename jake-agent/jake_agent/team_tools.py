@@ -86,26 +86,13 @@ def consult_team(question: str, members: str) -> str:
     return "\n\n".join(results)
 
 
-@tool
-def delegate_task(member: str, task: str) -> str:
-    """특정 팀원에게 실제 업무를 위임합니다. 팀원은 본인 전용 도구를 사용해 작업을 수행하고 결과를 보고합니다.
-    member: 업무를 수행할 팀원 이름 (예: 렉스, 다인, 루나, 피오 등)
-    task: 위임할 업무 내용 (구체적으로 작성)
-    유효한 이름: 다인, 에바, 미나, 바쿠, 피오, 리리, 설리, 카이, 렉스, 루나, 제로, 사라, 노바
-    """
-    if member not in PERSONAS:
-        return f"[위임 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
-    if not is_persona_active(member):
-        return f"[위임 불가] {member}은(는) 현재 비활성화(해임) 상태입니다."
-
-    caller = current_caller.get()
-    # DB에 태스크 생성
-    task_id = create_task(title=task[:100], instruction=task, assigned_to=member, delegated_by=caller)
+def run_delegation(task_id: int, member: str, task: str, caller: str) -> str:
+    """위임 실행 공통 로직 — delegate_task 도구와 실패 작업 재시도(/activity/{id}/retry) 양쪽에서 재사용.
+    이미 만들어진 task_id에 결과를 반영(신규 task 생성 없음)."""
     set_persona_activity(caller, "delegating", counterpart=member, note=task[:80])
     set_persona_activity(member, "working", counterpart=caller, note=task[:80])
 
     try:
-        # 해당 팀원 전용 에이전트(도구 포함) 실행
         from .graph import build_jake_graph
         graph = build_jake_graph()
         result = graph.invoke({
@@ -121,7 +108,7 @@ def delegate_task(member: str, task: str) -> str:
         update_task(task_id, "completed", response)
         save_chat_message(member, "user", f"[위임 업무] {task}", source="delegation")
         save_chat_message(member, "assistant", response, source="delegation")
-        notify_delegation(current_caller.get(), member, task, response)
+        notify_delegation(caller, member, task, response)
         clear_persona_activity(caller)
         clear_persona_activity(member)
         return f"[{member} 완료 보고]\n{response}"
@@ -130,6 +117,23 @@ def delegate_task(member: str, task: str) -> str:
         clear_persona_activity(caller)
         set_persona_activity(member, "error", counterpart=caller, note=str(e)[:150])
         return f"[{member} 위임 실패] {e}"
+
+
+@tool
+def delegate_task(member: str, task: str) -> str:
+    """특정 팀원에게 실제 업무를 위임합니다. 팀원은 본인 전용 도구를 사용해 작업을 수행하고 결과를 보고합니다.
+    member: 업무를 수행할 팀원 이름 (예: 렉스, 다인, 루나, 피오 등)
+    task: 위임할 업무 내용 (구체적으로 작성)
+    유효한 이름: 다인, 에바, 미나, 바쿠, 피오, 리리, 설리, 카이, 렉스, 루나, 제로, 사라, 노바
+    """
+    if member not in PERSONAS:
+        return f"[위임 실패] '{member}'은 유효한 팀원 이름이 아닙니다."
+    if not is_persona_active(member):
+        return f"[위임 불가] {member}은(는) 현재 비활성화(해임) 상태입니다."
+
+    caller = current_caller.get()
+    task_id = create_task(title=task[:100], instruction=task, assigned_to=member, delegated_by=caller)
+    return run_delegation(task_id, member, task, caller)
 
 
 @tool

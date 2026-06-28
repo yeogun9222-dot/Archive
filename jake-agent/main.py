@@ -10,7 +10,8 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id
+from jake_agent.team_tools import run_delegation
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
@@ -221,6 +222,29 @@ async def hold_task(task_id: int):
     if not ok:
         raise HTTPException(status_code=409, detail="상태가 이미 변경되어 보류할 수 없습니다. 새로고침 후 다시 시도하세요.")
     return {"status": "held"}
+
+
+@app.post("/activity/{task_id}/retry")
+async def retry_task(task_id: int):
+    """실패한 작업을 실제로 재실행 — '승인'(확인용 라벨 변경)과는 별개의 진짜 재시도"""
+    t = get_task_by_id(task_id)
+    if not t:
+        raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
+    if t["status"] != "failed":
+        raise HTTPException(status_code=409, detail="실패 상태인 작업만 재시도할 수 있습니다.")
+    if not t["assigned_to"]:
+        raise HTTPException(status_code=400, detail="담당자가 없는 작업은 재시도할 수 없습니다.")
+    if not is_persona_active(t["assigned_to"]):
+        raise HTTPException(status_code=403, detail=f"{t['assigned_to']}은(는) 현재 해임 상태라 재시도할 수 없습니다.")
+
+    ok = update_task_status_guarded(task_id, "pending", ["failed"])
+    if not ok:
+        raise HTTPException(status_code=409, detail="상태가 이미 변경되어 재시도할 수 없습니다.")
+
+    caller = t["delegated_by"] or "제이크"
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(None, lambda: run_delegation(task_id, t["assigned_to"], t["instruction"] or t["title"], caller))
+    return {"status": "retried", "result": response}
 
 
 @app.post("/activity/{task_id}/resume")

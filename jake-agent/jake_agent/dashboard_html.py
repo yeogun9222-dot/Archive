@@ -305,8 +305,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .act-btn { border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
   .act-btn.approve { background: rgba(74,222,128,0.18); color: #4ade80; }
   .act-btn.hold { background: rgba(107,125,143,0.25); color: #c5cdd6; }
+  .act-btn.retry { background: rgba(95,240,255,0.18); color: #5ff0ff; }
   .act-btn.delete { background: rgba(248,113,113,0.15); color: #f87171; margin-left: auto; }
   .act-btn:hover { filter: brightness(1.3); }
+  .act-btn:disabled { opacity: 0.5; cursor: default; }
 </style>
 </head>
 <body>
@@ -794,7 +796,11 @@ bulkDeleteBtn.addEventListener('click', () => {
 
 function actionButtons(t, status) {
   let btns = '';
-  if (status === 'failed' || status === 'pending') {
+  if (status === 'failed') {
+    btns += '<button class="act-btn retry" data-id="' + t.id + '" data-act="retry">재시도</button>';
+    btns += '<button class="act-btn approve" data-id="' + t.id + '" data-act="approve">확인(승인)</button>';
+    btns += '<button class="act-btn hold" data-id="' + t.id + '" data-act="hold">보류</button>';
+  } else if (status === 'pending') {
     btns += '<button class="act-btn approve" data-id="' + t.id + '" data-act="approve">승인</button>';
     btns += '<button class="act-btn hold" data-id="' + t.id + '" data-act="hold">보류</button>';
   } else if (status === 'held') {
@@ -882,6 +888,10 @@ async function pollAttention() {
         if (act === 'delete') {
           if (!confirm('이 작업을 영구적으로 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
           ok = await taskAction(id, '', 'DELETE');
+        } else if (act === 'retry') {
+          if (!confirm('같은 내용으로 실제로 다시 실행합니다 (API 비용 재발생). 계속할까요?')) return;
+          btn.textContent = '재시도 중...'; btn.disabled = true;
+          ok = await taskAction(id, act, 'POST');
         } else {
           ok = await taskAction(id, act, 'POST');
         }
