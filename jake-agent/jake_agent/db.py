@@ -505,6 +505,38 @@ def get_contention_personas() -> list:
     return [{"persona": r[0], "count": r[1]} for r in rows]
 
 
+def get_bottleneck_detail() -> list:
+    """병목 상세 — 미해결(pending/failed) 작업이 1건 이상 쌓인 페르소나별로,
+    실제 어떤 작업이 누구에게서 와서 얼마나 오래 막혀있는지 보여줌.
+    (작업 간 명시적 선후관계는 시스템에 없으므로, 백로그 적체=병목으로 정의)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, title, assigned_to, delegated_by, status, created_at
+        FROM tasks
+        WHERE archived = FALSE AND status IN ('pending', 'failed') AND assigned_to IS NOT NULL
+        ORDER BY assigned_to, created_at ASC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    grouped = {}
+    now = datetime.now()
+    for id_, title, assigned_to, delegated_by, status, created_at in rows:
+        age_hours = round((now - created_at).total_seconds() / 3600, 1)
+        grouped.setdefault(assigned_to, []).append({
+            "id": id_, "title": title, "from": delegated_by or "제이크", "status": status, "age_hours": age_hours
+        })
+
+    result = [
+        {"persona": persona, "count": len(items), "oldest_age_hours": max(i["age_hours"] for i in items), "tasks": items}
+        for persona, items in grouped.items()
+    ]
+    result.sort(key=lambda x: (x["count"], x["oldest_age_hours"]), reverse=True)
+    return result
+
+
 def set_persona_activity(persona: str, activity_type: str, counterpart: str = None, note: str = None) -> None:
     """카드 상태바용 — 'idle'로 갱신할 때만 started_at도 초기화, 그 외엔 갱신 시각만 업데이트"""
     conn = get_conn()

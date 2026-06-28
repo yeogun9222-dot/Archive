@@ -41,13 +41,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   .header-btn:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel {
+  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show { display: block; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show { display: block; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .bn-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(251,191,36,0.2); border-radius: 9px; padding: 9px 11px; margin-bottom: 9px; font-size: 11.5px; }
+  .bn-row .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .bn-row .pname { color: #fbbf24; font-weight: 700; }
+  .bn-row .count { color: #fbbf24; font-size: 10.5px; }
+  .bn-item { color: #9fb4c4; font-size: 11px; padding: 3px 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; gap: 6px; }
+  .bn-item .age { color: #6b7d8f; flex-shrink: 0; }
+  .bn-item.bn-stale .age { color: #f87171; }
 
   .dec-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 11.5px; }
   .dec-row .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
@@ -289,6 +297,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="header-btn" id="permBtn">🔐 권한</button>
   <button class="header-btn" id="perfBtn">📊 성과</button>
   <button class="header-btn" id="decBtn">📝 의사결정</button>
+  <button class="header-btn" id="bnBtn">🚧 병목</button>
   <div class="status" id="status"><span class="dot"></span>연결 중...</div>
 </div>
 
@@ -375,6 +384,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <button id="decAddBtn" style="background:rgba(95,240,255,0.18); color:#5ff0ff; border:none; border-radius:6px; padding:6px 11px; font-size:11px; cursor:pointer; font-weight:600; align-self:flex-end;">기록</button>
   </div>
   <div id="decBody"></div>
+</div>
+
+<div id="bnPanel">
+  <h3>🚧 병목 현황 — 누구에게 일이 쌓여있나</h3>
+  <div id="bnBody"></div>
+  <div id="bnNote" style="font-size:10px; color:#5a7184; margin-top:10px; line-height:1.5;">작업 간 선후관계 추적은 아직 없어, 미해결(대기/실패) 작업 적체량과 대기 시간으로 병목을 판단합니다.</div>
 </div>
 
 <div id="contentionBanner"></div>
@@ -1077,7 +1092,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -1140,7 +1155,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -1172,7 +1187,7 @@ function renderPermTable() {
 
 permBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
   permPanel.classList.toggle('show');
   if (permPanel.classList.contains('show')) renderPermTable();
 });
@@ -1229,7 +1244,7 @@ document.getElementById('perfTabAll').addEventListener('click', (e) => {
 
 perfBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show');
   perfPanel.classList.toggle('show');
   if (perfPanel.classList.contains('show')) pollPerformance();
 });
@@ -1273,12 +1288,41 @@ document.getElementById('decAddBtn').addEventListener('click', async (e) => {
 
 decBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
   decPanel.classList.toggle('show');
   if (decPanel.classList.contains('show')) pollDecisions();
 });
 document.addEventListener('click', (e) => {
   if (!decPanel.contains(e.target) && !decBtn.contains(e.target)) decPanel.classList.remove('show');
+});
+
+// ── 병목 현황 패널 ───────────────────────────────────────
+const bnBtn = document.getElementById('bnBtn');
+const bnPanel = document.getElementById('bnPanel');
+const bnBody = document.getElementById('bnBody');
+
+async function pollBottlenecks() {
+  try {
+    const res = await fetch('/activity/bottlenecks');
+    const data = await res.json();
+    const list = data.bottlenecks || [];
+    bnBody.innerHTML = list.map(b => {
+      const items = b.tasks.map(t =>
+        '<div class="bn-item' + (t.age_hours >= 24 ? ' bn-stale' : '') + '"><span>' + esc(t.from) + ' → ' + esc(t.title) + ' (' + t.status + ')</span><span class="age">' + t.age_hours + 'h</span></div>'
+      ).join('');
+      return '<div class="bn-row"><div class="head"><span class="pname">' + esc(b.persona) + '</span><span class="count">' + b.count + '건 적체 · 최장 ' + b.oldest_age_hours + 'h</span></div>' + items + '</div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">현재 적체된 작업이 없습니다</div>';
+  } catch (e) { bnBody.textContent = '불러오기 실패'; }
+}
+
+bnBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  bnPanel.classList.toggle('show');
+  if (bnPanel.classList.contains('show')) pollBottlenecks();
+});
+document.addEventListener('click', (e) => {
+  if (!bnPanel.contains(e.target) && !bnBtn.contains(e.target)) bnPanel.classList.remove('show');
 });
 
 async function poll() {
