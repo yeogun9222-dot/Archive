@@ -573,9 +573,29 @@ _DELEGATION_RULE = (
 )
 
 
+def _build_roster_note() -> str:
+    """시스템 프롬프트는 고정 텍스트라 신규 채용 인원을 전혀 모르는 문제가 있었음
+    (제이크가 이미 채용된 인력을 "미충원"이라고 거짓 보고한 사건의 원인) —
+    매 요청마다 현재 채용 현황을 실시간으로 주입해 항상 사실에 근거해 답하도록 함"""
+    try:
+        from .db import get_custom_personas
+        customs = get_custom_personas()
+    except Exception:
+        customs = []
+    if not customs:
+        return ""
+    lines = "\n".join(f"- {p['name']}: {p['role']} ({p['parent']} 산하)" for p in customs)
+    return (
+        "\n\n[현재 시점 기준 사실 — 결재 승인으로 실제 합류한 신규 팀원]\n" + lines +
+        "\n위 인원은 이미 채용 완료되어 실제로 호출/업무지시 가능한 상태입니다. "
+        "충원 여부를 질문받으면 추측하지 말고 이 목록을 근거로 정확히 답하세요. "
+        "이 목록에 없는 포지션만 미충원 상태입니다."
+    )
+
+
 def get_system_prompt(persona_name: str) -> str:
     base = PERSONAS.get(persona_name, PERSONAS["제이크"])["system"]
-    return base + _DELEGATION_RULE
+    return base + _DELEGATION_RULE + _build_roster_note()
 
 
 # ── 채용 결재 승인으로 실제 합류한 신규 페르소나 ──────────────────────
