@@ -195,8 +195,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .legend-row { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #c5cdd6; padding: 4px 0; }
   .legend-swatch { width: 22px; height: 10px; border-radius: 5px; flex-shrink: 0; background: #2a323e; }
   .lg-working { background: linear-gradient(90deg, transparent, #5ff0ff, transparent); animation: barShimmer 1.3s linear infinite; }
+  .lg-delegating { background: linear-gradient(90deg, transparent, #ffd76a, transparent); animation: barShimmer 1.3s linear infinite; }
   .lg-discussing { background: #a78bfa; animation: barPulse 1.8s ease-in-out infinite; }
-  .lg-error { background: #f87171; }
+  .lg-error { background: #f87171; animation: barPulse 1s ease-in-out infinite; }
   .lg-idle { background: transparent; border: 1px dashed rgba(255,255,255,0.15); }
   .lg-glowpending { background: rgba(251,191,36,0.5); animation: legendGlow 2.4s ease-in-out infinite; }
   .lg-glowfailed { background: rgba(248,113,113,0.5); animation: legendGlow 2.4s ease-in-out infinite; }
@@ -390,8 +391,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background: linear-gradient(90deg, transparent, #5ff0ff 45%, #5ff0ff 55%, transparent);
     background-size: 220% 100%; animation: barShimmer 1.3s linear infinite;
   }
+  .status-bar.delegating {
+    background: linear-gradient(90deg, transparent, #ffd76a 45%, #ffd76a 55%, transparent);
+    background-size: 220% 100%; animation: barShimmer 1.3s linear infinite;
+  }
   .status-bar.discussing { background: #a78bfa; animation: barPulse 1.8s ease-in-out infinite; }
-  .status-bar.error { background: #f87171; }
+  .status-bar.error { background: #f87171; animation: barPulse 1s ease-in-out infinite; }
   @keyframes barShimmer { 0% { background-position: 220% 0; } 100% { background-position: -20% 0; } }
   @keyframes barPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
@@ -736,9 +741,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div class="legend-group">
     <div class="legend-label">① 카드 하단 얇은 색상 바 — 지금 이 순간 실시간 활동</div>
     <div class="legend-row"><span class="legend-swatch lg-working"></span>흐르는 cyan — 작업중 (위임받아 처리 중)</div>
+    <div class="legend-row"><span class="legend-swatch lg-delegating"></span>흐르는 금색 — 위임중 (다른 팀원에게 업무를 넘기는 중)</div>
     <div class="legend-row"><span class="legend-swatch lg-discussing"></span>느린 보라 pulse — 협업중 (1:1논의/그룹회의 중)</div>
-    <div class="legend-row"><span class="legend-swatch lg-error"></span>정적 빨강 — 직전 작업 오류 발생</div>
+    <div class="legend-row"><span class="legend-swatch lg-error"></span>빠른 빨강 pulse — 직전 작업 오류 발생</div>
     <div class="legend-row"><span class="legend-swatch lg-idle"></span>표시 없음 — 대기 중 (할 일 없음)</div>
+    <div class="legend-row" style="color:#5a7184;font-size:10px;">※ 막대 위에 마우스를 올리면 상대방/내용 정보가 말풍선으로 표시됩니다</div>
   </div>
   <div class="legend-group">
     <div class="legend-label">② 카드 테두리/그림자 — 처리 필요한 미해결 작업 적체 (실시간 활동과는 별개)</div>
