@@ -326,6 +326,18 @@ def delete_task_row(task_id: int) -> bool:
     return row is not None
 
 
+def archive_all_tasks() -> int:
+    """Activity Stream 전체삭제 — 미보관 작업 전체를 일괄 소프트 삭제, 처리된 건수 반환"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE tasks SET archived = TRUE WHERE archived = FALSE RETURNING id")
+    count = cur.rowcount
+    conn.commit()
+    cur.close()
+    conn.close()
+    return count
+
+
 def get_archived_tasks(limit: int = 100) -> list:
     """감사 로그 조회용 — 보관된(삭제 처리된) 작업 전체"""
     conn = get_conn()

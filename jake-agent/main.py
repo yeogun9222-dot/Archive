@@ -21,7 +21,7 @@ from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS, register_persona, load_custom_personas, rename_persona
 from jake_agent.db import create_custom_persona, get_custom_personas, update_custom_persona
-from jake_agent.db import mark_task_read
+from jake_agent.db import mark_task_read, archive_all_tasks
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 from jake_agent.scheduler import start_scheduler_thread
@@ -322,6 +322,13 @@ async def read_task(task_id: int):
     if not ok:
         raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
     return {"status": "read"}
+
+
+@app.post("/activity/clear-all")
+async def clear_all_activity():
+    """Activity Stream 전체삭제 — 화면 비우기와 동시에 서버 데이터도 일괄 보관(소프트 삭제) 처리"""
+    count = archive_all_tasks()
+    return {"status": "cleared", "count": count}
 
 
 @app.delete("/activity/{task_id}")

@@ -1273,9 +1273,20 @@ function renderStream() {
   filtered.forEach(ev => eventsEl.appendChild(buildEventCard(ev, freshIds.has(ev.id))));
 }
 
-document.getElementById('streamClearAllBtn').addEventListener('click', () => {
+document.getElementById('streamClearAllBtn').addEventListener('click', async () => {
   if (streamEvents.length === 0) return;
-  if (!confirm('Activity Stream에 표시된 항목 ' + streamEvents.length + '건을 화면에서 전부 지울까요? (실제 작업 데이터는 삭제되지 않습니다)')) return;
+  if (!confirm('Activity Stream 항목 ' + streamEvents.length + '건을 전부 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+  const btn = document.getElementById('streamClearAllBtn');
+  btn.disabled = true;
+  try {
+    const res = await fetch('/activity/clear-all', { method: 'POST' });
+    if (!res.ok) { alert('삭제 실패. 새로고침 후 다시 시도하세요.'); return; }
+  } catch (e) {
+    alert('삭제 실패: ' + e.message);
+    return;
+  } finally {
+    btn.disabled = false;
+  }
   streamEvents = [];
   renderStream();
 });
