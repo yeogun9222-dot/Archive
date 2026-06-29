@@ -21,6 +21,7 @@ from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
 from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS, register_persona, load_custom_personas, rename_persona
 from jake_agent.db import create_custom_persona, get_custom_personas, update_custom_persona
+from jake_agent.db import mark_task_read
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 from jake_agent.scheduler import start_scheduler_thread
@@ -312,6 +313,15 @@ async def resume_task(task_id: int):
     if not ok:
         raise HTTPException(status_code=409, detail="보류 상태가 아니라 재개할 수 없습니다.")
     return {"status": "pending"}
+
+
+@app.post("/activity/{task_id}/read")
+async def read_task(task_id: int):
+    """Activity Stream 개별 항목 읍음 처리 — 상태와 무관하게 항상 가능, 삭제와 별개"""
+    ok = mark_task_read(task_id, True)
+    if not ok:
+        raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
+    return {"status": "read"}
 
 
 @app.delete("/activity/{task_id}")

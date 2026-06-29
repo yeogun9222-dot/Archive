@@ -71,6 +71,7 @@ def init_db():
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS delegated_by TEXT")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT FALSE")
     cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS due_date TIMESTAMP")
+    cur.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS read_by_ceo BOOLEAN DEFAULT FALSE")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS persona_status (
             persona TEXT PRIMARY KEY,
@@ -196,7 +197,7 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction
+        """SELECT id, title, assigned_to, delegated_by, status, result, created_at, instruction, read_by_ceo
            FROM tasks WHERE id > %s AND archived = FALSE ORDER BY id DESC LIMIT %s""",
         (since_id, limit)
     )
@@ -207,10 +208,21 @@ def get_recent_activity(since_id: int = 0, limit: int = 50) -> list:
         {
             "id": r[0], "title": r[1], "to": r[2], "from": r[3] or "제이크",
             "status": r[4], "result": r[5] or "", "timestamp": r[6].isoformat(),
-            "instruction": r[7] or ""
+            "instruction": r[7] or "", "read": bool(r[8])
         }
         for r in rows
     ]
+
+
+def mark_task_read(task_id: int, read: bool = True) -> bool:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE tasks SET read_by_ceo = %s WHERE id = %s RETURNING id", (read, task_id))
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
 
 def get_task_by_id(task_id: int):
     conn = get_conn()

@@ -448,6 +448,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #events { max-height: 460px; overflow-y: auto; padding-right: 2px; }
   .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
+  .event.unread { border-left: 3px solid #5ff0ff; padding-left: 11px; }
+  .act-btn.read { background: rgba(95,240,255,0.12); color: #5ff0ff; }
   .event .route { color: #5ff0ff; font-weight: 700; margin-bottom: 5px; font-size: 12.5px; }
   .event .task { color: #c5cdd6; margin-bottom: 5px; line-height: 1.4; }
   .event .task.collapsed { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -1193,6 +1195,9 @@ const freshIds = new Set();
 function streamActionButtons(ev) {
   const replyTarget = ev.to !== '대표님' ? ev.to : ev.from;
   let btns = '<button class="act-btn reply" data-act="reply" data-target="' + esc(replyTarget) + '">💬 답장</button>';
+  if (!ev.read) {
+    btns += '<button class="act-btn read" data-act="read">✓ 읽음</button>';
+  }
   if (ev.status === 'failed') {
     btns += '<button class="act-btn retry" data-act="retry">재시도</button>';
     btns += '<button class="act-btn approve" data-act="approve">확인(승인)</button>';
@@ -1213,7 +1218,7 @@ function streamActionButtons(ev) {
 
 function buildEventCard(ev, isFresh) {
   const div = document.createElement('div');
-  div.className = 'event' + (isFresh ? ' fresh' : '');
+  div.className = 'event' + (isFresh ? ' fresh' : '') + (!ev.read ? ' unread' : '');
   const statusClass = 'status-' + ev.status;
   const hasDetail = (ev.instruction && ev.instruction.length > 0) || (ev.result && ev.result.length > 0);
   div.innerHTML =
@@ -1252,6 +1257,7 @@ function buildEventCard(ev, isFresh) {
       const result = await taskAction(ev.id, act === 'delete' ? '' : act, method);
       if (!result) { btn.disabled = false; return; }
       if (act === 'delete') { streamEvents = streamEvents.filter(x => x.id !== ev.id); }
+      else if (act === 'read') { ev.read = true; }
       else if (result.status) { ev.status = result.status; }
       renderStream();
       pollAttention(); pollStatusMap();
