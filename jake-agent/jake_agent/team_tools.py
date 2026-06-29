@@ -114,10 +114,15 @@ def run_delegation(task_id: int, member: str, task: str, caller: str) -> str:
         clear_persona_activity(caller)
         clear_persona_activity(member)
         return f"[{member} 완료 보고]\n{response}"
-    except Exception as e:
-        update_task(task_id, "failed", str(e))
+    except BaseException as e:
+        # 일반 Exception뿐 아니라 클라이언트 타임아웃/연결 끊김으로 인한 asyncio.CancelledError까지
+        # 반드시 잡아서 상태를 갱신해야 함 — 안 그러면 task가 'pending'에 영구히 멈춰버림
+        # (대표님이 승인해야 하는 게 아니라 그냥 멈춰버린 버그였던 사건의 원인)
+        update_task(task_id, "failed", str(e) or "처리 중 연결이 끊기거나 시간 초과됨")
         clear_persona_activity(caller)
         set_persona_activity(member, "error", counterpart=caller, note=str(e)[:150])
+        if not isinstance(e, Exception):
+            raise
         return f"[{member} 위임 실패] {e}"
 
 
