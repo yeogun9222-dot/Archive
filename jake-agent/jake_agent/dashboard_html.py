@@ -316,28 +316,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #chartZoomCtrl button:hover { background: rgba(95,240,255,0.18); }
 
   .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
-
-  /* 부서 노드(사람이 아닌 그룹 라벨) — 일반 카드보다 단순하게, 클릭 불가 */
-  .level-depts { gap: 30px; margin-bottom: 40px; }
-  .dept-card { padding: 9px 16px; cursor: default; }
-  .dept-card .dept-icon {
-    width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 14px; flex-shrink: 0; background: rgba(255,215,106,0.12); border: 1px solid rgba(255,215,106,0.3);
-  }
-  .dept-card .info .name { font-size: 12.5px; color: #ffd76a; font-weight: 700; white-space: nowrap; }
-
-  /* 부서 직속 인력 — 부서 노드 바로 아래, 가로로 펼쳐짐(부서별로 위치 계산은 JS에서) */
-  .level-deptmembers { position: relative; height: 60px; width: 100%; margin-bottom: 0; }
-  .level-deptmembers .card { position: absolute; top: 0; transform: translateX(-50%); padding: 8px 10px; gap: 6px; box-sizing: border-box; }
-  .level-deptmembers .avatar { width: 28px; height: 28px; font-size: 13px; }
-  .level-deptmembers .info .name { font-size: 11px; white-space: nowrap; }
-  .level-deptmembers .info .role { font-size: 8.5px; white-space: nowrap; }
-
+  .level-members { flex-wrap: nowrap; max-width: none; gap: 10px; margin-bottom: 28px; }
+  .level-members .card { padding: 8px 10px; gap: 6px; }
+  .level-members .avatar { width: 28px; height: 28px; font-size: 13px; }
+  .level-members .info .name { font-size: 11px; }
+  .level-members .info .role { font-size: 8.5px; }
   .level-subteam { position: relative; height: 56px; width: 100%; margin-bottom: 0; }
   .level-subteam .card { position: absolute; top: 0; transform: translateX(-50%); padding: 8px 10px; width: 124px; box-sizing: border-box; }
   .level-subteam .avatar { width: 26px; height: 26px; font-size: 12px; }
   .level-subteam .info .name { font-size: 11.5px; }
   .level-subteam .info .role { font-size: 9px; white-space: normal; line-height: 1.25; }
+  .level-members .info .name, .level-members .info .role { white-space: nowrap; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
@@ -423,8 +412,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-top: 5px solid #2bb8cc;
   }
   .msg-badge.show { display: flex; }
-  .level-deptmembers .msg-badge { top: -16px; width: 20px; height: 14px; }
-  .level-deptmembers .msg-badge::after { bottom: -3px; border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
+  .level-members .msg-badge { top: -16px; width: 20px; height: 14px; }
+  .level-members .msg-badge::after { bottom: -3px; border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
   .msg-badge .dot { width: 3px; height: 3px; margin: 0; border-radius: 50%; background: #0a0d14; animation: msgDotBlink 1.3s infinite; }
   .msg-badge .dot:nth-child(2) { animation-delay: 0.18s; }
   .msg-badge .dot:nth-child(3) { animation-delay: 0.36s; }
@@ -567,7 +556,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     #chart { padding: 14px 16px 50px; }
     .level { gap: 12px; }
-    .level-depts { gap: 14px; }
+    .level-members { gap: 8px; }
     .card { padding: 9px 12px; }
 
     #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
@@ -817,8 +806,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="level level-depts" id="depts"></div>
-    <div class="level level-deptmembers" id="deptMembers"></div>
+    <div class="level level-members" id="members"></div>
     <div class="level level-subteam" id="subteam"></div>
   </div>
   <div id="chartZoomCtrl">
@@ -857,9 +845,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <script>
-// 제이크(COO) 직속 11인 — 본부장/CFO급, 전부 동급(피어). 조직도에서는 DEPT_DIRECT로
-// 부서별로 묶여 배치되며, 이 배열 순서 자체는 더 이상 레이아웃에 영향을 주지 않음.
-const DIRECT_REPORTS = ["루나","제로","다인","미나","에바","렉스","피오","리리","설리","카이","바쿠"];
+// 제이크(COO) 직속 11인 — 본부장/CFO급, 전부 동급(피어)
+const DIRECT_REPORTS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","미나","카이","설리"];
 // 팀장급 — 각자의 본부장 산하 (제이크 직속 아님)
 const SUB_REPORTS = { "사라": "에바", "노바": "렉스" };
 const MEMBERS = [...DIRECT_REPORTS, ...Object.keys(SUB_REPORTS)];
@@ -884,19 +871,6 @@ const ROSTER_DEPT = {
   "마케팅/그로스": ["카이", "조이"],
   "데이터/재무": ["바쿠", "엠마"],
 };
-// 조직도(트리)용 부서 분류 — 제이크 → 부서(5개) → 부서 직속 인력 순으로 실제 트리 단계를 만듦.
-// 팀장/신규채용(테오·노바·노아·사라·엠마·조이)은 부서 직속이 아니라 본인의 실제 상급자
-// (본부장/팀장) 산하이므로 여기엔 넣지 않고, SUB_REPORTS 로직으로 그 상급자 카드 밑에 배치한다.
-// 제이크는 이미 COO로 최상단에 단독 표시되므로 "경영진" 부서에서는 제외(중복 표시 방지).
-const DEPTS = ["경영진", "기획/전략", "개발", "마케팅/그로스", "데이터/재무"];
-const DEPT_DIRECT = {
-  "경영진": ["루나", "제로"],
-  "기획/전략": ["다인", "미나", "에바"],
-  "개발": ["렉스", "피오", "리리", "설리"],
-  "마케팅/그로스": ["카이"],
-  "데이터/재무": ["바쿠"],
-};
-const DEPT_ICONS = { "경영진": "🏛️", "기획/전략": "📐", "개발": "🖥️", "마케팅/그로스": "📣", "데이터/재무": "💹" };
 const JOB_DESC = {
   "제이크": "전체 지휘·조율, 대표님 비전을 실행 전략으로 전환",
   "다인": "사업기획서·IR·경영보고서·전략 프레임워크 수립",
@@ -921,20 +895,9 @@ function buildCard(name, sizeClass) {
   div.innerHTML = '<div class="status-badge" id="badge-' + name + '"></div><div class="msg-badge" id="msgbadge-' + name + '"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><div class="avatar">' + ICONS[name] + '</div><div class="info"><div class="name">' + name + '</div><div class="role">' + ROLES[name] + '</div></div><div class="status-bar" id="actbar-' + name + '"></div>';
   return div;
 }
-// 부서 노드 — 실제 인물이 아닌 그룹 라벨이라 채팅/상태뱃지 없이 단순하게 표시
-function buildDeptCard(dept) {
-  const div = document.createElement('div');
-  div.className = 'card dept-card';
-  div.id = 'card-' + dept;
-  div.innerHTML = '<div class="dept-icon">' + (DEPT_ICONS[dept] || '🏢') + '</div><div class="info"><div class="name">' + dept + '</div></div>';
-  return div;
-}
 
-const deptsEl = document.getElementById('depts');
-DEPTS.forEach(dept => deptsEl.appendChild(buildDeptCard(dept)));
-
-const deptMembersEl = document.getElementById('deptMembers');
-DIRECT_REPORTS.forEach(name => deptMembersEl.appendChild(buildCard(name)));
+const membersEl = document.getElementById('members');
+DIRECT_REPORTS.forEach(name => membersEl.appendChild(buildCard(name)));
 
 const subteamEl = document.getElementById('subteam');
 Object.keys(SUB_REPORTS).forEach(name => subteamEl.appendChild(buildCard(name)));
@@ -953,15 +916,12 @@ function relPos(el) {
   }
   return { x, y };
 }
-// deptMembers/subteam 카드는 CSS transform: translateX(-50%)로 이미 자기 중심에 위치해 있어
-// offsetLeft(=left 값) 자체가 중앙 X좌표임 — 일반(정상 흐름) 카드처럼 +너비/2를 더하면 위치가 틀어짐
-function isCenteredCard(el) {
-  const pid = el.parentElement && el.parentElement.id;
-  return pid === 'subteam' || pid === 'deptMembers';
-}
 function center(el) {
   const p = relPos(el);
-  const cx = isCenteredCard(el) ? p.x : p.x + el.offsetWidth / 2;
+  // subteam 카드는 CSS transform: translateX(-50%)로 이미 자기 중심에 위치해 있어
+  // offsetLeft(=left 값) 자체가 중앙 X좌표임 — 일반 카드처럼 +너비/2를 더하면 안 됨
+  const isSubteamCard = el.parentElement && el.parentElement.id === 'subteam';
+  const cx = isSubteamCard ? p.x : p.x + el.offsetWidth / 2;
   return { x: cx, y: p.y + el.offsetHeight / 2, top: p.y, bottom: p.y + el.offsetHeight };
 }
 
@@ -975,34 +935,6 @@ function elbowPath(p1, p2) {
 function directedElbow(x1, y1, x2, y2) {
   const midY = (y1 + y2) / 2;
   return 'M ' + x1 + ' ' + y1 + ' L ' + x1 + ' ' + midY + ' L ' + x2 + ' ' + midY + ' L ' + x2 + ' ' + y2;
-}
-
-// 부서 노드 바로 아래에 그 부서 직속 인력을 가로로 펼쳐서 배치(부서 노드 중앙 기준 정렬)
-const DEPT_MEMBER_GAP = 14;
-function positionDeptMembers() {
-  const deptMembersEl2 = document.getElementById('deptMembers');
-  const dmPos = relPos(deptMembersEl2);
-  let maxBottom = 0;
-  DEPTS.forEach(dept => {
-    const deptCard = document.getElementById('card-' + dept);
-    const names = DEPT_DIRECT[dept] || [];
-    const cards = names.map(n => document.getElementById('card-' + n)).filter(Boolean);
-    if (!deptCard || !cards.length) return;
-    const widths = cards.map(c => c.offsetWidth);
-    const totalW = widths.reduce((a, b) => a + b, 0) + DEPT_MEMBER_GAP * (cards.length - 1);
-    const deptPos = relPos(deptCard);
-    const deptCenterX = deptPos.x + deptCard.offsetWidth / 2 - dmPos.x;
-    const deptBottomY = deptPos.y - dmPos.y + deptCard.offsetHeight;
-    const top = deptBottomY + 18;
-    let curX = deptCenterX - totalW / 2;
-    cards.forEach((c, i) => {
-      c.style.left = Math.round(curX + widths[i] / 2) + 'px';
-      c.style.top = Math.round(top) + 'px';
-      curX += widths[i] + DEPT_MEMBER_GAP;
-      maxBottom = Math.max(maxBottom, top + c.offsetHeight);
-    });
-  });
-  deptMembersEl2.style.height = (maxBottom + 8) + 'px';
 }
 
 const SUBTEAM_ROW_H = 64;
@@ -1027,9 +959,9 @@ function positionSubteam() {
     const parentCard = document.getElementById('card-' + parent);
     if (!parentCard) return;
     const parentPos = relPos(parentCard);
-    // 부모 카드가 deptMembers/subteam 소속(이미 translateX(-50%)로 중앙정렬됨)이면
-    // left 값 자체가 중앙 X좌표이므로 +너비/2를 더하면 안 됨
-    const parentCenterX = isCenteredCard(parentCard)
+    // subteam 카드는 CSS transform: translateX(-50%)로 이미 자기 중심에 위치해 있어
+    // left 값 자체가 중앙 X좌표임 — 1단계(본부장) 카드처럼 +너비/2를 더하면 안 됨
+    const parentCenterX = subKeys.has(parent)
       ? (parentPos.x - subPos.x)
       : (parentPos.x + parentCard.offsetWidth / 2 - subPos.x);
     const parentBottomY = parentPos.y - subPos.y + parentCard.offsetHeight;
@@ -1067,7 +999,6 @@ function positionSubteam() {
 
 let staticPaths = [];
 function drawStaticLines() {
-  positionDeptMembers();
   positionSubteam();
   svg.innerHTML = '';
   const ceo = center(document.getElementById('card-대표님'));
@@ -1081,34 +1012,14 @@ function drawStaticLines() {
   p1.setAttribute('fill', 'none');
   svg.appendChild(p1);
 
-  // 제이크 → 부서(5개) — 본부장 11명에게 개별 선을 긋던 것을 부서 단위로 단순화
-  DEPTS.forEach(dept => {
-    const deptEl = document.getElementById('card-' + dept);
-    if (!deptEl) return;
-    const d = center(deptEl);
+  DIRECT_REPORTS.forEach(name => {
+    const m = center(document.getElementById('card-' + name));
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', elbowPath(jake, d));
-    p.setAttribute('stroke', 'rgba(255,215,106,0.3)');
-    p.setAttribute('stroke-width', '1.3');
+    p.setAttribute('d', elbowPath(jake, m));
+    p.setAttribute('stroke', 'rgba(95,240,255,0.16)');
+    p.setAttribute('stroke-width', '1.2');
     p.setAttribute('fill', 'none');
     svg.appendChild(p);
-  });
-
-  // 부서 → 그 부서 직속 인력
-  Object.entries(DEPT_DIRECT).forEach(([dept, names]) => {
-    const deptEl = document.getElementById('card-' + dept);
-    if (!deptEl) return;
-    const d = center(deptEl);
-    names.forEach(name => {
-      const m = document.getElementById('card-' + name);
-      if (!m) return;
-      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      p.setAttribute('d', elbowPath(d, center(m)));
-      p.setAttribute('stroke', 'rgba(95,240,255,0.16)');
-      p.setAttribute('stroke-width', '1.2');
-      p.setAttribute('fill', 'none');
-      svg.appendChild(p);
-    });
   });
 
   // 팀장급/신규채용은 본부장(또는 팀장) 산하 — 항상 "진짜 부모"에게서 직접 선을 그림.
