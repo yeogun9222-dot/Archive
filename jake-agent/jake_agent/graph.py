@@ -56,6 +56,11 @@ def _get_persona_tools(persona: str) -> list:
         "카이":   web + team,
         "설리":   github + web + rex + team,
         "노바":   rex + github + web + team,
+        # 결재 승인으로 채용된 신규 인력 — 소속 본부장과 같은 직무 도구를 부여
+        "테오":   notion + web + team,           # 전략기획 (다인 산하)
+        "노아":   rex + github + web + team,      # DevOps 엔지니어 (노바 산하) — Docker/인프라 도구 필요
+        "엠마":   luna + web + team,              # 재무분석 (루나 산하)
+        "조이":   web + team,                     # 콘텐츠마케팅 (카이 산하)
     }
     return mapping.get(persona, web + team)
 
