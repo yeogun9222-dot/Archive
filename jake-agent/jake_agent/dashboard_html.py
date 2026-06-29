@@ -333,6 +333,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     display: flex; align-items: center; gap: 10px;
     box-shadow: 0 4px 18px rgba(0,0,0,0.4);
     transition: box-shadow 0.4s ease, border-color 0.4s ease, transform 0.4s ease;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   /* 이슈 없을 때는 완전 정적 — 이슈(pending/failed/held) 발생 시에만 glow-* 클래스로 애니메이션 부여 */
   .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
@@ -1078,7 +1080,10 @@ let panX = 0, panY = 0, chartScale = 1, dragMoved = false;
 const MIN_SCALE = 0.35, MAX_SCALE = 2.2;
 
 function applyChartTransform() {
-  chart.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + chartScale + ')';
+  // 이동 거리가 정수 픽셀이 아니면 서브픽셀 위치에서 텍스트/아이콘이 흐릿하게
+  // 래스터화되는 문제가 있어, 실제 적용 직전에 정수로 반올림
+  const rx = Math.round(panX), ry = Math.round(panY);
+  chart.style.transform = 'translate(' + rx + 'px,' + ry + 'px) scale(' + chartScale + ')';
 }
 function zoomAt(cx, cy, factor) {
   const prev = chartScale;
