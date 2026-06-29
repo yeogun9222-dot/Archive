@@ -798,17 +798,30 @@ def clear_persona_activity(persona: str) -> None:
     set_persona_activity(persona, "idle")
 
 
+PERSONA_ACTIVITY_STALE_MINUTES = 15
+
+
 def get_persona_activity_map() -> dict:
+    """카드 상태바 조회 — 서버 재시작/예외 등으로 클리어가 누락된 경우를 대비해,
+    started_at 기준 일정 시간(PERSONA_ACTIVITY_STALE_MINUTES) 이상 지난 작업중 상태는 화면상 idle로 간주"""
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("SELECT persona, activity_type, counterpart, note, started_at FROM persona_activity")
+    cur.execute("""
+        SELECT persona, activity_type, counterpart, note, started_at,
+               EXTRACT(EPOCH FROM (NOW() - started_at)) AS elapsed_seconds
+        FROM persona_activity
+    """)
     rows = cur.fetchall()
     cur.close()
     conn.close()
-    return {
-        r[0]: {"activity_type": r[1], "counterpart": r[2], "note": r[3] or "", "started_at": r[4].isoformat()}
-        for r in rows
-    }
+    stale_seconds = PERSONA_ACTIVITY_STALE_MINUTES * 60
+    result = {}
+    for r in rows:
+        activity_type = r[1]
+        if activity_type != "idle" and r[5] is not None and r[5] > stale_seconds:
+            activity_type = "idle"
+        result[r[0]] = {"activity_type": activity_type, "counterpart": r[2], "note": r[3] or "", "started_at": r[4].isoformat()}
+    return result
 
 
 def get_last_message_map() -> dict:
