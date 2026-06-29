@@ -360,14 +360,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
      말풍선 모양 + 타이핑 도트로 은은하게 깜빡임 (확인되면 즉시 사라짐)
      중앙 정렬: 좌상단 모서리에 두면 인접 카드와 겹쳐 보여 소속이 헷갈리는 문제가 있었음 */
   .msg-badge {
-    display: none; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 8;
-    width: 26px; height: 19px; border-radius: 9px 9px 9px 3px;
+    display: none; position: absolute; top: -19px; left: 50%; transform: translateX(-50%); z-index: 8;
+    width: 24px; height: 17px; border-radius: 8px;
     background: linear-gradient(160deg, #6ff5ff, #2bb8cc);
     box-shadow: 0 0 8px rgba(95,240,255,0.55);
     align-items: center; justify-content: center; gap: 2.5px;
     animation: msgBubblePulse 1.8s ease-in-out infinite;
   }
+  .msg-badge::after {
+    content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid #2bb8cc;
+  }
   .msg-badge.show { display: flex; }
+  .level-members .msg-badge { top: -16px; width: 20px; height: 14px; }
+  .level-members .msg-badge::after { bottom: -3px; border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
   .msg-badge .dot { width: 3px; height: 3px; border-radius: 50%; background: #0a0d14; animation: msgDotBlink 1.3s infinite; }
   .msg-badge .dot:nth-child(2) { animation-delay: 0.18s; }
   .msg-badge .dot:nth-child(3) { animation-delay: 0.36s; }
@@ -396,11 +403,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-radius: 10px; padding: 3px 8px; cursor: pointer;
   }
   #streamClearAllBtn:hover { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
-  .event-dismiss {
-    position: absolute; top: 8px; right: 9px; background: none; border: none; color: #44546a;
-    font-size: 13px; cursor: pointer; padding: 2px 4px; line-height: 1;
-  }
-  .event-dismiss:hover { color: #f87171; }
   .event { position: relative; }
   #streamTabs { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
   #streamTabs .tab {
@@ -486,6 +488,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #attentionEmpty { color: #34465a; font-size: 12px; text-align: center; padding: 20px 0; }
   .att-actions { display: flex; gap: 6px; margin-top: 8px; }
   .act-btn { border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  .act-btn.reply { background: rgba(255,215,106,0.16); color: #ffd76a; }
   .act-btn.approve { background: rgba(74,222,128,0.18); color: #4ade80; }
   .act-btn.hold { background: rgba(107,125,143,0.25); color: #c5cdd6; }
   .act-btn.retry { background: rgba(95,240,255,0.18); color: #5ff0ff; }
@@ -1041,13 +1044,35 @@ let streamEvents = [];
 let activeTabStatus = 'all';
 const freshIds = new Set();
 
+// 개별 메시지에 대해 답장(해당 페르소나 카드챗 열기) / 보류 / 철회(삭제) 등을
+// 상태별로 다르게 제시 — 일괄 승인/삭제만 있던 기존 구조의 불편함을 해소
+function streamActionButtons(ev) {
+  const replyTarget = ev.to !== '대표님' ? ev.to : ev.from;
+  let btns = '<button class="act-btn reply" data-act="reply" data-target="' + esc(replyTarget) + '">💬 답장</button>';
+  if (ev.status === 'failed') {
+    btns += '<button class="act-btn retry" data-act="retry">재시도</button>';
+    btns += '<button class="act-btn approve" data-act="approve">확인(승인)</button>';
+    btns += '<button class="act-btn hold" data-act="hold">보류</button>';
+    btns += '<button class="act-btn delete" data-act="delete">삭제</button>';
+  } else if (ev.status === 'pending') {
+    btns += '<button class="act-btn approve" data-act="approve">승인</button>';
+    btns += '<button class="act-btn hold" data-act="hold">보류</button>';
+    btns += '<button class="act-btn delete" data-act="delete" data-label="철회">철회</button>';
+  } else if (ev.status === 'held') {
+    btns += '<button class="act-btn approve" data-act="resume">재개</button>';
+    btns += '<button class="act-btn delete" data-act="delete">삭제</button>';
+  } else {
+    btns += '<button class="act-btn delete" data-act="delete">삭제</button>';
+  }
+  return '<div class="att-actions">' + btns + '</div>';
+}
+
 function buildEventCard(ev, isFresh) {
   const div = document.createElement('div');
   div.className = 'event' + (isFresh ? ' fresh' : '');
   const statusClass = 'status-' + ev.status;
   const hasDetail = (ev.instruction && ev.instruction.length > 0) || (ev.result && ev.result.length > 0);
   div.innerHTML =
-    '<button class="event-dismiss" data-id="' + ev.id + '" title="삭제">×</button>' +
     '<div class="route">' + ev.from + ' → ' + ev.to + '</div>' +
     '<div class="task collapsed">' + esc(ev.title) + '</div>' +
     (hasDetail ? '<div class="more">자세히 보기 ▾</div>' : '') +
@@ -1056,7 +1081,8 @@ function buildEventCard(ev, isFresh) {
       (ev.result ? '<div class="label">결과</div><div>' + esc(ev.result) + '</div>' : '') +
     '</div>' +
     '<div class="time">' + new Date(ev.timestamp).toLocaleTimeString('ko-KR') +
-    ' · <span class="' + statusClass + '">' + ev.status + '</span></div>';
+    ' · <span class="' + statusClass + '">' + ev.status + '</span></div>' +
+    streamActionButtons(ev);
   if (hasDetail) {
     div.addEventListener('click', () => {
       div.classList.toggle('expanded');
@@ -1066,10 +1092,26 @@ function buildEventCard(ev, isFresh) {
       else { taskEl.classList.add('collapsed'); if (moreEl) moreEl.textContent = '자세히 보기 ▾'; }
     });
   }
-  div.querySelector('.event-dismiss').addEventListener('click', (e) => {
-    e.stopPropagation();
-    streamEvents = streamEvents.filter(x => x.id !== ev.id);
-    renderStream();
+  div.querySelectorAll('.act-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const act = btn.dataset.act;
+      if (act === 'reply') { openCardChat(btn.dataset.target); return; }
+      if (act === 'delete') {
+        const label = btn.dataset.label || '삭제';
+        if (!confirm('이 기록을 영구적으로 ' + label + '합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+      } else if (act === 'retry' && !confirm('같은 내용으로 실제로 다시 실행합니다 (API 비용 재발생). 계속할까요?')) {
+        return;
+      }
+      btn.disabled = true;
+      const method = act === 'delete' ? 'DELETE' : 'POST';
+      const result = await taskAction(ev.id, act === 'delete' ? '' : act, method);
+      if (!result) { btn.disabled = false; return; }
+      if (act === 'delete') { streamEvents = streamEvents.filter(x => x.id !== ev.id); }
+      else if (result.status) { ev.status = result.status; }
+      renderStream();
+      pollAttention(); pollStatusMap();
+    });
   });
   return div;
 }
@@ -1165,7 +1207,7 @@ async function taskAction(id, action, method) {
       alert(err.detail || '처리 실패. 새로고침 후 다시 시도하세요.');
       return false;
     }
-    return true;
+    return await res.json().catch(() => true);
   } catch (e) { alert('처리 실패: ' + e.message); return false; }
 }
 
