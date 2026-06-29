@@ -121,6 +121,17 @@ def init_db():
     cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS resolution TEXT")
     cur.execute("ALTER TABLE decision_log ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP")
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS custom_personas (
+            name TEXT PRIMARY KEY,
+            role TEXT,
+            icon TEXT,
+            parent TEXT,
+            system_prompt TEXT NOT NULL,
+            decision_id INTEGER,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
             label TEXT NOT NULL,
@@ -525,6 +536,34 @@ def get_decisions(limit: int = 100) -> list:
             "decided_by": r[4] or "대표님", "related_task_id": r[5], "created_at": r[6].isoformat(),
             "requested_by": r[7], "resolution": r[8] or ""
         }
+        for r in rows
+    ]
+
+
+def create_custom_persona(name: str, role: str, icon: str, parent: str, system_prompt: str, decision_id: int = None) -> None:
+    """결재 승인으로 실제 채용된 신규 페르소나를 영구 저장 — 서버 재시작 후에도 유지됨"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO custom_personas (name, role, icon, parent, system_prompt, decision_id)
+           VALUES (%s, %s, %s, %s, %s, %s)
+           ON CONFLICT (name) DO NOTHING""",
+        (name, role, icon, parent, system_prompt, decision_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_custom_personas() -> list:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT name, role, icon, parent, system_prompt FROM custom_personas ORDER BY created_at ASC")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {"name": r[0], "role": r[1], "icon": r[2], "parent": r[3], "system_prompt": r[4]}
         for r in rows
     ]
 

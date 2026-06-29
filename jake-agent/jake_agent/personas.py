@@ -572,3 +572,29 @@ _DELEGATION_RULE = (
 def get_system_prompt(persona_name: str) -> str:
     base = PERSONAS.get(persona_name, PERSONAS["제이크"])["system"]
     return base + _DELEGATION_RULE
+
+
+# ── 채용 결재 승인으로 실제 합류한 신규 페르소나 ──────────────────────
+# 정적 PERSONAS dict에 런타임으로 추가 — 서버 재시작 시에도 DB에서 다시 불러옴
+
+def register_persona(name: str, role: str, icon: str, parent: str, system_prompt: str) -> None:
+    """신규 채용 페르소나를 즉시 대화 가능하게 등록 (PERSONAS dict에 추가)"""
+    PERSONAS[name] = {
+        "keywords": [name + "야", name, name.lower()],
+        "system": system_prompt,
+        "role": role,
+        "icon": icon,
+        "parent": parent,
+        "custom": True,
+    }
+
+
+def load_custom_personas() -> None:
+    """서버 시작 시 — 이전에 채용 승인된 페르소나를 DB에서 불러와 등록"""
+    try:
+        from .db import get_custom_personas
+        for p in get_custom_personas():
+            if p["name"] not in PERSONAS:
+                register_persona(p["name"], p["role"], p["icon"], p["parent"], p["system_prompt"])
+    except Exception:
+        pass  # DB가 아직 준비되지 않은 초기 import 시점일 수 있음 — main.py 시작 시 다시 호출됨

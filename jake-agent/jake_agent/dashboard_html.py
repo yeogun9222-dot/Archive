@@ -750,6 +750,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <div class="level level-members" id="members"></div>
     <div class="level level-subteam" id="subteam"></div>
+    <div id="newHiresLabel" style="display:none; color:#ffd76a; font-size:10.5px; letter-spacing:1px; margin:30px 0 8px; text-align:center;">🆕 신규 합류</div>
+    <div class="level level-members" id="newHires"></div>
   </div>
   <div id="chartZoomCtrl">
     <button id="chartZoomIn" title="확대">+</button>
@@ -902,6 +904,36 @@ function drawStaticLines() {
 }
 window.addEventListener('resize', drawStaticLines);
 setTimeout(drawStaticLines, 50);
+
+// ── 채용 승인으로 실제 합류한 신규 페르소나 — 조직도/상태폴링에 동적으로 합류 ──────
+// DIRECT_REPORTS/MEMBERS/ROLES/ICONS는 const지만 배열·객체 자체는 변경 가능(재할당만 금지) —
+// 그래서 push/속성추가만으로 이미 돌고 있는 폴링 함수들(MEMBERS 참조)에 자동으로 반영됨
+const newHiresEl = document.getElementById('newHires');
+const newHiresLabel = document.getElementById('newHiresLabel');
+const knownHires = new Set();
+async function loadCustomPersonas() {
+  try {
+    const res = await fetch('/personas/custom');
+    const list = (await res.json()).personas || [];
+    let added = false;
+    list.forEach(p => {
+      if (knownHires.has(p.name)) return;
+      knownHires.add(p.name);
+      ROLES[p.name] = p.role + ' (' + (p.parent || '제이크') + ' 산하)';
+      ICONS[p.name] = p.icon || '🧩';
+      MEMBERS.push(p.name);
+      ALL_NAMES.push(p.name);
+      newHiresEl.appendChild(buildCard(p.name));
+      added = true;
+    });
+    if (added) {
+      newHiresLabel.style.display = 'block';
+      pollActivityMap(); pollUnreadBadges(); pollStatusMap();
+    }
+  } catch (e) { /* ignore */ }
+}
+loadCustomPersonas();
+setInterval(loadCustomPersonas, 15000);
 
 // ── 조직도 패닝/줌 — 마우스 드래그+휠, 손가락 드래그+핀치 모두 지원 ──────────
 let panX = 0, panY = 0, chartScale = 1, dragMoved = false;
@@ -1831,14 +1863,21 @@ async function pollPendingDecisions() {
     const list = data.decisions || [];
     decBadge.textContent = list.length;
     decBadge.classList.toggle('show', list.length > 0);
-    decPendingBody.innerHTML = list.map(d =>
-      '<div class="dec-row" style="border-color:rgba(251,191,36,0.35);"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
-      '<div class="summary">' + esc(d.summary) + '</div>' +
-      '<div class="reason">' + esc(d.requested_by) + '의 요청 — ' + esc(d.reason) + '</div>' +
-      '<textarea class="dec-resolve-input" data-id="' + d.id + '" placeholder="결정 내용을 입력하세요" rows="2" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(251,191,36,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px; resize:vertical;"></textarea>' +
-      '<button class="dec-resolve-btn" data-id="' + d.id + '" style="margin-top:6px; background:rgba(251,191,36,0.18); color:#fbbf24; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">결재하기</button>' +
-      '</div>'
-    ).join('') || '<div style="color:#34465a;font-size:11px;">결재 대기 중인 사안이 없습니다</div>';
+    decPendingBody.innerHTML = list.map(d => {
+      const isHiring = d.category === '인사';
+      const actionsHtml = isHiring
+        ? '<div style="margin-top:8px; display:flex; gap:6px;">' +
+            '<button class="dec-hire-btn" data-id="' + d.id + '" style="background:rgba(74,222,128,0.18); color:#4ade80; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">✅ 승인(채용)</button>' +
+            '<button class="dec-reject-btn" data-id="' + d.id + '" style="background:rgba(248,113,113,0.15); color:#f87171; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">❌ 반려</button>' +
+          '</div>'
+        : '<textarea class="dec-resolve-input" data-id="' + d.id + '" placeholder="결정 내용을 입력하세요" rows="2" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(251,191,36,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px; resize:vertical;"></textarea>' +
+          '<button class="dec-resolve-btn" data-id="' + d.id + '" style="margin-top:6px; background:rgba(251,191,36,0.18); color:#fbbf24; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">결재하기</button>';
+      return '<div class="dec-row" style="border-color:rgba(251,191,36,0.35);"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
+        '<div class="summary">' + esc(d.summary) + '</div>' +
+        '<div class="reason">' + esc(d.requested_by) + '의 요청 — ' + esc(d.reason) + '</div>' +
+        actionsHtml +
+        '</div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">결재 대기 중인 사안이 없습니다</div>';
 
     decPendingBody.querySelectorAll('.dec-resolve-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1851,6 +1890,38 @@ async function pollPendingDecisions() {
         await fetch('/decisions/' + id + '/resolve', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resolution })
+        });
+        pollPendingDecisions(); pollDecisions();
+      });
+    });
+    decPendingBody.querySelectorAll('.dec-hire-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (!confirm('승인하면 신규 팀원이 실제로 합류해서 바로 대화·업무 위임이 가능해집니다 (API 비용 발생). 계속할까요?')) return;
+        btn.disabled = true; btn.textContent = '채용 처리 중...';
+        const res = await fetch('/decisions/' + id + '/approve_hire', { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.detail || '채용 처리 실패. 새로고침 후 다시 시도하세요.');
+          btn.disabled = false; btn.textContent = '✅ 승인(채용)';
+          return;
+        }
+        const data = await res.json();
+        alert(data.persona.name + '(' + data.persona.role + ')이 ' + data.persona.parent + ' 산하로 합류했습니다. 조직도에 곧 표시됩니다.');
+        pollPendingDecisions(); pollDecisions();
+        if (typeof loadCustomPersonas === 'function') loadCustomPersonas();
+      });
+    });
+    decPendingBody.querySelectorAll('.dec-reject-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (!confirm('이 채용 요청을 반려합니다. 계속할까요?')) return;
+        btn.disabled = true; btn.textContent = '처리 중...';
+        await fetch('/decisions/' + id + '/resolve', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resolution: '반려 — 채용하지 않음' })
         });
         pollPendingDecisions(); pollDecisions();
       });

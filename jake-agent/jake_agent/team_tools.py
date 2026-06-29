@@ -1,4 +1,6 @@
 import os
+import json
+import re
 import time
 from contextvars import ContextVar
 from langchain_anthropic import ChatAnthropic
@@ -229,6 +231,44 @@ def request_ceo_decision(category: str, summary: str, reason: str) -> str:
     decision_id = request_decision(category, summary, reason, requested_by=requester)
     notify_decision_request(requester, category, summary, reason)
     return f"[결재 요청 등록됨 #{decision_id}] 대표님의 결재 패널에 올라갔습니다. 결재가 나면 알려드리겠습니다."
+
+
+def draft_persona_from_decision(summary: str, reason: str) -> dict:
+    """채용 결재(인사 카테고리)가 승인됐을 때 — 공고 내용(summary/reason)을 바탕으로
+    신규 페르소나의 이름/직책/아이콘/소속/시스템 프롬프트를 LLM으로 즉석 설계."""
+    llm = ChatAnthropic(model=HAIKU_MODEL, api_key=os.getenv("ANTHROPIC_API_KEY"), max_tokens=900)
+    prompt = (
+        "다음은 AI 조직 채용 결재 공고입니다. 이 내용을 바탕으로 신규 AI 팀원 페르소나를 설계하세요.\n\n"
+        f"공고 제목: {summary}\n공고 상세: {reason}\n\n"
+        "다른 설명 없이 아래 JSON 형식으로만 답하세요:\n"
+        '{"name": "한글 이름 2~4자(기존 팀원과 중복 금지, 신선한 작명)", '
+        '"role": "직책 한 줄(예: 시장조사 애널리스트)", '
+        '"icon": "이모지 1개", '
+        '"parent": "소속 상급자의 한글 이름(공고에 명시된 본부장/CFO 등 — 불명확하면 제이크)", '
+        '"system": "이 페르소나의 1인칭 시스템 프롬프트. 정체성/말투/전문성/대표님 호칭 포함, 400~600자"}'
+    )
+    response = llm.invoke([HumanMessage(content=prompt)])
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        log_token_usage("제이크", response.usage_metadata.get("input_tokens", 0), response.usage_metadata.get("output_tokens", 0), model=HAIKU_MODEL)
+
+    text = response.content.strip()
+    match = re.search(r"\{.*\}", text, re.S)
+    data = json.loads(match.group(0)) if match else {}
+
+    name = (data.get("name") or "신입").strip()[:10]
+    if name in PERSONAS:
+        name = name + "2"
+    parent = data.get("parent", "").strip()
+    if parent not in PERSONAS:
+        parent = "제이크"
+
+    return {
+        "name": name,
+        "role": (data.get("role") or "신규 합류 팀원").strip()[:40],
+        "icon": (data.get("icon") or "🧩").strip()[:4],
+        "parent": parent,
+        "system_prompt": (data.get("system") or f"당신은 {name}입니다. Kade YEO CEO의 신규 합류 팀원입니다. 항상 한국어로 응답하고 대표님을 \"대표님\"으로 호칭합니다.").strip(),
+    }
 
 
 def get_all_team_tools():

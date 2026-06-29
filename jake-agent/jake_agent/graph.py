@@ -185,7 +185,7 @@ def agent_node(state: JakeState) -> JakeState:
         log_conversation(persona, f"{persona}: {jake_response}", None)
 
         if persona == "제이크":
-            for member in TEAM_MEMBERS:
+            for member in PERSONAS.keys():
                 if member in jake_response and member != "제이크":
                     task_id = create_task(
                         title=f"{member} 작업",

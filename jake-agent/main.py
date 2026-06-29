@@ -14,12 +14,13 @@ import uuid
 
 from jake_agent.graph import build_jake_graph
 from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision, get_last_message_map
-from jake_agent.team_tools import run_delegation
+from jake_agent.team_tools import run_delegation, draft_persona_from_decision
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
-from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS
+from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS, register_persona, load_custom_personas
+from jake_agent.db import create_custom_persona, get_custom_personas
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 from jake_agent.scheduler import start_scheduler_thread
@@ -27,6 +28,7 @@ from jake_agent.scheduler import start_scheduler_thread
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    load_custom_personas()
     start_bot_thread()
     start_monitor_thread()
     start_scheduler_thread()
@@ -395,6 +397,35 @@ async def resolve_decision_endpoint(decision_id: int, req: ResolveDecisionReques
     if not ok:
         raise HTTPException(status_code=409, detail="이미 결재되었거나 존재하지 않는 사안입니다.")
     return {"status": "resolved"}
+
+
+@app.post("/decisions/{decision_id}/approve_hire")
+async def approve_hire(decision_id: int):
+    """인사(채용) 결재 승인 — 실제로 신규 페르소나를 생성해 즉시 대화 가능하게 만듦"""
+    target = next((d for d in get_pending_decisions() if d["id"] == decision_id), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="대기 중인 결재가 아닙니다. 새로고침 후 다시 시도하세요.")
+    if target["category"] != "인사":
+        raise HTTPException(status_code=400, detail="인사 카테고리 결재만 채용 승인할 수 있습니다.")
+
+    persona = draft_persona_from_decision(target["summary"], target["reason"])
+    register_persona(persona["name"], persona["role"], persona["icon"], persona["parent"], persona["system_prompt"])
+    create_custom_persona(persona["name"], persona["role"], persona["icon"], persona["parent"], persona["system_prompt"], decision_id)
+
+    ok = resolve_decision(
+        decision_id,
+        f"채용 승인 — {persona['name']}({persona['role']}, {persona['parent']} 산하) 온보딩 완료. 즉시 호출 가능합니다.",
+        decided_by="대표님",
+    )
+    if not ok:
+        raise HTTPException(status_code=409, detail="이미 결재되었거나 존재하지 않는 사안입니다.")
+    return {"status": "hired", "persona": persona}
+
+
+@app.get("/personas/custom")
+async def list_custom_personas():
+    """결재 승인으로 실제 채용된 신규 페르소나 목록 — 대시보드 조직도 동적 표시용"""
+    return {"personas": get_custom_personas()}
 
 
 class PersonaStatusRequest(BaseModel):
