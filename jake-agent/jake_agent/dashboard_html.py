@@ -325,6 +325,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .card.ceo .avatar { width: 46px; height: 46px; background: radial-gradient(circle, #ffe9a8, #ffd76a); box-shadow: 0 0 16px rgba(255,215,106,0.5); }
   .card.ceo .info .name { font-size: 16px; color: #ffd76a; }
   .card.ceo .info .role { color: #b89a4e; }
+  /* 대표님 카드 — 결재/확인필요를 합산해 직접 표시. 좌측 드롭메뉴 안에 묻혀있어 놓치는 문제 해소 */
+  .ceo-alert {
+    display: none; position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 9;
+    background: linear-gradient(160deg, #ff8a8a, #f87171); color: #1a0a0a; font-size: 11px; font-weight: 700;
+    padding: 3px 9px; border-radius: 10px; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 0 10px rgba(248,113,113,0.7);
+    animation: ceoAlertPulse 1.6s ease-in-out infinite;
+  }
+  .ceo-alert.show { display: block; }
+  @keyframes ceoAlertPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 8px rgba(248,113,113,0.55); }
+    50% { transform: translateX(-50%) scale(1.1); box-shadow: 0 0 16px rgba(248,113,113,0.9); }
+  }
 
   .card.coo { padding: 14px 22px; border-color: rgba(95,240,255,0.4); }
   .card.coo .avatar { width: 42px; height: 42px; background: radial-gradient(circle, #aef6ff, #5ff0ff); box-shadow: 0 0 16px rgba(95,240,255,0.5); }
@@ -733,6 +746,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="level level-ceo">
       <div class="card ceo" id="card-대표님">
         <div class="status-badge" id="badge-대표님"></div>
+        <div class="ceo-alert" id="ceoAlert" title="확인필요/결재 대기 — 클릭해서 바로 확인">🔔 <span id="ceoAlertCount">0</span></div>
         <div class="avatar">🧑‍💼</div>
         <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
       </div>
@@ -1220,6 +1234,34 @@ async function pollStatusMap() {
 pollStatusMap();
 setInterval(pollStatusMap, 4000);
 
+// ── Kade YEO 카드 알림 — 확인필요(종)/결재 합산, 좌측 드롭메뉴에 묻혀 놓치는 문제 해소 ──
+const ceoAlert = document.getElementById('ceoAlert');
+const ceoAlertCount = document.getElementById('ceoAlertCount');
+let lastAttentionCount = 0, lastDecisionCount = 0;
+function updateCeoAlert() {
+  const total = lastAttentionCount + lastDecisionCount;
+  ceoAlertCount.textContent = total;
+  ceoAlert.classList.toggle('show', total > 0);
+  ceoAlert.title = (lastDecisionCount > 0 ? '결재 대기 ' + lastDecisionCount + '건' : '') +
+    (lastAttentionCount > 0 && lastDecisionCount > 0 ? ' · ' : '') +
+    (lastAttentionCount > 0 ? '확인필요 ' + lastAttentionCount + '건' : '') +
+    ' — 클릭해서 바로 확인';
+}
+ceoAlert.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
+  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  if (lastDecisionCount > 0) {
+    attentionPanel.classList.remove('show');
+    decPanel.classList.add('show');
+    pollDecisions(); pollPendingDecisions();
+  } else {
+    decPanel.classList.remove('show');
+    attentionPanel.classList.add('show');
+  }
+});
+
 // ── 종 아이콘: 미완료(failed/pending/held) 작업 ─────────────
 const bellWrap = document.getElementById('bellWrap');
 const bellBadge = document.getElementById('bellBadge');
@@ -1303,6 +1345,8 @@ async function pollAttention() {
     const count = failed.length + pending.length + healthData.overdue.length + healthData.unassigned.length;
     bellBadge.textContent = count;
     bellBadge.classList.toggle('show', count > 0);
+    lastAttentionCount = count;
+    updateCeoAlert();
     bulkApproveBtn.disabled = (failed.length + pending.length) === 0;
     bulkHoldBtn.disabled = (failed.length + pending.length) === 0;
     bulkDeleteBtn.disabled = (failed.length + pending.length + held.length) === 0;
@@ -1863,6 +1907,8 @@ async function pollPendingDecisions() {
     const list = data.decisions || [];
     decBadge.textContent = list.length;
     decBadge.classList.toggle('show', list.length > 0);
+    lastDecisionCount = list.length;
+    updateCeoAlert();
     decPendingBody.innerHTML = list.map(d => {
       const isHiring = d.category === '인사';
       const actionsHtml = isHiring
