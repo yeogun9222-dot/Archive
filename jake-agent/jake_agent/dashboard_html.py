@@ -174,7 +174,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background: rgba(95,240,255,0.5);
   }
   /* 파이어폭스용 */
-  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #log, #events {
+  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel, #log, #events {
     scrollbar-width: thin; scrollbar-color: rgba(95,240,255,0.3) transparent;
   }
   .cchat-msg { padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
@@ -182,12 +182,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cchat-msg.assistant { background: rgba(255,255,255,0.04); color: #c5cdd6; }
   .cchat-msg .who { font-size: 10px; color: #5a7184; margin-bottom: 3px; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel {
+  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show { display: block; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; }
   #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
 
   .legend-group { margin-bottom: 14px; }
@@ -243,6 +243,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .memo-btn-check { background: rgba(95,240,255,0.16); color: #5ff0ff; }
   .memo-btn-done { background: rgba(74,222,128,0.18); color: #4ade80; }
   .memo-btn-del { background: rgba(248,113,113,0.15); color: #f87171; }
+  #rosterStats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .roster-stat { background: rgba(95,240,255,0.08); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; padding: 6px 10px; font-size: 11px; color: #9fb4c4; }
+  .roster-stat b { color: #5ff0ff; font-size: 13px; }
+  .roster-dept { color: #ffd76a; font-size: 10.5px; letter-spacing: 1px; margin: 12px 0 6px; }
+  .roster-dept:first-child { margin-top: 0; }
+  .roster-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 9px; padding: 8px 11px; margin-bottom: 6px; font-size: 12px; display: flex; gap: 9px; align-items: flex-start; }
+  .roster-row .ic { font-size: 16px; flex-shrink: 0; }
+  .roster-row .name { color: #c5cdd6; font-weight: 700; }
+  .roster-row .role { color: #5a7184; font-size: 10.5px; }
+  .roster-row .parent { color: #34465a; font-size: 10px; }
+  .roster-row .desc { color: #9fb4c4; font-size: 10.5px; margin-top: 3px; }
   .proj-status { border: none; border-radius: 10px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; }
   .proj-status.active { background: rgba(95,240,255,0.15); color: #5ff0ff; }
   .proj-status.done { background: rgba(74,222,128,0.15); color: #4ade80; }
@@ -541,7 +552,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .level-members { gap: 8px; }
     .card { padding: 9px 12px; }
 
-    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel {
+    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
       left: 50%; right: auto; transform: translateX(-50%);
       width: 92vw; max-width: 420px; top: 64px; max-height: 78vh;
     }
@@ -573,6 +584,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <button class="sm-item" id="projectBtn">📁 프로젝트</button>
       <button class="sm-item" id="decBtn" style="position:relative;">🖋 결재 <span id="decBadge" class="bell-badge" style="position:absolute; top:6px; right:8px;">0</span></button>
       <button class="sm-item" id="bnBtn">🚧 병목</button>
+      <button class="sm-item" id="rosterBtn">📋 인력 명단</button>
     </div>
   </div>
   <div class="sm-group">
@@ -628,6 +640,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <button id="projectAddBtn">생성</button>
   </div>
   <div id="projectBody"></div>
+</div>
+
+<div id="rosterPanel">
+  <h3>📋 ALPHA SQUAD KADE COMPANY — 인력 명단</h3>
+  <div id="rosterStats"></div>
+  <div id="rosterBody"></div>
 </div>
 
 <div id="memoPanel">
@@ -836,6 +854,32 @@ const ICONS = {
   "미나":"📈","카이":"🚀","설리":"🔎","노바":"⚙️"
 };
 const ALL_NAMES = ["대표님", "제이크", ...MEMBERS];
+
+// ── 인력 명단 패널용 — 부서 분류 + 한줄 업무 설명 ────────────────────
+// 신규 채용(테오/노아/엠마/조이)은 부서가 본인 role 텍스트로 충분히 설명돼서 별도 분류 불필요
+const ROSTER_DEPT = {
+  "경영진(C-Level)": ["제이크", "루나", "제로"],
+  "기획/전략": ["다인", "테오", "미나", "에바", "사라"],
+  "개발(엔지니어링)": ["렉스", "노바", "노아", "피오", "리리", "설리"],
+  "마케팅/그로스": ["카이", "조이"],
+  "데이터/재무": ["바쿠", "엠마"],
+};
+const JOB_DESC = {
+  "제이크": "전체 지휘·조율, 대표님 비전을 실행 전략으로 전환",
+  "다인": "사업기획서·IR·경영보고서·전략 프레임워크 수립",
+  "렉스": "LangGraph 멀티에이전트 시스템 설계, DevOps 총괄",
+  "루나": "API·서버 비용 ROI 분석, 예산 배분, 재무 보고",
+  "제로": "AI 인프라 보안, API 키 관리, 취약점 스캔",
+  "바쿠": "데이터 구조 설계, 수치 검증, DB 스키마",
+  "피오": "API/서버/결제 인프라 설계 및 보안",
+  "리리": "React/TypeScript 기반 UI/UX 구현",
+  "에바": "사용자 리서치 설계, 퍼널 개선 전략",
+  "사라": "사용자 테스트 진행, 정성 데이터 수집",
+  "미나": "전환율 최적화(CRO), A/B 테스트 분석",
+  "카이": "제품 포지셔닝, GTM 전략, 마케팅 기획",
+  "설리": "엣지 케이스 검증, QA, 배포 전 최종 검수",
+  "노바": "CI/CD, 모니터링, 인프라 운영 안정화",
+};
 
 function buildCard(name, sizeClass) {
   const div = document.createElement('div');
@@ -1780,6 +1824,61 @@ document.addEventListener('click', (e) => {
   if (!projectPanel.contains(e.target) && !projectBtn.contains(e.target)) projectPanel.classList.remove('show');
 });
 setInterval(() => { if (projectPanel.classList.contains('show')) pollProjects(); }, 15000);
+
+// ── 인력 명단 패널 ────────────────────────────────────────────
+const rosterBtn = document.getElementById('rosterBtn');
+const rosterPanel = document.getElementById('rosterPanel');
+const rosterStats = document.getElementById('rosterStats');
+const rosterBody = document.getElementById('rosterBody');
+
+function renderRoster() {
+  // 신규 채용은 부서 미배정 — 별도 "신규 합류" 통계로 집계
+  const classified = new Set(Object.values(ROSTER_DEPT).flat());
+  const unclassified = MEMBERS.filter(n => !classified.has(n));
+
+  const statsHtml = [
+    '<div class="roster-stat"><b>' + (MEMBERS.length + 1) + '명</b> 총 인원(제이크 포함)</div>',
+    ...Object.entries(ROSTER_DEPT).map(([dept, names]) =>
+      '<div class="roster-stat"><b>' + names.length + '명</b> ' + dept + '</div>'),
+    unclassified.length > 0 ? '<div class="roster-stat"><b>' + unclassified.length + '명</b> 신규 합류(부서 분류 전)</div>' : '',
+  ].join('');
+  rosterStats.innerHTML = statsHtml;
+
+  let bodyHtml = '<div class="roster-row" style="border-color:rgba(255,215,106,0.4);"><div class="ic">🧑‍💼</div><div><div class="name">Kade YEO <span class="role">CEO</span></div><div class="desc">비전·전략 방향 설정, AI 조직 총괄</div></div></div>';
+
+  Object.entries(ROSTER_DEPT).forEach(([dept, names]) => {
+    bodyHtml += '<div class="roster-dept">' + dept + '</div>';
+    names.forEach(name => {
+      const parent = SUB_REPORTS[name] ? SUB_REPORTS[name] : (name === '제이크' ? '대표님' : '제이크');
+      bodyHtml += '<div class="roster-row"><div class="ic">' + (name === '제이크' ? '🧠' : (ICONS[name] || '')) + '</div><div>' +
+        '<div class="name">' + name + ' <span class="role">' + (name === '제이크' ? 'COO' : (ROLES[name] || '')) + '</span></div>' +
+        '<div class="parent">' + parent + ' 산하</div>' +
+        '<div class="desc">' + (JOB_DESC[name] || '') + '</div></div></div>';
+    });
+  });
+  if (unclassified.length > 0) {
+    bodyHtml += '<div class="roster-dept">🆕 신규 합류</div>';
+    unclassified.forEach(name => {
+      bodyHtml += '<div class="roster-row"><div class="ic">' + (ICONS[name] || '🧩') + '</div><div>' +
+        '<div class="name">' + name + ' <span class="role">' + (ROLES[name] || '') + '</span></div>' +
+        '<div class="parent">' + (SUB_REPORTS[name] || '제이크') + ' 산하</div></div></div>';
+    });
+  }
+  rosterBody.innerHTML = bodyHtml;
+}
+
+rosterBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
+  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  memoPanel.classList.remove('show');
+  rosterPanel.classList.toggle('show');
+  if (rosterPanel.classList.contains('show')) renderRoster();
+});
+document.addEventListener('click', (e) => {
+  if (!rosterPanel.contains(e.target) && !rosterBtn.contains(e.target)) rosterPanel.classList.remove('show');
+});
 
 // ── Kade YEO 카드 메모 ────────────────────────────────────────
 const memoPanel = document.getElementById('memoPanel');
