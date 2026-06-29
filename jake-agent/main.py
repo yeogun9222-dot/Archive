@@ -436,6 +436,7 @@ class MemoRequest(BaseModel):
 class MemoUpdateRequest(BaseModel):
     content: Optional[str] = None
     pinned: Optional[bool] = None
+    checked: Optional[bool] = None
     done: Optional[bool] = None
 
 
@@ -452,7 +453,7 @@ async def add_memo(req: MemoRequest):
 
 @app.patch("/memos/{memo_id}")
 async def patch_memo(memo_id: int, req: MemoUpdateRequest):
-    ok = update_memo(memo_id, content=req.content, pinned=req.pinned, done=req.done)
+    ok = update_memo(memo_id, content=req.content, pinned=req.pinned, checked=req.checked, done=req.done)
     if not ok:
         raise HTTPException(status_code=404, detail="존재하지 않는 메모입니다.")
     return {"status": "updated"}

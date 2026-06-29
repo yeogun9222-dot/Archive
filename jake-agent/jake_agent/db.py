@@ -136,10 +136,12 @@ def init_db():
             id SERIAL PRIMARY KEY,
             content TEXT NOT NULL,
             pinned BOOLEAN DEFAULT FALSE,
+            checked BOOLEAN DEFAULT FALSE,
             done BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT NOW()
         )
     """)
+    cur.execute("ALTER TABLE ceo_memos ADD COLUMN IF NOT EXISTS checked BOOLEAN DEFAULT FALSE")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
@@ -565,7 +567,7 @@ def get_memos() -> list:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, content, pinned, done, created_at FROM ceo_memos
+        """SELECT id, content, pinned, checked, done, created_at FROM ceo_memos
            WHERE done = FALSE
            ORDER BY pinned DESC, created_at DESC"""
     )
@@ -573,17 +575,19 @@ def get_memos() -> list:
     cur.close()
     conn.close()
     return [
-        {"id": r[0], "content": r[1], "pinned": r[2], "done": r[3], "created_at": r[4].isoformat()}
+        {"id": r[0], "content": r[1], "pinned": r[2], "checked": r[3], "done": r[4], "created_at": r[5].isoformat()}
         for r in rows
     ]
 
 
-def update_memo(memo_id: int, content: str = None, pinned: bool = None, done: bool = None) -> bool:
+def update_memo(memo_id: int, content: str = None, pinned: bool = None, checked: bool = None, done: bool = None) -> bool:
     fields, values = [], []
     if content is not None:
         fields.append("content=%s"); values.append(content)
     if pinned is not None:
         fields.append("pinned=%s"); values.append(pinned)
+    if checked is not None:
+        fields.append("checked=%s"); values.append(checked)
     if done is not None:
         fields.append("done=%s"); values.append(done)
     if not fields:

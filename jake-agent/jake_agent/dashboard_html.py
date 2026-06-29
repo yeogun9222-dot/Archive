@@ -235,10 +235,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   .memo-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(255,215,106,0.15); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 12px; }
   .memo-row.pinned { border-color: rgba(255,215,106,0.5); }
+  .memo-row.checked { opacity: 0.6; }
   .memo-row .content { color: #c5cdd6; white-space: pre-wrap; word-break: break-word; }
   .memo-row .actions { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
   .memo-row .actions button { border: none; border-radius: 6px; padding: 3px 8px; font-size: 10.5px; cursor: pointer; font-weight: 600; }
   .memo-btn-pin { background: rgba(255,215,106,0.16); color: #ffd76a; }
+  .memo-btn-check { background: rgba(95,240,255,0.16); color: #5ff0ff; }
   .memo-btn-done { background: rgba(74,222,128,0.18); color: #4ade80; }
   .memo-btn-del { background: rgba(248,113,113,0.15); color: #f87171; }
   .proj-status { border: none; border-radius: 10px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; }
@@ -1756,10 +1758,11 @@ async function pollMemos() {
     const res = await fetch('/memos');
     const list = (await res.json()).memos || [];
     memoBody.innerHTML = list.map(m =>
-      '<div class="memo-row' + (m.pinned ? ' pinned' : '') + '" data-id="' + m.id + '">' +
+      '<div class="memo-row' + (m.pinned ? ' pinned' : '') + (m.checked ? ' checked' : '') + '" data-id="' + m.id + '">' +
         '<div class="content">' + esc(m.content) + '</div>' +
         '<div class="actions">' +
           '<button class="memo-btn-pin" data-act="pin" data-id="' + m.id + '">' + (m.pinned ? '📌 고정해제' : '📌 고정') + '</button>' +
+          '<button class="memo-btn-check" data-act="check" data-id="' + m.id + '">' + (m.checked ? '🔁 대기중으로' : '✅ 확인') + '</button>' +
           '<button class="memo-btn-done" data-act="done" data-id="' + m.id + '">완료</button>' +
           '<button class="memo-btn-del" data-act="del" data-id="' + m.id + '">삭제</button>' +
         '</div></div>'
@@ -1772,6 +1775,9 @@ async function pollMemos() {
         if (act === 'pin') {
           const row = btn.closest('.memo-row');
           await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pinned: !row.classList.contains('pinned') }) });
+        } else if (act === 'check') {
+          const row = btn.closest('.memo-row');
+          await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checked: !row.classList.contains('checked') }) });
         } else if (act === 'done') {
           await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ done: true }) });
         } else if (act === 'del') {
@@ -1782,7 +1788,7 @@ async function pollMemos() {
       });
     });
 
-    lastMemoCount = list.length;
+    lastMemoCount = list.filter(m => !m.checked).length;
     updateCeoAlert();
   } catch (e) { memoBody.textContent = '불러오기 실패'; }
 }
