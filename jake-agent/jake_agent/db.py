@@ -326,6 +326,18 @@ def delete_task_row(task_id: int) -> bool:
     return row is not None
 
 
+def restore_task(task_id: int) -> bool:
+    """감사 로그에서 실수로 삭제된 작업을 되돌림 — 영구 폐기(purge) 전까지만 가능"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE tasks SET archived = FALSE WHERE id = %s AND archived = TRUE RETURNING id", (task_id,))
+    row = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
+
+
 def archive_all_tasks() -> int:
     """Activity Stream 전체삭제 — 미보관 작업 전체를 일괄 소프트 삭제, 처리된 건수 반환"""
     conn = get_conn()

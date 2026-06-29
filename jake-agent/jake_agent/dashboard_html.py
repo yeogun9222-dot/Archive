@@ -2043,10 +2043,31 @@ async function pollAudit() {
     const list = data.tasks || [];
     auditBody.innerHTML = list.map(t =>
       '<div class="audit-row"><div class="route">' + esc(t.from) + ' → ' + esc(t.to || '미배정') + '</div>' +
-      esc(t.title) + '<div class="time">' + new Date(t.timestamp).toLocaleString('ko-KR') + ' · 삭제 처리됨 (status: ' + t.status + ')</div></div>'
+      esc(t.title) + '<div class="time">' + new Date(t.timestamp).toLocaleString('ko-KR') + ' · 삭제 처리됨 (status: ' + t.status + ')' +
+      ' <button class="audit-restore-btn" data-id="' + t.id + '" style="margin-left:6px;background:rgba(74,222,128,0.15);color:#4ade80;border:none;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;">복구</button>' +
+      '</div></div>'
     ).join('') || '<div style="color:#34465a;font-size:11px;">보관된 항목이 없습니다</div>';
   } catch (e) { auditBody.textContent = '불러오기 실패'; }
 }
+
+auditBody.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.audit-restore-btn');
+  if (!btn) return;
+  e.stopPropagation();
+  const id = btn.dataset.id;
+  if (!confirm('이 항목을 활동 스트림으로 복구할까요?')) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch('/activity/archived/' + id + '/restore', { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || '복구 실패. 새로고침 후 다시 시도하세요.');
+      btn.disabled = false;
+      return;
+    }
+    pollAudit();
+  } catch (e2) { alert('복구 실패: ' + e2.message); btn.disabled = false; }
+});
 
 purgeBtn.addEventListener('click', async (e) => {
   e.stopPropagation();
