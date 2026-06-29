@@ -918,7 +918,11 @@ function relPos(el) {
 }
 function center(el) {
   const p = relPos(el);
-  return { x: p.x + el.offsetWidth / 2, y: p.y + el.offsetHeight / 2, top: p.y, bottom: p.y + el.offsetHeight };
+  // subteam 카드는 CSS transform: translateX(-50%)로 이미 자기 중심에 위치해 있어
+  // offsetLeft(=left 값) 자체가 중앙 X좌표임 — 일반 카드처럼 +너비/2를 더하면 안 됨
+  const isSubteamCard = el.parentElement && el.parentElement.id === 'subteam';
+  const cx = isSubteamCard ? p.x : p.x + el.offsetWidth / 2;
+  return { x: cx, y: p.y + el.offsetHeight / 2, top: p.y, bottom: p.y + el.offsetHeight };
 }
 
 function elbowPath(p1, p2) {
