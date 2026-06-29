@@ -2039,6 +2039,14 @@ async function pollPendingDecisions() {
     decBadge.classList.toggle('show', list.length > 0);
     lastDecisionCount = list.length;
     updateCeoAlert();
+
+    // 6초마다 통째로 다시 그리다 보니, 결정 내용을 입력하는 중에 텍스트가 사라지는
+    // 문제가 있었음 — 입력 중(포커스 중이거나 이미 글자가 써진 textarea가 있으면)
+    // 이번 갱신은 건너뛰어 입력 내용을 보존함
+    const typingNow = [...decPendingBody.querySelectorAll('.dec-resolve-input')]
+      .some(el => el.value.trim().length > 0 || el === document.activeElement);
+    if (typingNow) return;
+
     decPendingBody.innerHTML = list.map(d => {
       const isHiring = d.category === '인사';
       const actionsHtml = isHiring
