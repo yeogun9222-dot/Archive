@@ -914,6 +914,12 @@ def get_cost_summary() -> dict:
         entry["input_tokens"] += inp
         entry["output_tokens"] += out
         entry["cost"] = round(entry["cost"] + cost(inp, out, model), 4)
+
+    # 이번 달 토큰 사용 기록이 없는 인원(신규 채용 직후 등)도 0원으로 누락 없이 표시
+    from .personas import PERSONAS
+    for name in PERSONAS.keys():
+        persona_agg.setdefault(name, {"persona": name, "input_tokens": 0, "output_tokens": 0, "cost": 0.0})
+
     by_persona = sorted(
         [{**v, "active": active_map.get(v["persona"], True)} for v in persona_agg.values()],
         key=lambda p: p["cost"], reverse=True
