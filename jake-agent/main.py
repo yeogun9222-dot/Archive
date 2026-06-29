@@ -317,7 +317,7 @@ async def resume_task(task_id: int):
 
 @app.post("/activity/{task_id}/read")
 async def read_task(task_id: int):
-    """Activity Stream 개별 항목 읍음 처리 — 상태와 무관하게 항상 가능, 삭제와 별개"""
+    """Activity Stream 개별 항목 읽음 처리 — 상태와 무관하게 항상 가능, 삭제와 별개"""
     ok = mark_task_read(task_id, True)
     if not ok:
         raise HTTPException(status_code=404, detail="해당 작업을 찾을 수 없습니다.")
