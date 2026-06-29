@@ -375,7 +375,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .msg-badge.show { display: flex; }
   .level-members .msg-badge { top: -16px; width: 20px; height: 14px; }
   .level-members .msg-badge::after { bottom: -3px; border-left-width: 3px; border-right-width: 3px; border-top-width: 4px; }
-  .msg-badge .dot { width: 3px; height: 3px; border-radius: 50%; background: #0a0d14; animation: msgDotBlink 1.3s infinite; }
+  .msg-badge .dot { width: 3px; height: 3px; margin: 0; border-radius: 50%; background: #0a0d14; animation: msgDotBlink 1.3s infinite; }
   .msg-badge .dot:nth-child(2) { animation-delay: 0.18s; }
   .msg-badge .dot:nth-child(3) { animation-delay: 0.36s; }
   @keyframes msgDotBlink { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-1px); } }
