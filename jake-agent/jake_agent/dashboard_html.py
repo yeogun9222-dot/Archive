@@ -889,25 +889,33 @@ function positionSubteam() {
   // 같은 본부장 산하에 여러 명이 붙을 수 있어(팀장 + 신규 채용 등) — 가로로 펼치면 옆
   // 부서 카드와 겹치므로, 실제 회사 조직도처럼 부모 바로 아래로 "수직으로" 쌓는다.
   // 가로 위치는 항상 부모 중앙과 정확히 같아서 다른 부서와 절대 겹치지 않음.
+  // 노바 산하의 노아처럼 본부장이 아니라 팀장 산하인 2단계 중첩도 있을 수 있어,
+  // 부모 카드가 먼저 자리잡혀야 자식이 그 "실제 위치" 기준으로 쌓일 수 있음 —
+  // 본부장(1단계) 그룹을 먼저 배치한 뒤 팀장 산하(2단계) 그룹을 배치한다.
   const byParent = {};
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
     (byParent[parent] = byParent[parent] || []).push(name);
   });
-  let maxStack = 1;
-  Object.entries(byParent).forEach(([parent, children]) => {
+  const subKeys = new Set(Object.keys(SUB_REPORTS));
+  const groups = Object.entries(byParent).sort((a, b) => (subKeys.has(a[0]) ? 1 : 0) - (subKeys.has(b[0]) ? 1 : 0));
+
+  let maxBottom = 0;
+  groups.forEach(([parent, children]) => {
     const parentCard = document.getElementById('card-' + parent);
     if (!parentCard) return;
     const parentPos = relPos(parentCard);
     const parentCenterX = parentPos.x + parentCard.offsetWidth / 2 - subPos.x;
-    maxStack = Math.max(maxStack, children.length);
+    const parentBottomY = parentPos.y - subPos.y + parentCard.offsetHeight;
     children.forEach((name, i) => {
       const childCard = document.getElementById('card-' + name);
       if (!childCard) return;
+      const top = parentBottomY + 10 + i * SUBTEAM_ROW_H;
       childCard.style.left = parentCenterX + 'px';
-      childCard.style.top = (i * SUBTEAM_ROW_H) + 'px';
+      childCard.style.top = top + 'px';
+      maxBottom = Math.max(maxBottom, top + SUBTEAM_ROW_H);
     });
   });
-  subteamEl2.style.height = (maxStack * SUBTEAM_ROW_H + 8) + 'px';
+  subteamEl2.style.height = (maxBottom + 8) + 'px';
 }
 
 let staticPaths = [];
@@ -935,26 +943,19 @@ function drawStaticLines() {
     svg.appendChild(p);
   });
 
-  // 팀장급/신규채용은 본부장 산하 — 제이크가 아니라 각자의 본부장에서 선 연결.
-  // 같은 본부장 산하에 여러 명이면 부모→1번째→2번째... 수직 체인으로 이어서
-  // 실제 회사 조직도처럼 한 줄기로 깔끔하게 내려가도록 함 (옆 부서와 선이 겹치지 않음)
-  const subteamByParent = {};
+  // 팀장급/신규채용은 본부장(또는 팀장) 산하 — 항상 "진짜 부모"에게서 직접 선을 그림.
+  // 형제(같은 부모를 둔 동료)끼리 체인으로 잇지 않음 — 동료 사이에 위계가 있는 것처럼
+  // 보이는 착시(예: 노아가 노바 밑에 있는 것처럼 보임)를 방지하기 위함
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
-    (subteamByParent[parent] = subteamByParent[parent] || []).push(name);
-  });
-  Object.entries(subteamByParent).forEach(([parent, children]) => {
-    let prevPoint = center(document.getElementById('card-' + parent));
-    children.forEach(name => {
-      const m = center(document.getElementById('card-' + name));
-      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      p.setAttribute('d', elbowPath(prevPoint, m));
-      p.setAttribute('stroke', 'rgba(165,180,255,0.3)');
-      p.setAttribute('stroke-width', '1.2');
-      p.setAttribute('stroke-dasharray', '3,3');
-      p.setAttribute('fill', 'none');
-      svg.appendChild(p);
-      prevPoint = m;
-    });
+    const m = center(document.getElementById('card-' + name));
+    const parentPoint = center(document.getElementById('card-' + parent));
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', elbowPath(parentPoint, m));
+    p.setAttribute('stroke', 'rgba(165,180,255,0.3)');
+    p.setAttribute('stroke-width', '1.2');
+    p.setAttribute('stroke-dasharray', '3,3');
+    p.setAttribute('fill', 'none');
+    svg.appendChild(p);
   });
 }
 window.addEventListener('resize', drawStaticLines);
