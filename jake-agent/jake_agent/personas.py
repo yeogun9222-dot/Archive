@@ -593,6 +593,24 @@ def register_persona(name: str, role: str, icon: str, parent: str, system_prompt
     }
 
 
+def rename_persona(old_name: str, new_name: str, role: str = None, parent: str = None, system_prompt: str = None) -> bool:
+    """커스텀 페르소나의 이름/직책/소속을 수정 (잘못 배정된 산하 등 교정용)"""
+    info = PERSONAS.get(old_name)
+    if not info or not info.get("custom"):
+        return False
+    if role is not None:
+        info["role"] = role
+    if parent is not None:
+        info["parent"] = parent
+    if system_prompt is not None:
+        info["system"] = system_prompt
+    if new_name and new_name != old_name:
+        info["keywords"] = [new_name + "야", new_name, new_name.lower()]
+        del PERSONAS[old_name]
+        PERSONAS[new_name] = info
+    return True
+
+
 def load_custom_personas() -> None:
     """서버 시작 시 — 이전에 채용 승인된 페르소나를 DB에서 불러와 등록"""
     try:

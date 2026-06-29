@@ -784,8 +784,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <div class="level level-members" id="members"></div>
     <div class="level level-subteam" id="subteam"></div>
-    <div id="newHiresLabel" style="display:none; color:#ffd76a; font-size:10.5px; letter-spacing:1px; margin:30px 0 8px; text-align:center;">🆕 신규 합류</div>
-    <div class="level level-members" id="newHires"></div>
   </div>
   <div id="chartZoomCtrl">
     <button id="chartZoomIn" title="확대">+</button>
@@ -888,13 +886,25 @@ function directedElbow(x1, y1, x2, y2) {
 function positionSubteam() {
   const subteamEl2 = document.getElementById('subteam');
   const subPos = relPos(subteamEl2);
+  // 같은 본부장 산하에 여러 명이 붙을 수 있어(팀장 + 신규 채용 등) 부모별로 묶어서
+  // 가로로 나란히 펼쳐 배치 — 한 명뿐이면 정확히 부모 중앙(offset 0)에 위치
+  const byParent = {};
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
+    (byParent[parent] = byParent[parent] || []).push(name);
+  });
+  const spacing = 140;
+  Object.entries(byParent).forEach(([parent, children]) => {
     const parentCard = document.getElementById('card-' + parent);
-    const childCard = document.getElementById('card-' + name);
-    if (!parentCard || !childCard) return;
+    if (!parentCard) return;
     const parentPos = relPos(parentCard);
     const parentCenterX = parentPos.x + parentCard.offsetWidth / 2 - subPos.x;
-    childCard.style.left = parentCenterX + 'px';
+    const n = children.length;
+    children.forEach((name, i) => {
+      const childCard = document.getElementById('card-' + name);
+      if (!childCard) return;
+      const offset = (i - (n - 1) / 2) * spacing;
+      childCard.style.left = (parentCenterX + offset) + 'px';
+    });
   });
 }
 
@@ -939,31 +949,43 @@ function drawStaticLines() {
 window.addEventListener('resize', drawStaticLines);
 setTimeout(drawStaticLines, 50);
 
-// ── 채용 승인으로 실제 합류한 신규 페르소나 — 조직도/상태폴링에 동적으로 합류 ──────
-// DIRECT_REPORTS/MEMBERS/ROLES/ICONS는 const지만 배열·객체 자체는 변경 가능(재할당만 금지) —
-// 그래서 push/속성추가만으로 이미 돌고 있는 폴링 함수들(MEMBERS 참조)에 자동으로 반영됨
-const newHiresEl = document.getElementById('newHires');
-const newHiresLabel = document.getElementById('newHiresLabel');
-const knownHires = new Set();
+// ── 채용 승인으로 실제 합류한 신규 페르소나 — 본부장 산하(SUB_REPORTS)에 실제로 연결 ──────
+// DIRECT_REPORTS/MEMBERS/ROLES/ICONS/SUB_REPORTS는 const지만 배열·객체 자체는 변경 가능(재할당만
+// 금지) — push/속성추가만으로 이미 돌고 있는 폴링 함수들(MEMBERS 참조)에 자동으로 반영됨
+const customSubteamNames = new Set();
 async function loadCustomPersonas() {
   try {
     const res = await fetch('/personas/custom');
     const list = (await res.json()).personas || [];
-    let added = false;
-    list.forEach(p => {
-      if (knownHires.has(p.name)) return;
-      knownHires.add(p.name);
-      ROLES[p.name] = p.role + ' (' + (p.parent || '제이크') + ' 산하)';
-      ICONS[p.name] = p.icon || '🧩';
-      MEMBERS.push(p.name);
-      ALL_NAMES.push(p.name);
-      newHiresEl.appendChild(buildCard(p.name));
-      added = true;
+    const currentNames = new Set(list.map(p => p.name));
+
+    // 이름이 바뀌었거나(개명) 더 이상 목록에 없는 기존 카드 정리
+    [...customSubteamNames].forEach(name => {
+      if (currentNames.has(name)) return;
+      delete SUB_REPORTS[name];
+      const i1 = MEMBERS.indexOf(name); if (i1 > -1) MEMBERS.splice(i1, 1);
+      const i2 = ALL_NAMES.indexOf(name); if (i2 > -1) ALL_NAMES.splice(i2, 1);
+      const el = document.getElementById('card-' + name); if (el) el.remove();
+      customSubteamNames.delete(name);
     });
-    if (added) {
-      newHiresLabel.style.display = 'block';
-      pollActivityMap(); pollUnreadBadges(); pollStatusMap();
-    }
+
+    list.forEach(p => {
+      ROLES[p.name] = p.role;
+      ICONS[p.name] = p.icon || '🧩';
+      SUB_REPORTS[p.name] = p.parent || '제이크';
+      if (!customSubteamNames.has(p.name)) {
+        MEMBERS.push(p.name);
+        ALL_NAMES.push(p.name);
+        subteamEl.appendChild(buildCard(p.name));
+        customSubteamNames.add(p.name);
+      } else {
+        const card = document.getElementById('card-' + p.name);
+        const roleEl = card && card.querySelector('.role');
+        if (roleEl) roleEl.textContent = p.role;
+      }
+    });
+    drawStaticLines();
+    pollActivityMap(); pollUnreadBadges(); pollStatusMap();
   } catch (e) { /* ignore */ }
 }
 loadCustomPersonas();

@@ -19,8 +19,8 @@ from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
 from jake_agent.telegram import notify_jake_response, notify_startup
 from jake_agent.telegram_bot import start_bot_thread
-from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS, register_persona, load_custom_personas
-from jake_agent.db import create_custom_persona, get_custom_personas
+from jake_agent.personas import detect_persona, detect_persona_from_system, PERSONAS, register_persona, load_custom_personas, rename_persona
+from jake_agent.db import create_custom_persona, get_custom_personas, update_custom_persona
 from jake_agent.analyzer import check_and_analyze, get_total_conversation_count
 from jake_agent.monitor import start_monitor_thread
 from jake_agent.scheduler import start_scheduler_thread
@@ -426,6 +426,27 @@ async def approve_hire(decision_id: int):
 async def list_custom_personas():
     """결재 승인으로 실제 채용된 신규 페르소나 목록 — 대시보드 조직도 동적 표시용"""
     return {"personas": get_custom_personas()}
+
+
+class CustomPersonaEditRequest(BaseModel):
+    new_name: Optional[str] = None
+    role: Optional[str] = None
+    parent: Optional[str] = None
+    system_prompt: Optional[str] = None
+
+
+@app.patch("/personas/custom/{name}")
+async def edit_custom_persona(name: str, req: CustomPersonaEditRequest):
+    """채용 직후 잘못 배정된 소속/직책 교정, 이름 변경용"""
+    if name not in PERSONAS or not PERSONAS[name].get("custom"):
+        raise HTTPException(status_code=404, detail="커스텀 페르소나가 아닙니다.")
+    if req.new_name and req.new_name in PERSONAS:
+        raise HTTPException(status_code=409, detail="이미 존재하는 이름입니다.")
+    ok = update_custom_persona(name, new_name=req.new_name, role=req.role, parent=req.parent, system_prompt=req.system_prompt)
+    if not ok:
+        raise HTTPException(status_code=404, detail="해당 페르소나를 찾을 수 없습니다.")
+    rename_persona(name, req.new_name or name, role=req.role, parent=req.parent, system_prompt=req.system_prompt)
+    return {"status": "updated", "name": req.new_name or name}
 
 
 # ── Kade YEO 카드 메모 ────────────────────────────────────────

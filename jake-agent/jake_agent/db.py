@@ -642,6 +642,38 @@ def get_custom_personas() -> list:
     ]
 
 
+def update_custom_persona(old_name: str, new_name: str = None, role: str = None, parent: str = None, system_prompt: str = None) -> bool:
+    """채용 직후 잘못 배정된 산하/직책 교정이나 이름 변경용 — 새 이름이면 관련 기록도 함께 옮김"""
+    conn = get_conn()
+    cur = conn.cursor()
+    fields, values = [], []
+    if role is not None:
+        fields.append("role=%s"); values.append(role)
+    if parent is not None:
+        fields.append("parent=%s"); values.append(parent)
+    if system_prompt is not None:
+        fields.append("system_prompt=%s"); values.append(system_prompt)
+    rename = bool(new_name and new_name != old_name)
+    if rename:
+        fields.append("name=%s"); values.append(new_name)
+    if not fields:
+        cur.close(); conn.close()
+        return False
+    values.append(old_name)
+    cur.execute(f"UPDATE custom_personas SET {', '.join(fields)} WHERE name=%s RETURNING name", values)
+    row = cur.fetchone()
+    if row and rename:
+        cur.execute("UPDATE chat_messages SET persona=%s WHERE persona=%s", (new_name, old_name))
+        cur.execute("UPDATE persona_status SET persona=%s WHERE persona=%s", (new_name, old_name))
+        cur.execute("UPDATE persona_activity SET persona=%s WHERE persona=%s", (new_name, old_name))
+        cur.execute("UPDATE tasks SET assigned_to=%s WHERE assigned_to=%s", (new_name, old_name))
+        cur.execute("UPDATE tasks SET delegated_by=%s WHERE delegated_by=%s", (new_name, old_name))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row is not None
+
+
 def is_persona_active(persona: str) -> bool:
     conn = get_conn()
     cur = conn.cursor()
