@@ -22,11 +22,12 @@ _BASE = os.path.dirname(os.path.dirname(__file__))
 CREDS_FILE = os.path.join(_BASE, "google_credentials.json")
 TOKEN_FILE = os.path.join(_BASE, "google_token.json")
 
-# Jake 전용 공유 캘린더 ID (기본값: primary)
-_SHARED_CAL_ID = os.getenv(
-    "GOOGLE_SHARED_CALENDAR_ID",
-    "27e0cb7b3ca3831a335c7629c9b83cf0131b8be77a383a1795684e677d86ed4e@group.calendar.google.com"
-)
+# Jake 전용 공유 캘린더 ID
+# docker-compose의 ${GOOGLE_SHARED_CALENDAR_ID:-} 치환 때문에 .env에 값이 없으면
+# "빈 문자열"이 컨테이너 환경변수로 그대로 들어옴 — os.getenv의 default는 변수가
+# 아예 없을 때만 적용되고 "있지만 빈 값"일 때는 적용 안 되므로, 반드시 or로 한 번 더 보강해야 함
+# (이 보강이 없어서 캘린더 ID가 빈 문자열로 호출되어 404가 나던 버그)
+_SHARED_CAL_ID = os.getenv("GOOGLE_SHARED_CALENDAR_ID") or "27e0cb7b3ca3831a335c7629c9b83cf0131b8be77a383a1795684e677d86ed4e@group.calendar.google.com"
 
 
 def _ensure_credential_files():
