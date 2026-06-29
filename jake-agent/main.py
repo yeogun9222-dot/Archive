@@ -13,7 +13,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision, get_last_message_map
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision, get_last_message_map, create_memo, get_memos, update_memo, delete_memo, get_due_memo_count
 from jake_agent.team_tools import run_delegation, draft_persona_from_decision
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
@@ -426,6 +426,53 @@ async def approve_hire(decision_id: int):
 async def list_custom_personas():
     """결재 승인으로 실제 채용된 신규 페르소나 목록 — 대시보드 조직도 동적 표시용"""
     return {"personas": get_custom_personas()}
+
+
+# ── Kade YEO 카드 메모 ────────────────────────────────────────
+class MemoRequest(BaseModel):
+    content: str
+    remind_at: Optional[str] = None
+
+
+class MemoUpdateRequest(BaseModel):
+    content: Optional[str] = None
+    pinned: Optional[bool] = None
+    remind_at: Optional[str] = None
+    clear_remind: bool = False
+    done: Optional[bool] = None
+
+
+@app.get("/memos")
+async def list_memos():
+    return {"memos": get_memos()}
+
+
+@app.post("/memos")
+async def add_memo(req: MemoRequest):
+    memo_id = create_memo(req.content, req.remind_at)
+    return {"id": memo_id, "status": "created"}
+
+
+@app.patch("/memos/{memo_id}")
+async def patch_memo(memo_id: int, req: MemoUpdateRequest):
+    ok = update_memo(memo_id, content=req.content, pinned=req.pinned, remind_at=req.remind_at,
+                      done=req.done, clear_remind=req.clear_remind)
+    if not ok:
+        raise HTTPException(status_code=404, detail="존재하지 않는 메모입니다.")
+    return {"status": "updated"}
+
+
+@app.delete("/memos/{memo_id}")
+async def remove_memo(memo_id: int):
+    ok = delete_memo(memo_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="존재하지 않는 메모입니다.")
+    return {"status": "deleted"}
+
+
+@app.get("/memos/due_count")
+async def memo_due_count():
+    return {"count": get_due_memo_count()}
 
 
 class PersonaStatusRequest(BaseModel):

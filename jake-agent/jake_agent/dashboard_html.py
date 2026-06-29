@@ -174,7 +174,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background: rgba(95,240,255,0.5);
   }
   /* 파이어폭스용 */
-  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #log, #events {
+  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #log, #events {
     scrollbar-width: thin; scrollbar-color: rgba(95,240,255,0.3) transparent;
   }
   .cchat-msg { padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
@@ -182,12 +182,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cchat-msg.assistant { background: rgba(255,255,255,0.04); color: #c5cdd6; }
   .cchat-msg .who { font-size: 10px; color: #5a7184; margin-bottom: 3px; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel {
+  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show { display: block; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show { display: block; }
   #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
 
   .legend-group { margin-bottom: 14px; }
@@ -232,6 +232,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .proj-row .name { color: #c5cdd6; font-weight: 700; }
   .proj-row .meta { color: #5a7184; font-size: 10.5px; margin-top: 3px; }
   .proj-row .prog { color: #4ade80; font-size: 10.5px; }
+
+  .memo-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(255,215,106,0.15); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 12px; }
+  .memo-row.pinned { border-color: rgba(255,215,106,0.5); }
+  .memo-row.due { border-color: rgba(248,113,113,0.55); box-shadow: 0 0 8px rgba(248,113,113,0.25); }
+  .memo-row .content { color: #c5cdd6; white-space: pre-wrap; word-break: break-word; }
+  .memo-row .meta { color: #5a7184; font-size: 10px; margin-top: 5px; }
+  .memo-row .meta.due { color: #f87171; font-weight: 600; }
+  .memo-row .actions { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .memo-row .actions button { border: none; border-radius: 6px; padding: 3px 8px; font-size: 10.5px; cursor: pointer; font-weight: 600; }
+  .memo-btn-pin { background: rgba(255,215,106,0.16); color: #ffd76a; }
+  .memo-btn-done { background: rgba(74,222,128,0.18); color: #4ade80; }
+  .memo-btn-del { background: rgba(248,113,113,0.15); color: #f87171; }
   .proj-status { border: none; border-radius: 10px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; }
   .proj-status.active { background: rgba(95,240,255,0.15); color: #5ff0ff; }
   .proj-status.done { background: rgba(74,222,128,0.15); color: #4ade80; }
@@ -318,8 +330,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .info .name { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
   .info .role { font-size: 10.5px; color: #6b7d8f; }
 
-  .card.coo, .card.member { cursor: pointer; }
-  .card.coo:hover, .card.member:hover { border-color: rgba(95,240,255,0.45); }
+  .card.coo, .card.member, .card.ceo { cursor: pointer; }
+  .card.coo:hover, .card.member:hover, .card.ceo:hover { border-color: rgba(255,215,106,0.7); }
 
   .card.ceo { padding: 16px 26px; border-color: rgba(255,215,106,0.4); }
   .card.ceo .avatar { width: 46px; height: 46px; background: radial-gradient(circle, #ffe9a8, #ffd76a); box-shadow: 0 0 16px rgba(255,215,106,0.5); }
@@ -531,7 +543,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .level-members { gap: 8px; }
     .card { padding: 9px 12px; }
 
-    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel {
+    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel {
       left: 50%; right: auto; transform: translateX(-50%);
       width: 92vw; max-width: 420px; top: 64px; max-height: 78vh;
     }
@@ -618,6 +630,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <button id="projectAddBtn">생성</button>
   </div>
   <div id="projectBody"></div>
+</div>
+
+<div id="memoPanel">
+  <h3>📝 Kade YEO 메모</h3>
+  <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+    <textarea id="memoContentInput" placeholder="메모 내용을 입력하세요" rows="2" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:12px; padding:7px; resize:vertical;"></textarea>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input type="datetime-local" id="memoRemindInput" style="flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px;">
+      <button id="memoAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">추가</button>
+    </div>
+  </div>
+  <div id="memoBody"></div>
 </div>
 
 <div id="auditPanel">
@@ -1237,14 +1261,14 @@ setInterval(pollStatusMap, 4000);
 // ── Kade YEO 카드 알림 — 확인필요(종)/결재 합산, 좌측 드롭메뉴에 묻혀 놓치는 문제 해소 ──
 const ceoAlert = document.getElementById('ceoAlert');
 const ceoAlertCount = document.getElementById('ceoAlertCount');
-let lastAttentionCount = 0, lastDecisionCount = 0;
+let lastAttentionCount = 0, lastDecisionCount = 0, lastMemoCount = 0;
 function updateCeoAlert() {
-  const total = lastAttentionCount + lastDecisionCount;
+  const total = lastAttentionCount + lastDecisionCount + lastMemoCount;
   ceoAlertCount.textContent = total;
   ceoAlert.classList.toggle('show', total > 0);
   ceoAlert.title = (lastDecisionCount > 0 ? '결재 대기 ' + lastDecisionCount + '건' : '') +
-    (lastAttentionCount > 0 && lastDecisionCount > 0 ? ' · ' : '') +
-    (lastAttentionCount > 0 ? '확인필요 ' + lastAttentionCount + '건' : '') +
+    (lastAttentionCount > 0 ? (lastDecisionCount > 0 ? ' · ' : '') + '확인필요 ' + lastAttentionCount + '건' : '') +
+    (lastMemoCount > 0 ? ((lastDecisionCount + lastAttentionCount) > 0 ? ' · ' : '') + '메모 알림 ' + lastMemoCount + '건' : '') +
     ' — 클릭해서 바로 확인';
 }
 ceoAlert.addEventListener('click', (e) => {
@@ -1252,13 +1276,15 @@ ceoAlert.addEventListener('click', (e) => {
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
   permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
   legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  attentionPanel.classList.remove('show'); decPanel.classList.remove('show'); memoPanel.classList.remove('show');
   if (lastDecisionCount > 0) {
-    attentionPanel.classList.remove('show');
     decPanel.classList.add('show');
     pollDecisions(); pollPendingDecisions();
-  } else {
-    decPanel.classList.remove('show');
+  } else if (lastAttentionCount > 0) {
     attentionPanel.classList.add('show');
+  } else if (lastMemoCount > 0) {
+    memoPanel.classList.add('show');
+    pollMemos();
   }
 });
 
@@ -1724,6 +1750,86 @@ document.addEventListener('click', (e) => {
   if (!projectPanel.contains(e.target) && !projectBtn.contains(e.target)) projectPanel.classList.remove('show');
 });
 setInterval(() => { if (projectPanel.classList.contains('show')) pollProjects(); }, 15000);
+
+// ── Kade YEO 카드 메모 ────────────────────────────────────────
+const memoPanel = document.getElementById('memoPanel');
+const memoBody = document.getElementById('memoBody');
+const memoContentInput = document.getElementById('memoContentInput');
+const memoRemindInput = document.getElementById('memoRemindInput');
+const memoAddBtn = document.getElementById('memoAddBtn');
+
+function fmtMemoTime(iso) {
+  return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+async function pollMemos() {
+  try {
+    const res = await fetch('/memos');
+    const list = (await res.json()).memos || [];
+    const now = new Date();
+    memoBody.innerHTML = list.map(m => {
+      const isDue = m.remind_at && new Date(m.remind_at) <= now;
+      return '<div class="memo-row' + (m.pinned ? ' pinned' : '') + (isDue ? ' due' : '') + '" data-id="' + m.id + '">' +
+        '<div class="content">' + esc(m.content) + '</div>' +
+        (m.remind_at ? '<div class="meta' + (isDue ? ' due' : '') + '">⏰ ' + fmtMemoTime(m.remind_at) + (isDue ? ' — 알림 도착' : '') + '</div>' : '') +
+        '<div class="actions">' +
+          '<button class="memo-btn-pin" data-act="pin" data-id="' + m.id + '">' + (m.pinned ? '📌 고정해제' : '📌 고정') + '</button>' +
+          '<button class="memo-btn-done" data-act="done" data-id="' + m.id + '">완료</button>' +
+          '<button class="memo-btn-del" data-act="del" data-id="' + m.id + '">삭제</button>' +
+        '</div></div>';
+    }).join('') || '<div style="color:#34465a;font-size:11px;">메모가 없습니다</div>';
+
+    memoBody.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id, act = btn.dataset.act;
+        if (act === 'pin') {
+          const row = btn.closest('.memo-row');
+          await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pinned: !row.classList.contains('pinned') }) });
+        } else if (act === 'done') {
+          await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ done: true }) });
+        } else if (act === 'del') {
+          if (!confirm('이 메모를 삭제할까요?')) return;
+          await fetch('/memos/' + id, { method: 'DELETE' });
+        }
+        pollMemos();
+      });
+    });
+
+    const dueRes = await fetch('/memos/due_count');
+    lastMemoCount = (await dueRes.json()).count || 0;
+    updateCeoAlert();
+  } catch (e) { memoBody.textContent = '불러오기 실패'; }
+}
+
+memoAddBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const content = memoContentInput.value.trim();
+  if (!content) { alert('메모 내용을 입력하세요.'); return; }
+  const remind_at = memoRemindInput.value ? new Date(memoRemindInput.value).toISOString() : null;
+  await fetch('/memos', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content, remind_at })
+  });
+  memoContentInput.value = '';
+  memoRemindInput.value = '';
+  pollMemos();
+});
+
+document.getElementById('card-대표님').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (dragMoved) { dragMoved = false; return; }
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); permPanel.classList.remove('show');
+  costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  memoPanel.classList.toggle('show');
+  if (memoPanel.classList.contains('show')) pollMemos();
+});
+document.addEventListener('click', (e) => {
+  if (!memoPanel.contains(e.target) && !document.getElementById('card-대표님').contains(e.target)) memoPanel.classList.remove('show');
+});
+pollMemos();
+setInterval(pollMemos, 20000);
 
 // ── 감사 로그 패널 ───────────────────────────────────────
 const auditBtn = document.getElementById('auditBtn');
