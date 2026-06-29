@@ -965,6 +965,26 @@ function positionSubteam() {
       maxBottom = Math.max(maxBottom, top + SUBTEAM_ROW_H);
     });
   });
+  // 인접한 본부장들이 동시에 산하 인력을 두면 카드 너비(124px) 때문에 같은 줄에서
+  // 서로 겹치거나 거의 붙어버릴 수 있음 — 같은 높이(top)에 있는 카드들을 좌→우로
+  // 훑으며 최소 간격(MIN_GAP)을 보장하도록 오른쪽으로 밀어냄
+  const MIN_GAP = 16;
+  const rowGroups = {};
+  Array.from(subteamEl2.children).forEach(card => {
+    const top = Math.round(parseFloat(card.style.top));
+    (rowGroups[top] = rowGroups[top] || []).push(card);
+  });
+  Object.values(rowGroups).forEach(cards => {
+    cards.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left));
+    for (let i = 1; i < cards.length; i++) {
+      const prev = cards[i - 1], cur = cards[i];
+      const prevRight = parseFloat(prev.style.left) + prev.offsetWidth / 2;
+      const curLeft = parseFloat(cur.style.left) - cur.offsetWidth / 2;
+      const overlap = (prevRight + MIN_GAP) - curLeft;
+      if (overlap > 0) cur.style.left = (parseFloat(cur.style.left) + overlap) + 'px';
+    }
+  });
+
   subteamEl2.style.height = (maxBottom + 8) + 'px';
 }
 
