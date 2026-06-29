@@ -880,6 +880,58 @@ def search_hotels(
     return "\n\n".join(lines)
 
 
+@tool
+def search_places(query: str, latitude: float = 0.0, longitude: float = 0.0, radius_m: int = 5000) -> str:
+    """맛집/카페/숙소/관광지 등 장소를 검색하고 이름·주소·평점·영업여부·지도 링크를 알려줍니다 (Google Places API).
+    query: 검색어 (예: "강남역 맛집", "다낭 카페", "이태원 호텔")
+    latitude, longitude: 검색 중심 좌표 (선택, 있으면 그 주변으로 우선 검색)
+    radius_m: 검색 반경(미터), 좌표가 있을 때만 적용 (기본 5000m)
+    """
+    rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
+    if not rapidapi_key:
+        return "RAPIDAPI_KEY가 설정되지 않아 장소 검색을 할 수 없습니다."
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.googleMapsUri",
+        "x-rapidapi-host": "google-map-places-new-v2.p.rapidapi.com",
+        "x-rapidapi-key": rapidapi_key,
+    }
+    body = {"textQuery": query, "maxResultCount": 8}
+    if latitude and longitude:
+        body["locationBias"] = {"circle": {"center": {"latitude": latitude, "longitude": longitude}, "radius": radius_m}}
+
+    url = "https://google-map-places-new-v2.p.rapidapi.com/v1/places:searchText"
+    try:
+        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        return f"장소 검색 오류: {e}"
+
+    places = data.get("places", [])
+    if not places:
+        return f"'{query}' 검색 결과가 없습니다."
+
+    lines = [f"장소 검색 결과: {query}\n"]
+    for i, p in enumerate(places[:6], 1):
+        name = p.get("displayName", {}).get("text", "이름 미정")
+        addr = p.get("formattedAddress", "주소 미정")
+        rating = p.get("rating")
+        rcount = p.get("userRatingCount", 0)
+        rating_str = f"★{rating} ({rcount}개 리뷰)" if rating else "평점 없음"
+        open_now = p.get("currentOpeningHours", {}).get("openNow")
+        open_str = "영업중" if open_now is True else ("영업종료" if open_now is False else "영업시간 정보없음")
+        maps_url = p.get("googleMapsUri", "")
+        lines.append(
+            f"[{i}] {name}\n"
+            f"    주소: {addr}\n"
+            f"    {rating_str} | {open_str}\n"
+            f"    지도: {maps_url}"
+        )
+    return "\n\n".join(lines)
+
+
 def get_all_external_tools():
     return [
         search_flights,
@@ -889,4 +941,5 @@ def get_all_external_tools():
         timetree_list_events,
         search_accommodation,
         search_hotels,
+        search_places,
     ]
