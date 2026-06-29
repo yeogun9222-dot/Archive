@@ -184,16 +184,6 @@ def agent_node(state: JakeState) -> JakeState:
         log_conversation(persona, f"대표님: {state['user_input']}", None)
         log_conversation(persona, f"{persona}: {jake_response}", None)
 
-        if persona == "제이크":
-            for member in PERSONAS.keys():
-                if member in jake_response and member != "제이크":
-                    task_id = create_task(
-                        title=f"{member} 작업",
-                        instruction=jake_response,
-                        assigned_to=member,
-                    )
-                    tasks_created.append({"member": member, "task_id": task_id})
-
     return {
         **state,
         "loop_msgs": loop_msgs,
