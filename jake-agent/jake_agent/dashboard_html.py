@@ -316,6 +316,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #chartZoomCtrl button:hover { background: rgba(95,240,255,0.18); }
 
   .level { display: flex; justify-content: center; gap: 24px; position: relative; z-index: 2; margin-bottom: 56px; }
+  #deptFrames { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .dept-frame {
+    position: absolute; border: 1px dashed rgba(255,215,106,0.28); border-radius: 14px;
+    background: rgba(255,215,106,0.025); box-sizing: border-box;
+  }
+  .dept-label {
+    position: absolute; background: rgba(10,14,20,0.92); color: #ffd76a; font-size: 10.5px;
+    font-weight: 700; letter-spacing: 0.5px; padding: 2px 9px; border-radius: 6px;
+    border: 1px solid rgba(255,215,106,0.3); white-space: nowrap;
+  }
   .level-members { flex-wrap: nowrap; max-width: none; gap: 10px; margin-bottom: 28px; }
   .level-members .card { padding: 8px 10px; gap: 6px; }
   .level-members .avatar { width: 28px; height: 28px; font-size: 13px; }
@@ -786,6 +796,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div id="chartViewport">
   <div id="chart">
     <svg id="lines"></svg>
+    <div id="deptFrames"></div>
 
     <div class="level level-ceo">
       <div class="card ceo" id="card-대표님">
@@ -846,7 +857,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <script>
 // 제이크(COO) 직속 11인 — 본부장/CFO급, 전부 동급(피어)
-const DIRECT_REPORTS = ["다인","렉스","루나","제로","바쿠","피오","리리","에바","미나","카이","설리"];
+// 부서 박스로 묶어 보여주기 위해 같은 부서 소속끼리 인접하도록 정렬(ORG_DEPT 순서 기준)
+const DIRECT_REPORTS = ["루나","제로","다인","미나","에바","렉스","피오","리리","설리","카이","바쿠"];
 // 팀장급 — 각자의 본부장 산하 (제이크 직속 아님)
 const SUB_REPORTS = { "사라": "에바", "노바": "렉스" };
 const MEMBERS = [...DIRECT_REPORTS, ...Object.keys(SUB_REPORTS)];
@@ -871,6 +883,17 @@ const ROSTER_DEPT = {
   "마케팅/그로스": ["카이", "조이"],
   "데이터/재무": ["바쿠", "엠마"],
 };
+// 조직도(트리)용 부서 분류 — 제이크는 이미 COO로 최상단에 단독 표시되므로
+// "경영진" 부서 박스에서는 제외(중복 표시 방지), 나머지는 ROSTER_DEPT와 동일
+const ORG_DEPT = {
+  "경영진": ["루나", "제로"],
+  "기획/전략": ["다인", "테오", "미나", "에바", "사라"],
+  "개발": ["렉스", "노바", "노아", "피오", "리리", "설리"],
+  "마케팅/그로스": ["카이", "조이"],
+  "데이터/재무": ["바쿠", "엠마"],
+};
+const NAME_TO_DEPT = {};
+Object.entries(ORG_DEPT).forEach(([dept, names]) => names.forEach(n => { NAME_TO_DEPT[n] = dept; }));
 const JOB_DESC = {
   "제이크": "전체 지휘·조율, 대표님 비전을 실행 전략으로 전환",
   "다인": "사업기획서·IR·경영보고서·전략 프레임워크 수립",
@@ -897,7 +920,15 @@ function buildCard(name, sizeClass) {
 }
 
 const membersEl = document.getElementById('members');
-DIRECT_REPORTS.forEach(name => membersEl.appendChild(buildCard(name)));
+// 부서 박스끼리 겹치지 않도록, 새 부서가 시작되는 첫 카드에 여유 간격을 추가로 둠
+let prevDeptForGap = null;
+DIRECT_REPORTS.forEach(name => {
+  const card = buildCard(name);
+  const dept = NAME_TO_DEPT[name] || null;
+  if (prevDeptForGap !== null && dept !== prevDeptForGap) card.style.marginLeft = '26px';
+  prevDeptForGap = dept;
+  membersEl.appendChild(card);
+});
 
 const subteamEl = document.getElementById('subteam');
 Object.keys(SUB_REPORTS).forEach(name => subteamEl.appendChild(buildCard(name)));
@@ -923,6 +954,51 @@ function center(el) {
   const isSubteamCard = el.parentElement && el.parentElement.id === 'subteam';
   const cx = isSubteamCard ? p.x : p.x + el.offsetWidth / 2;
   return { x: cx, y: p.y + el.offsetHeight / 2, top: p.y, bottom: p.y + el.offsetHeight };
+}
+// center()와 같은 중앙정렬 차이를 반영한 카드의 실제 좌/우/상/하 경계 — 부서 박스 크기 계산용
+function cardBox(el) {
+  const p = relPos(el);
+  const isSubteamCard = el.parentElement && el.parentElement.id === 'subteam';
+  const left = isSubteamCard ? (p.x - el.offsetWidth / 2) : p.x;
+  return { left, right: left + el.offsetWidth, top: p.y, bottom: p.y + el.offsetHeight };
+}
+
+// 부서별로 소속 인력 카드를 감싸는 시각적 박스 + 라벨을 그림 (실제 보고체계 선은 그대로 유지)
+const DEPT_PAD_SIDE = 14, DEPT_PAD_TOP = 26, DEPT_PAD_BOTTOM = 14;
+function renderDeptFrames() {
+  const deptFramesEl = document.getElementById('deptFrames');
+  deptFramesEl.innerHTML = '';
+  const boxes = {};
+  Object.entries(ORG_DEPT).forEach(([dept, names]) => {
+    let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    names.forEach(name => {
+      const el = document.getElementById('card-' + name);
+      if (!el) return;
+      const b = cardBox(el);
+      left = Math.min(left, b.left); right = Math.max(right, b.right);
+      top = Math.min(top, b.top); bottom = Math.max(bottom, b.bottom);
+    });
+    if (!isFinite(left)) return;
+    const frameLeft = Math.round(left - DEPT_PAD_SIDE);
+    const frameTop = Math.round(top - DEPT_PAD_TOP);
+    const frameW = Math.round(right - left + DEPT_PAD_SIDE * 2);
+    const frameH = Math.round(bottom - top + DEPT_PAD_TOP + DEPT_PAD_BOTTOM);
+    boxes[dept] = { left: frameLeft, right: frameLeft + frameW, top: frameTop, bottom: frameTop + frameH };
+
+    const frame = document.createElement('div');
+    frame.className = 'dept-frame';
+    frame.style.left = frameLeft + 'px'; frame.style.top = frameTop + 'px';
+    frame.style.width = frameW + 'px'; frame.style.height = frameH + 'px';
+    deptFramesEl.appendChild(frame);
+
+    const label = document.createElement('div');
+    label.className = 'dept-label';
+    label.textContent = dept;
+    label.style.left = (frameLeft + 10) + 'px';
+    label.style.top = (frameTop - 2) + 'px';
+    deptFramesEl.appendChild(label);
+  });
+  return boxes;
 }
 
 function elbowPath(p1, p2) {
@@ -1012,10 +1088,13 @@ function drawStaticLines() {
   p1.setAttribute('fill', 'none');
   svg.appendChild(p1);
 
-  DIRECT_REPORTS.forEach(name => {
-    const m = center(document.getElementById('card-' + name));
+  // 부서 박스를 먼저 그리고, 제이크 → 각 부서(박스 상단 중앙)로 선을 연결 —
+  // 본부장 11명에게 개별 선을 긋던 것을 부서 단위 5개 선으로 단순화
+  const deptBoxes = renderDeptFrames();
+  Object.values(deptBoxes).forEach(box => {
+    const topCenter = { x: (box.left + box.right) / 2, top: box.top };
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', elbowPath(jake, m));
+    p.setAttribute('d', elbowPath(jake, topCenter));
     p.setAttribute('stroke', 'rgba(95,240,255,0.16)');
     p.setAttribute('stroke-width', '1.2');
     p.setAttribute('fill', 'none');
