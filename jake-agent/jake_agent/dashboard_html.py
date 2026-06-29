@@ -356,10 +356,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   @keyframes barShimmer { 0% { background-position: 220% 0; } 100% { background-position: -20% 0; } }
   @keyframes barPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
-  /* 카드 좌상단 — 결재 대기/미해결 작업/실시간 협업 등 "결정되지 않은" 상태가 있을 때만
-     말풍선 모양 + 타이핑 도트로 은은하게 깜빡임 (확인되면 즉시 사라짐) */
+  /* 카드 상단 중앙 — 결재 대기/미해결 작업/실시간 협업 등 "결정되지 않은" 상태가 있을 때만
+     말풍선 모양 + 타이핑 도트로 은은하게 깜빡임 (확인되면 즉시 사라짐)
+     중앙 정렬: 좌상단 모서리에 두면 인접 카드와 겹쳐 보여 소속이 헷갈리는 문제가 있었음 */
   .msg-badge {
-    display: none; position: absolute; top: -10px; left: -10px; z-index: 8;
+    display: none; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 8;
     width: 26px; height: 19px; border-radius: 9px 9px 9px 3px;
     background: linear-gradient(160deg, #6ff5ff, #2bb8cc);
     box-shadow: 0 0 8px rgba(95,240,255,0.55);
@@ -372,8 +373,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .msg-badge .dot:nth-child(3) { animation-delay: 0.36s; }
   @keyframes msgDotBlink { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-1px); } }
   @keyframes msgBubblePulse {
-    0%, 100% { box-shadow: 0 0 6px rgba(95,240,255,0.4); transform: scale(1); }
-    50% { box-shadow: 0 0 15px rgba(95,240,255,0.8); transform: scale(1.07); }
+    0%, 100% { box-shadow: 0 0 6px rgba(95,240,255,0.4); transform: translateX(-50%) scale(1); }
+    50% { box-shadow: 0 0 15px rgba(95,240,255,0.8); transform: translateX(-50%) scale(1.07); }
   }
 
   .card.inactive-persona { opacity: 0.35; filter: grayscale(0.6); }
