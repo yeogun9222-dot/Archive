@@ -950,12 +950,16 @@ function positionSubteam() {
     const parentCard = document.getElementById('card-' + parent);
     if (!parentCard) return;
     const parentPos = relPos(parentCard);
-    const parentCenterX = parentPos.x + parentCard.offsetWidth / 2 - subPos.x;
+    // subteam 카드는 CSS transform: translateX(-50%)로 이미 자기 중심에 위치해 있어
+    // left 값 자체가 중앙 X좌표임 — 1단계(본부장) 카드처럼 +너비/2를 더하면 안 됨
+    const parentCenterX = subKeys.has(parent)
+      ? (parentPos.x - subPos.x)
+      : (parentPos.x + parentCard.offsetWidth / 2 - subPos.x);
     const parentBottomY = parentPos.y - subPos.y + parentCard.offsetHeight;
     children.forEach((name, i) => {
       const childCard = document.getElementById('card-' + name);
       if (!childCard) return;
-      const top = parentBottomY + 10 + i * SUBTEAM_ROW_H;
+      const top = parentBottomY + 14 + i * SUBTEAM_ROW_H;
       childCard.style.left = parentCenterX + 'px';
       childCard.style.top = top + 'px';
       maxBottom = Math.max(maxBottom, top + SUBTEAM_ROW_H);
