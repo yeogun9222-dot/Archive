@@ -409,7 +409,7 @@ async def add_decision(req: DecisionRequest):
 
 @app.get("/decisions/pending")
 async def list_pending_decisions():
-    """14인이 올린, 대표님 결재가 필요한 사안 목록"""
+    """팀원들이 올린, 대표님 결재가 필요한 사안 목록"""
     return {"decisions": get_pending_decisions()}
 
 
