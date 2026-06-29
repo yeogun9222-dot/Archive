@@ -1356,7 +1356,14 @@ function renderEvent(ev) {
   if (streamEvents.length > 100) streamEvents.length = 100;
   freshIds.add(ev.id);
   setTimeout(() => freshIds.delete(ev.id), 2500);
-  renderStream();
+  // 여러 페르소나가 동시에 활동해 짧은 시간에 이벤트가 몰릴 때, 매번 전체 목록을
+  // 통째로 지우고 다시 그리면(최대 100개) 렌더링 비용이 누적되어 병목이 생길 수 있음 —
+  // 새 이벤트 1건만 DOM에 추가하는 방식으로 처리해 부담을 줄임
+  if (activeTabStatus === 'all' || ev.status === activeTabStatus) {
+    emptyEl.style.display = 'none';
+    eventsEl.insertBefore(buildEventCard(ev, true), eventsEl.firstChild);
+    while (eventsEl.children.length > 100) eventsEl.removeChild(eventsEl.lastChild);
+  }
 }
 
 // ── 카드 백라이트: 이슈(pending/failed/held)일 때만 계속 펄스, 그 외엔 정적 ──
