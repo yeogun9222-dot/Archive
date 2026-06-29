@@ -2054,8 +2054,12 @@ async function pollPendingDecisions() {
             '<button class="dec-hire-btn" data-id="' + d.id + '" style="background:rgba(74,222,128,0.18); color:#4ade80; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">✅ 승인(채용)</button>' +
             '<button class="dec-reject-btn" data-id="' + d.id + '" style="background:rgba(248,113,113,0.15); color:#f87171; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">❌ 반려</button>' +
           '</div>'
-        : '<textarea class="dec-resolve-input" data-id="' + d.id + '" placeholder="결정 내용을 입력하세요" rows="2" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(251,191,36,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px; resize:vertical;"></textarea>' +
-          '<button class="dec-resolve-btn" data-id="' + d.id + '" style="margin-top:6px; background:rgba(251,191,36,0.18); color:#fbbf24; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">결재하기</button>';
+        : '<textarea class="dec-resolve-input" data-id="' + d.id + '" placeholder="결정 내용/피드백을 입력하세요 (보완 필요·반려 시에는 이유를 꼭 적어주세요)" rows="2" style="width:100%; margin-top:6px; background:rgba(255,255,255,0.04); border:1px solid rgba(251,191,36,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:6px; resize:vertical;"></textarea>' +
+          '<div style="margin-top:6px; display:flex; gap:6px;">' +
+            '<button class="dec-approve-btn" data-id="' + d.id + '" style="background:rgba(74,222,128,0.18); color:#4ade80; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">✅ 승인</button>' +
+            '<button class="dec-revise-btn" data-id="' + d.id + '" style="background:rgba(251,191,36,0.18); color:#fbbf24; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">✏️ 보완 필요</button>' +
+            '<button class="dec-reject2-btn" data-id="' + d.id + '" style="background:rgba(248,113,113,0.15); color:#f87171; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">❌ 반려</button>' +
+          '</div>';
       return '<div class="dec-row" style="border-color:rgba(251,191,36,0.35);"><div class="top"><span class="cat">' + esc(d.category) + '</span><span class="time">' + new Date(d.created_at).toLocaleString('ko-KR') + '</span></div>' +
         '<div class="summary">' + esc(d.summary) + '</div>' +
         '<div class="reason">' + esc(d.requested_by) + '의 요청 — ' + esc(d.reason) + '</div>' +
@@ -2063,19 +2067,39 @@ async function pollPendingDecisions() {
         '</div>';
     }).join('') || '<div style="color:#34465a;font-size:11px;">결재 대기 중인 사안이 없습니다</div>';
 
-    decPendingBody.querySelectorAll('.dec-resolve-btn').forEach(btn => {
+    async function submitResolve(id, tag, requireText, defaultText) {
+      const textarea = decPendingBody.querySelector('.dec-resolve-input[data-id="' + id + '"]');
+      const text = (textarea ? textarea.value.trim() : '');
+      if (requireText && !text) { alert('이유/피드백을 입력하세요.'); return false; }
+      const resolution = '[' + tag + '] ' + (text || defaultText);
+      await fetch('/decisions/' + id + '/resolve', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution })
+      });
+      pollPendingDecisions(); pollDecisions();
+      return true;
+    }
+    decPendingBody.querySelectorAll('.dec-approve-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        const textarea = decPendingBody.querySelector('.dec-resolve-input[data-id="' + id + '"]');
-        const resolution = textarea.value.trim();
-        if (!resolution) { alert('결정 내용을 입력하세요.'); return; }
-        btn.disabled = true; btn.textContent = '처리 중...';
-        await fetch('/decisions/' + id + '/resolve', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resolution })
-        });
-        pollPendingDecisions(); pollDecisions();
+        btn.disabled = true;
+        await submitResolve(btn.dataset.id, '승인', false, '승인합니다.');
+      });
+    });
+    decPendingBody.querySelectorAll('.dec-revise-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        const ok = await submitResolve(btn.dataset.id, '보완 필요', true, '');
+        if (!ok) btn.disabled = false;
+      });
+    });
+    decPendingBody.querySelectorAll('.dec-reject2-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('이 요청을 반려할까요?')) return;
+        btn.disabled = true;
+        await submitResolve(btn.dataset.id, '반려', false, '반려합니다.');
       });
     });
     decPendingBody.querySelectorAll('.dec-hire-btn').forEach(btn => {
