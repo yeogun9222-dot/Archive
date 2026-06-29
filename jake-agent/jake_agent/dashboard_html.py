@@ -235,10 +235,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   .memo-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(255,215,106,0.15); border-radius: 9px; padding: 9px 11px; margin-bottom: 8px; font-size: 12px; }
   .memo-row.pinned { border-color: rgba(255,215,106,0.5); }
-  .memo-row.due { border-color: rgba(248,113,113,0.55); box-shadow: 0 0 8px rgba(248,113,113,0.25); }
   .memo-row .content { color: #c5cdd6; white-space: pre-wrap; word-break: break-word; }
-  .memo-row .meta { color: #5a7184; font-size: 10px; margin-top: 5px; }
-  .memo-row .meta.due { color: #f87171; font-weight: 600; }
   .memo-row .actions { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
   .memo-row .actions button { border: none; border-radius: 6px; padding: 3px 8px; font-size: 10.5px; cursor: pointer; font-weight: 600; }
   .memo-btn-pin { background: rgba(255,215,106,0.16); color: #ffd76a; }
@@ -636,10 +633,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h3>📝 Kade YEO 메모</h3>
   <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
     <textarea id="memoContentInput" placeholder="메모 내용을 입력하세요" rows="2" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:12px; padding:7px; resize:vertical;"></textarea>
-    <div style="display:flex; gap:6px; align-items:center;">
-      <input type="datetime-local" id="memoRemindInput" style="flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px;">
-      <button id="memoAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">추가</button>
-    </div>
+    <button id="memoAddBtn" style="align-self:flex-end; background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">추가</button>
   </div>
   <div id="memoBody"></div>
 </div>
@@ -1755,29 +1749,21 @@ setInterval(() => { if (projectPanel.classList.contains('show')) pollProjects();
 const memoPanel = document.getElementById('memoPanel');
 const memoBody = document.getElementById('memoBody');
 const memoContentInput = document.getElementById('memoContentInput');
-const memoRemindInput = document.getElementById('memoRemindInput');
 const memoAddBtn = document.getElementById('memoAddBtn');
-
-function fmtMemoTime(iso) {
-  return new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
 
 async function pollMemos() {
   try {
     const res = await fetch('/memos');
     const list = (await res.json()).memos || [];
-    const now = new Date();
-    memoBody.innerHTML = list.map(m => {
-      const isDue = m.remind_at && new Date(m.remind_at) <= now;
-      return '<div class="memo-row' + (m.pinned ? ' pinned' : '') + (isDue ? ' due' : '') + '" data-id="' + m.id + '">' +
+    memoBody.innerHTML = list.map(m =>
+      '<div class="memo-row' + (m.pinned ? ' pinned' : '') + '" data-id="' + m.id + '">' +
         '<div class="content">' + esc(m.content) + '</div>' +
-        (m.remind_at ? '<div class="meta' + (isDue ? ' due' : '') + '">⏰ ' + fmtMemoTime(m.remind_at) + (isDue ? ' — 알림 도착' : '') + '</div>' : '') +
         '<div class="actions">' +
           '<button class="memo-btn-pin" data-act="pin" data-id="' + m.id + '">' + (m.pinned ? '📌 고정해제' : '📌 고정') + '</button>' +
           '<button class="memo-btn-done" data-act="done" data-id="' + m.id + '">완료</button>' +
           '<button class="memo-btn-del" data-act="del" data-id="' + m.id + '">삭제</button>' +
-        '</div></div>';
-    }).join('') || '<div style="color:#34465a;font-size:11px;">메모가 없습니다</div>';
+        '</div></div>'
+    ).join('') || '<div style="color:#34465a;font-size:11px;">메모가 없습니다</div>';
 
     memoBody.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1796,8 +1782,7 @@ async function pollMemos() {
       });
     });
 
-    const dueRes = await fetch('/memos/due_count');
-    lastMemoCount = (await dueRes.json()).count || 0;
+    lastMemoCount = list.length;
     updateCeoAlert();
   } catch (e) { memoBody.textContent = '불러오기 실패'; }
 }
@@ -1806,10 +1791,9 @@ memoAddBtn.addEventListener('click', async (e) => {
   e.stopPropagation();
   const content = memoContentInput.value.trim();
   if (!content) { alert('메모 내용을 입력하세요.'); return; }
-  const remind_at = memoRemindInput.value ? new Date(memoRemindInput.value).toISOString() : null;
   await fetch('/memos', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, remind_at })
+    body: JSON.stringify({ content })
   });
   memoContentInput.value = '';
   memoRemindInput.value = '';

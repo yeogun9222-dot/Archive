@@ -136,7 +136,6 @@ def init_db():
             id SERIAL PRIMARY KEY,
             content TEXT NOT NULL,
             pinned BOOLEAN DEFAULT FALSE,
-            remind_at TIMESTAMP,
             done BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT NOW()
         )
@@ -550,13 +549,10 @@ def get_decisions(limit: int = 100) -> list:
     ]
 
 
-def create_memo(content: str, remind_at: str = None) -> int:
+def create_memo(content: str) -> int:
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO ceo_memos (content, remind_at) VALUES (%s, %s) RETURNING id",
-        (content, remind_at)
-    )
+    cur.execute("INSERT INTO ceo_memos (content) VALUES (%s) RETURNING id", (content,))
     memo_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
@@ -565,34 +561,29 @@ def create_memo(content: str, remind_at: str = None) -> int:
 
 
 def get_memos() -> list:
-    """완료 처리되지 않은 메모만 — 고정(pin) 먼저, 그다음 알림시각 빠른 순"""
+    """완료 처리되지 않은 메모만 — 고정(pin) 먼저, 그다음 최신순"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, content, pinned, remind_at, done, created_at FROM ceo_memos
+        """SELECT id, content, pinned, done, created_at FROM ceo_memos
            WHERE done = FALSE
-           ORDER BY pinned DESC, (remind_at IS NULL), remind_at ASC, created_at DESC"""
+           ORDER BY pinned DESC, created_at DESC"""
     )
     rows = cur.fetchall()
     cur.close()
     conn.close()
     return [
-        {"id": r[0], "content": r[1], "pinned": r[2], "remind_at": r[3].isoformat() if r[3] else None,
-         "done": r[4], "created_at": r[5].isoformat()}
+        {"id": r[0], "content": r[1], "pinned": r[2], "done": r[3], "created_at": r[4].isoformat()}
         for r in rows
     ]
 
 
-def update_memo(memo_id: int, content: str = None, pinned: bool = None, remind_at: str = None, done: bool = None, clear_remind: bool = False) -> bool:
+def update_memo(memo_id: int, content: str = None, pinned: bool = None, done: bool = None) -> bool:
     fields, values = [], []
     if content is not None:
         fields.append("content=%s"); values.append(content)
     if pinned is not None:
         fields.append("pinned=%s"); values.append(pinned)
-    if clear_remind:
-        fields.append("remind_at=NULL")
-    elif remind_at is not None:
-        fields.append("remind_at=%s"); values.append(remind_at)
     if done is not None:
         fields.append("done=%s"); values.append(done)
     if not fields:
@@ -617,16 +608,6 @@ def delete_memo(memo_id: int) -> bool:
     cur.close()
     conn.close()
     return row is not None
-
-
-def get_due_memo_count() -> int:
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM ceo_memos WHERE done = FALSE AND remind_at IS NOT NULL AND remind_at <= NOW()")
-    count = cur.fetchone()[0]
-    cur.close()
-    conn.close()
-    return count
 
 
 def create_custom_persona(name: str, role: str, icon: str, parent: str, system_prompt: str, decision_id: int = None) -> None:
