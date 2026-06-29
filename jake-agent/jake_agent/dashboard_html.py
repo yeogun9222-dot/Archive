@@ -300,8 +300,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   #chart {
     position: absolute; top: 0; left: 0; width: max-content; min-height: 480px;
     padding: 30px 40px 60px; display: flex; flex-direction: column; align-items: center;
-    transform-origin: 0 0; will-change: transform;
+    transform-origin: 0 0;
   }
+  /* 드래그/줌 동작 중에만 GPU 레이어로 승격 — 항시 켜두면 정적 상태에서도
+     텍스트가 미묘하게 흐려지는 래스터화 캐시 문제가 생김 */
+  #chart.panning { will-change: transform; }
   svg#lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
   #chartZoomCtrl {
     position: absolute; right: 14px; bottom: 14px; z-index: 6; display: flex; flex-direction: column; gap: 6px;
@@ -1102,11 +1105,14 @@ setTimeout(centerChart, 60);
 window.addEventListener('resize', centerChart);
 
 let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+let wheelEndTimer = null;
+function markPanningEnd() { chart.classList.remove('panning'); }
 chartViewport.addEventListener('mousedown', (e) => {
   if (e.button !== 0) return;
   isPanning = true; dragMoved = false;
   panStartX = e.clientX; panStartY = e.clientY; panOrigX = panX; panOrigY = panY;
   chartViewport.classList.add('dragging');
+  chart.classList.add('panning');
 });
 window.addEventListener('mousemove', (e) => {
   if (!isPanning) return;
@@ -1116,10 +1122,13 @@ window.addEventListener('mousemove', (e) => {
   applyChartTransform();
 });
 window.addEventListener('mouseup', () => {
-  if (isPanning) { isPanning = false; chartViewport.classList.remove('dragging'); }
+  if (isPanning) { isPanning = false; chartViewport.classList.remove('dragging'); markPanningEnd(); }
 });
 chartViewport.addEventListener('wheel', (e) => {
   e.preventDefault();
+  chart.classList.add('panning');
+  clearTimeout(wheelEndTimer);
+  wheelEndTimer = setTimeout(markPanningEnd, 200);
   const rect = chartViewport.getBoundingClientRect();
   zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 1 / 1.12);
 }, { passive: false });
@@ -1130,8 +1139,10 @@ chartViewport.addEventListener('touchstart', (e) => {
   if (e.touches.length === 1) {
     touchMode = 'pan'; dragMoved = false;
     lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
+    chart.classList.add('panning');
   } else if (e.touches.length === 2) {
     touchMode = 'pinch'; lastPinchDist = touchDist(e.touches);
+    chart.classList.add('panning');
   }
 }, { passive: true });
 chartViewport.addEventListener('touchmove', (e) => {
@@ -1153,7 +1164,7 @@ chartViewport.addEventListener('touchmove', (e) => {
     lastPinchDist = dist;
   }
 }, { passive: false });
-chartViewport.addEventListener('touchend', () => { touchMode = null; });
+chartViewport.addEventListener('touchend', () => { touchMode = null; markPanningEnd(); });
 
 document.getElementById('chartZoomIn').addEventListener('click', (e) => {
   e.stopPropagation();
