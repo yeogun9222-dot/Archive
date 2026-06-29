@@ -308,12 +308,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .level-members .info .name { font-size: 11px; }
   .level-members .info .role { font-size: 8.5px; }
   .level-subteam { position: relative; height: 56px; width: 100%; margin-bottom: 0; }
-  .level-subteam .card { position: absolute; top: 0; transform: translateX(-50%); padding: 9px 14px; white-space: nowrap; }
-  .level-subteam .avatar { width: 30px; height: 30px; font-size: 13px; }
-  .level-subteam .info .name { font-size: 12px; }
-  .level-subteam .info .role { font-size: 9.5px; }
-  .level-members .info .name, .level-members .info .role,
-  .level-subteam .info .name, .level-subteam .info .role { white-space: nowrap; }
+  .level-subteam .card { position: absolute; top: 0; transform: translateX(-50%); padding: 8px 10px; width: 124px; box-sizing: border-box; }
+  .level-subteam .avatar { width: 26px; height: 26px; font-size: 12px; }
+  .level-subteam .info .name { font-size: 11.5px; }
+  .level-subteam .info .role { font-size: 9px; white-space: normal; line-height: 1.25; }
+  .level-members .info .name, .level-members .info .role { white-space: nowrap; }
 
   .card {
     background: linear-gradient(160deg, rgba(22,28,38,0.95), rgba(14,18,26,0.95));
@@ -883,29 +882,32 @@ function directedElbow(x1, y1, x2, y2) {
   return 'M ' + x1 + ' ' + y1 + ' L ' + x1 + ' ' + midY + ' L ' + x2 + ' ' + midY + ' L ' + x2 + ' ' + y2;
 }
 
+const SUBTEAM_ROW_H = 64;
 function positionSubteam() {
   const subteamEl2 = document.getElementById('subteam');
   const subPos = relPos(subteamEl2);
-  // 같은 본부장 산하에 여러 명이 붙을 수 있어(팀장 + 신규 채용 등) 부모별로 묶어서
-  // 가로로 나란히 펼쳐 배치 — 한 명뿐이면 정확히 부모 중앙(offset 0)에 위치
+  // 같은 본부장 산하에 여러 명이 붙을 수 있어(팀장 + 신규 채용 등) — 가로로 펼치면 옆
+  // 부서 카드와 겹치므로, 실제 회사 조직도처럼 부모 바로 아래로 "수직으로" 쌓는다.
+  // 가로 위치는 항상 부모 중앙과 정확히 같아서 다른 부서와 절대 겹치지 않음.
   const byParent = {};
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
     (byParent[parent] = byParent[parent] || []).push(name);
   });
-  const spacing = 140;
+  let maxStack = 1;
   Object.entries(byParent).forEach(([parent, children]) => {
     const parentCard = document.getElementById('card-' + parent);
     if (!parentCard) return;
     const parentPos = relPos(parentCard);
     const parentCenterX = parentPos.x + parentCard.offsetWidth / 2 - subPos.x;
-    const n = children.length;
+    maxStack = Math.max(maxStack, children.length);
     children.forEach((name, i) => {
       const childCard = document.getElementById('card-' + name);
       if (!childCard) return;
-      const offset = (i - (n - 1) / 2) * spacing;
-      childCard.style.left = (parentCenterX + offset) + 'px';
+      childCard.style.left = parentCenterX + 'px';
+      childCard.style.top = (i * SUBTEAM_ROW_H) + 'px';
     });
   });
+  subteamEl2.style.height = (maxStack * SUBTEAM_ROW_H + 8) + 'px';
 }
 
 let staticPaths = [];
@@ -933,17 +935,26 @@ function drawStaticLines() {
     svg.appendChild(p);
   });
 
-  // 팀장급은 본부장 산하 — 제이크가 아니라 각자의 본부장에서 선 연결
+  // 팀장급/신규채용은 본부장 산하 — 제이크가 아니라 각자의 본부장에서 선 연결.
+  // 같은 본부장 산하에 여러 명이면 부모→1번째→2번째... 수직 체인으로 이어서
+  // 실제 회사 조직도처럼 한 줄기로 깔끔하게 내려가도록 함 (옆 부서와 선이 겹치지 않음)
+  const subteamByParent = {};
   Object.entries(SUB_REPORTS).forEach(([name, parent]) => {
-    const parentPos = center(document.getElementById('card-' + parent));
-    const m = center(document.getElementById('card-' + name));
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', elbowPath(parentPos, m));
-    p.setAttribute('stroke', 'rgba(165,180,255,0.3)');
-    p.setAttribute('stroke-width', '1.2');
-    p.setAttribute('stroke-dasharray', '3,3');
-    p.setAttribute('fill', 'none');
-    svg.appendChild(p);
+    (subteamByParent[parent] = subteamByParent[parent] || []).push(name);
+  });
+  Object.entries(subteamByParent).forEach(([parent, children]) => {
+    let prevPoint = center(document.getElementById('card-' + parent));
+    children.forEach(name => {
+      const m = center(document.getElementById('card-' + name));
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', elbowPath(prevPoint, m));
+      p.setAttribute('stroke', 'rgba(165,180,255,0.3)');
+      p.setAttribute('stroke-width', '1.2');
+      p.setAttribute('stroke-dasharray', '3,3');
+      p.setAttribute('fill', 'none');
+      svg.appendChild(p);
+      prevPoint = m;
+    });
   });
 }
 window.addEventListener('resize', drawStaticLines);
