@@ -25,7 +25,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background: rgba(12,16,24,0.97); border: 1px solid rgba(255,215,106,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #costPanel.show { display: block; }
+  #costPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
   #costPanel h3 { font-size: 12px; color: #ffd76a; margin-bottom: 10px; }
   .cost-row { display: flex; justify-content: space-between; font-size: 12px; color: #c5cdd6; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .cost-row .name { color: #9fb4c4; flex: 1; }
@@ -92,7 +92,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     box-shadow: 0 10px 44px rgba(0,0,0,0.65); z-index: 60; overflow: hidden;
     display: none; flex-direction: column; transition: width 0.2s ease, max-height 0.2s ease;
   }
-  #cardChatPanel.show { display: flex; }
+  #cardChatPanel.show { display: flex; animation: chatPopIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
   #cardChatPanel.maximized { width: 640px; max-height: 86vh; }
   #cardChatPanel.minimized { max-height: none; }
   #cardChatPanel.minimized #cardChatBody { display: none; }
@@ -187,7 +187,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; }
+  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
   #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
 
   .legend-group { margin-bottom: 14px; }
@@ -206,6 +206,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .lg-flash { background: linear-gradient(90deg, #4ade80, transparent); }
   .lg-inactive { background: #5a6473; opacity: 0.5; }
   @keyframes legendGlow { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  @keyframes panelPopIn { from { opacity: 0; transform: scale(0.96) translateY(-6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes chatPopIn { from { opacity: 0; transform: translateX(-50%) translateY(18px) scale(0.97); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 
   .bn-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(251,191,36,0.2); border-radius: 9px; padding: 9px 11px; margin-bottom: 9px; font-size: 11.5px; }
   .bn-row .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
