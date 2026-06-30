@@ -234,7 +234,7 @@ def _search_skyscanner_rapidapi(from_iata, to_iata, departure, destination, date
 
         sc_date = date_iso.replace("-", "")[2:]
         skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
-        tripdotcom_url = f"https://kr.trip.com/flights/showfare?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&adult={adults}&cabin=Economy"
+        tripdotcom_url = f"https://kr.trip.com/flights/showfarefirst?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&triptype=ow&class=y&quantity={adults}&locale=ko-KR&curr=KRW"
 
         if not itineraries:
             return _search_links_only(from_iata, to_iata, departure, destination, date_iso, adults)
@@ -302,7 +302,7 @@ def _search_links_only(from_iata, to_iata, departure, destination, date_iso, adu
     """링크만 제공하는 폴백"""
     sc_date = date_iso.replace("-", "")[2:]
     skyscanner_url = f"https://www.skyscanner.co.kr/transport/flights/{from_iata}/{to_iata}/{sc_date}/"
-    tripdotcom_url = f"https://kr.trip.com/flights/showfare?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&adult={adults}&cabin=Economy"
+    tripdotcom_url = f"https://kr.trip.com/flights/showfarefirst?dcity={from_iata}&acity={to_iata}&ddate={date_iso}&triptype=ow&class=y&quantity={adults}&locale=ko-KR&curr=KRW"
     return (
         f"항공권 검색: {departure}({from_iata}) → {destination}({to_iata}) | {date_iso} | 성인 {adults}명\n\n"
         f"실시간 최저가 확인:\n"
