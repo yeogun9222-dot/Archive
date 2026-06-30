@@ -880,32 +880,50 @@ def search_hotels(
     return "\n\n".join(lines)
 
 
+def _places_search_request(rapidapi_key: str, text_query: str, field_mask: str, location_bias: dict = None, max_results: int = 8) -> dict:
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask": field_mask,
+        "x-rapidapi-host": "google-map-places-new-v2.p.rapidapi.com",
+        "x-rapidapi-key": rapidapi_key,
+    }
+    body = {"textQuery": text_query, "maxResultCount": max_results, "languageCode": "ko"}
+    if location_bias:
+        body["locationBias"] = location_bias
+    url = "https://google-map-places-new-v2.p.rapidapi.com/v1/places:searchText"
+    req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
 @tool
-def search_places(query: str, latitude: float = 0.0, longitude: float = 0.0, radius_m: int = 5000) -> str:
+def search_places(query: str, near: str = "", radius_m: int = 1000) -> str:
     """맛집/카페/숙소/관광지 등 장소를 검색하고 이름·주소·평점·영업여부·지도 링크를 알려줍니다 (Google Places API).
-    query: 검색어 (예: "강남역 맛집", "다낭 카페", "이태원 호텔")
-    latitude, longitude: 검색 중심 좌표 (선택, 있으면 그 주변으로 우선 검색)
-    radius_m: 검색 반경(미터), 좌표가 있을 때만 적용 (기본 5000m)
+    query: 찾고자 하는 대상 (예: "족발집", "맛집", "카페")
+    near: 기준이 되는 역/동/랜드마크 (예: "원흥역", "강남역") — 사용자가 특정 지역 근처를 언급하면 반드시 채워야 정확도가 크게 올라감
+    radius_m: near 기준 검색 반경(미터). 사용자가 "300m 안팎" 등으로 말하면 그 값을 그대로 사용 (기본 1000m)
     """
     rapidapi_key = os.getenv("RAPIDAPI_KEY", "")
     if not rapidapi_key:
         return "RAPIDAPI_KEY가 설정되지 않아 장소 검색을 할 수 없습니다."
 
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.googleMapsUri",
-        "x-rapidapi-host": "google-map-places-new-v2.p.rapidapi.com",
-        "x-rapidapi-key": rapidapi_key,
-    }
-    body = {"textQuery": query, "maxResultCount": 8}
-    if latitude and longitude:
-        body["locationBias"] = {"circle": {"center": {"latitude": latitude, "longitude": longitude}, "radius": radius_m}}
-
-    url = "https://google-map-places-new-v2.p.rapidapi.com/v1/places:searchText"
+    location_bias = None
     try:
-        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        if near:
+            geo_data = _places_search_request(rapidapi_key, near, "places.location", max_results=1)
+            geo_places = geo_data.get("places", [])
+            if geo_places:
+                loc = geo_places[0].get("location", {})
+                lat, lng = loc.get("latitude"), loc.get("longitude")
+                if lat is not None and lng is not None:
+                    location_bias = {"circle": {"center": {"latitude": lat, "longitude": lng}, "radius": min(max(radius_m, 50), 50000)}}
+
+        text_query = f"{near} {query}" if near else query
+        data = _places_search_request(
+            rapidapi_key, text_query,
+            "places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.googleMapsUri",
+            location_bias=location_bias,
+        )
     except Exception as e:
         return f"장소 검색 오류: {e}"
 
