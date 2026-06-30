@@ -1631,6 +1631,9 @@ async function pollAttention() {
     attentionBody.innerHTML = '';
     attentionEmpty.style.display = count === 0 ? 'block' : 'none';
 
+    // 실패/대기/보류 목록은 Activity Stream 탭(전체/대기/완료/실패/보류)과 내용이 100% 겹쳐서
+    // 여기서 다시 보여주지 않음 — 여기는 Activity Stream에 없는 "건강도" 경고(기한 초과,
+    // 담당자 미배정)만 다루고, 실패/대기 건수는 안내문 + Activity Stream 바로가기로만 표시
     if (healthData.overdue.length > 0) {
       attentionBody.innerHTML += '<div class="sec-label">⏰ 기한 초과</div>';
       healthData.overdue.forEach(t => {
@@ -1649,30 +1652,12 @@ async function pollAttention() {
           '<div class="att-actions"><button class="act-btn delete" data-id="' + t.id + '" data-act="delete">삭제</button></div></div>';
       });
     }
-
-    if (failed.length > 0) {
-      attentionBody.innerHTML += '<div class="sec-label">⛔ 실패 — 확인 필요</div>';
-      failed.forEach(t => {
-        attentionBody.innerHTML +=
-          '<div class="att-item failed"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text">' + esc(t.result || t.title) + '</div>' + actionButtons(t, 'failed') + '</div>';
-      });
-    }
-    if (pending.length > 0) {
-      attentionBody.innerHTML += '<div class="sec-label">⏳ 진행/확인 필요 — 요청 내용</div>';
-      pending.forEach(t => {
-        attentionBody.innerHTML +=
-          '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text">' + esc(t.instruction || t.title) + '</div>' + actionButtons(t, 'pending') + '</div>';
-      });
-    }
-    if (held.length > 0) {
-      attentionBody.innerHTML += '<div class="sec-label">⏸ 보류 중</div>';
-      held.forEach(t => {
-        attentionBody.innerHTML +=
-          '<div class="att-item pending"><div class="route">' + t.from + ' → ' + t.to + '</div>' +
-          '<div class="text">' + esc(t.instruction || t.title) + '</div>' + actionButtons(t, 'held') + '</div>';
-      });
+    if (failed.length > 0 || pending.length > 0) {
+      attentionBody.innerHTML +=
+        '<div class="sec-label">📡 그 외 확인 필요</div>' +
+        '<button id="attnGoStream" style="width:100%; text-align:left; background:rgba(95,240,255,0.08); border:1px solid rgba(95,240,255,0.25); border-radius:8px; padding:9px 11px; font-size:12px; color:#9fb4c4; cursor:pointer;">' +
+          '⛔ 실패 ' + failed.length + '건 · ⏳ 대기 ' + pending.length + '건 — Activity Stream에서 확인 →' +
+        '</button>';
     }
 
     attentionBody.querySelectorAll('.act-btn').forEach(btn => {
@@ -1693,6 +1678,19 @@ async function pollAttention() {
         if (ok) { pollAttention(); pollStatusMap(); }
       });
     });
+
+    const goStreamBtn = document.getElementById('attnGoStream');
+    if (goStreamBtn) {
+      goStreamBtn.addEventListener('click', () => {
+        attentionPanel.classList.remove('show');
+        const targetStatus = failed.length > 0 ? 'failed' : 'pending';
+        document.querySelectorAll('#streamTabs .tab').forEach(b => b.classList.toggle('active', b.dataset.status === targetStatus));
+        activeTabStatus = targetStatus;
+        renderStream();
+        logEl.classList.add('expanded');
+        logEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
   } catch (e) { /* ignore */ }
 }
 
