@@ -4,6 +4,7 @@ services:
     container_name: jake-postgres
     restart: "no"
     environment:
+      TZ: Asia/Seoul
       POSTGRES_DB: jakedb
       POSTGRES_USER: jake
       POSTGRES_PASSWORD: jake1234
@@ -20,6 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      TZ: Asia/Seoul
       DB_HOST: jake-postgres
       DB_PORT: "5432"
       DB_NAME: jakedb
