@@ -16,6 +16,7 @@ from .github_tools import get_all_github_tools
 from .tools_external import get_all_external_tools
 from .team_tools import get_all_team_tools
 from .rex_tools import get_all_rex_tools
+from .memo_tools import get_all_memo_tools
 
 load_dotenv()
 
@@ -25,7 +26,8 @@ TEAM_MEMBERS = list(PERSONAS.keys())
 ALL_TOOLS = (
     get_all_tools() + get_all_web_tools() + get_all_luna_tools() +
     get_all_zero_tools() + get_all_google_tools() + get_all_github_tools() +
-    get_all_external_tools() + get_all_team_tools() + get_all_rex_tools()
+    get_all_external_tools() + get_all_team_tools() + get_all_rex_tools() +
+    get_all_memo_tools()
 )
 TOOL_MAP = {t.name: t for t in ALL_TOOLS}
 
@@ -40,9 +42,10 @@ def _get_persona_tools(persona: str) -> list:
     external = get_all_external_tools()
     team     = get_all_team_tools()
     rex      = get_all_rex_tools()
+    memo     = get_all_memo_tools()
 
     mapping = {
-        "제이크": notion + web + external + team + google + github + luna + zero + rex,
+        "제이크": notion + web + external + team + google + github + luna + zero + rex + memo,
         "렉스":   rex + zero + web + github + team,
         "루나":   luna + web + team,
         "제로":   zero + web + rex + team,
