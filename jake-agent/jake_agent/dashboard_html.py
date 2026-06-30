@@ -254,6 +254,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .memo-btn-check { background: rgba(95,240,255,0.16); color: #5ff0ff; }
   .memo-btn-done { background: rgba(74,222,128,0.18); color: #4ade80; }
   .memo-btn-del { background: rgba(248,113,113,0.15); color: #f87171; }
+  .memo-row[data-priority="1순위"] { border-left: 3px solid #f87171; }
+  .memo-row[data-priority="2순위"] { border-left: 3px solid #ffd76a; }
+  .memo-row[data-priority="추후"] { border-left: 3px solid #5ff0ff; }
+  .memo-row[data-priority="보류"] { border-left: 3px solid #6b7785; }
+  .memo-row .priority-row { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .memo-btn-priority { border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); color: #9aa7b4; border-radius: 6px; padding: 3px 8px; font-size: 10.5px; cursor: pointer; font-weight: 600; }
+  .memo-btn-priority.active[data-pact="1순위"] { background: rgba(248,113,113,0.18); border-color: #f87171; color: #f87171; }
+  .memo-btn-priority.active[data-pact="2순위"] { background: rgba(255,215,106,0.18); border-color: #ffd76a; color: #ffd76a; }
+  .memo-btn-priority.active[data-pact="추후"] { background: rgba(95,240,255,0.18); border-color: #5ff0ff; color: #5ff0ff; }
+  .memo-btn-priority.active[data-pact="보류"] { background: rgba(148,163,184,0.18); border-color: #94a3b8; color: #94a3b8; }
   #rosterStats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .roster-stat { background: rgba(95,240,255,0.08); border: 1px solid rgba(95,240,255,0.2); border-radius: 8px; padding: 6px 10px; font-size: 11px; color: #9fb4c4; }
   .roster-stat b { color: #5ff0ff; font-size: 13px; }
@@ -700,7 +710,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <h3>📝 Kade YEO 메모</h3>
   <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
     <textarea id="memoContentInput" placeholder="메모 내용을 입력하세요" rows="2" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:12px; padding:7px; resize:vertical;"></textarea>
-    <button id="memoAddBtn" style="align-self:flex-end; background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">추가</button>
+    <div style="display:flex; gap:6px; align-items:center; justify-content:space-between;">
+      <select id="memoPriorityInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#c5cdd6; font-size:11.5px; padding:5px;">
+        <option value="">우선순위 없음</option>
+        <option value="1순위">1순위</option>
+        <option value="2순위">2순위</option>
+        <option value="추후">추후</option>
+        <option value="보류">보류</option>
+      </select>
+      <button id="memoAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:700;">추가</button>
+    </div>
   </div>
   <div id="memoBody"></div>
 </div>
@@ -2052,15 +2071,22 @@ document.addEventListener('click', (e) => {
 const memoPanel = document.getElementById('memoPanel');
 const memoBody = document.getElementById('memoBody');
 const memoContentInput = document.getElementById('memoContentInput');
+const memoPriorityInput = document.getElementById('memoPriorityInput');
 const memoAddBtn = document.getElementById('memoAddBtn');
 
 async function pollMemos() {
   try {
     const res = await fetch('/memos');
     const list = (await res.json()).memos || [];
+    const PRIORITIES = ['1순위', '2순위', '추후', '보류'];
     memoBody.innerHTML = list.map(m =>
-      '<div class="memo-row' + (m.pinned ? ' pinned' : '') + (m.checked ? ' checked' : '') + '" data-id="' + m.id + '">' +
+      '<div class="memo-row' + (m.pinned ? ' pinned' : '') + (m.checked ? ' checked' : '') + '" data-id="' + m.id + '" data-priority="' + (m.priority || '') + '">' +
         '<div class="content">' + esc(m.content) + '</div>' +
+        '<div class="priority-row">' +
+          PRIORITIES.map(p =>
+            '<button class="memo-btn-priority' + (m.priority === p ? ' active' : '') + '" data-pact="' + p + '" data-id="' + m.id + '">' + p + '</button>'
+          ).join('') +
+        '</div>' +
         '<div class="actions">' +
           '<button class="memo-btn-pin" data-act="pin" data-id="' + m.id + '">' + (m.pinned ? '📌 고정해제' : '📌 고정') + '</button>' +
           '<button class="memo-btn-check" data-act="check" data-id="' + m.id + '">' + (m.checked ? '🔁 대기중으로' : '✅ 확인') + '</button>' +
@@ -2069,7 +2095,17 @@ async function pollMemos() {
         '</div></div>'
     ).join('') || '<div style="color:#34465a;font-size:11px;">메모가 없습니다</div>';
 
-    memoBody.querySelectorAll('button').forEach(btn => {
+    memoBody.querySelectorAll('.memo-btn-priority').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id, p = btn.dataset.pact;
+        const isActive = btn.classList.contains('active');
+        await fetch('/memos/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ priority: isActive ? '' : p }) });
+        pollMemos();
+      });
+    });
+
+    memoBody.querySelectorAll('.actions button').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.dataset.id, act = btn.dataset.act;
@@ -2100,10 +2136,10 @@ memoAddBtn.addEventListener('click', async (e) => {
   if (!content) { alert('메모 내용을 입력하세요.'); return; }
   await fetch('/memos', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content })
+    body: JSON.stringify({ content, priority: memoPriorityInput.value || null })
   });
   memoContentInput.value = '';
-  memoRemindInput.value = '';
+  memoPriorityInput.value = '';
   pollMemos();
 });
 

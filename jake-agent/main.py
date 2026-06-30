@@ -478,6 +478,7 @@ async def edit_custom_persona(name: str, req: CustomPersonaEditRequest):
 # ── Kade YEO 카드 메모 ────────────────────────────────────────
 class MemoRequest(BaseModel):
     content: str
+    priority: Optional[str] = None
 
 
 class MemoUpdateRequest(BaseModel):
@@ -485,6 +486,7 @@ class MemoUpdateRequest(BaseModel):
     pinned: Optional[bool] = None
     checked: Optional[bool] = None
     done: Optional[bool] = None
+    priority: Optional[str] = None
 
 
 @app.get("/memos")
@@ -494,13 +496,13 @@ async def list_memos():
 
 @app.post("/memos")
 async def add_memo(req: MemoRequest):
-    memo_id = create_memo(req.content)
+    memo_id = create_memo(req.content, priority=req.priority)
     return {"id": memo_id, "status": "created"}
 
 
 @app.patch("/memos/{memo_id}")
 async def patch_memo(memo_id: int, req: MemoUpdateRequest):
-    ok = update_memo(memo_id, content=req.content, pinned=req.pinned, checked=req.checked, done=req.done)
+    ok = update_memo(memo_id, content=req.content, pinned=req.pinned, checked=req.checked, done=req.done, priority=req.priority)
     if not ok:
         raise HTTPException(status_code=404, detail="존재하지 않는 메모입니다.")
     return {"status": "updated"}

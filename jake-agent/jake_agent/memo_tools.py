@@ -3,13 +3,14 @@ from .db import create_memo, get_memos, get_projects
 
 
 @tool
-def save_memo(content: str) -> str:
+def save_memo(content: str, priority: str = "") -> str:
     """대표님(CEO)의 메모를 대시보드 메모장에 저장합니다.
     대표님이 업무·할일·아이디어를 공유하며 "메모해줘", "저장해줘", "정리해서 넣어줘" 등으로 요청할 때 사용하세요.
     content: 저장할 메모 내용. 대표님이 구어체/나열식으로 말한 내용을 읽기 편한 문장이나 항목으로 다듬어서 작성하세요.
              여러 항목이면 줄바꿈으로 구분해 보기 좋게 정리하세요.
+    priority: 대표님이 우선순위를 명시했을 때만 "1순위", "2순위", "추후", "보류" 중 하나로 지정. 언급 없으면 빈 문자열로 둔다.
     """
-    memo_id = create_memo(content)
+    memo_id = create_memo(content, priority=priority or None)
     return f"[메모 저장 완료 #{memo_id}] 대시보드 메모장에 등록했습니다."
 
 
@@ -25,7 +26,8 @@ def get_my_board() -> str:
     if memos:
         for m in memos:
             mark = "📌" if m["pinned"] else "-"
-            lines.append(f"{mark} {m['content']}")
+            tag = f"[{m['priority']}] " if m.get("priority") else ""
+            lines.append(f"{mark} {tag}{m['content']}")
     else:
         lines.append("없음")
 

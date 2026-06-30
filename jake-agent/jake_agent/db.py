@@ -143,6 +143,7 @@ def init_db():
         )
     """)
     cur.execute("ALTER TABLE ceo_memos ADD COLUMN IF NOT EXISTS checked BOOLEAN DEFAULT FALSE")
+    cur.execute("ALTER TABLE ceo_memos ADD COLUMN IF NOT EXISTS priority TEXT")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS manual_costs (
             id SERIAL PRIMARY KEY,
@@ -587,10 +588,15 @@ def get_decisions(limit: int = 100) -> list:
     ]
 
 
-def create_memo(content: str) -> int:
+MEMO_PRIORITIES = ("1순위", "2순위", "추후", "보류")
+
+
+def create_memo(content: str, priority: str = None) -> int:
+    if priority is not None and priority not in MEMO_PRIORITIES:
+        priority = None
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("INSERT INTO ceo_memos (content) VALUES (%s) RETURNING id", (content,))
+    cur.execute("INSERT INTO ceo_memos (content, priority) VALUES (%s, %s) RETURNING id", (content, priority))
     memo_id = cur.fetchone()[0]
     conn.commit()
     cur.close()
@@ -599,24 +605,30 @@ def create_memo(content: str) -> int:
 
 
 def get_memos() -> list:
-    """완료 처리되지 않은 메모만 — 고정(pin) 먼저, 그다음 최신순"""
+    """완료 처리되지 않은 메모만 — 고정(pin) > 우선순위(1순위~보류~미지정) > 최신순"""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
-        """SELECT id, content, pinned, checked, done, created_at FROM ceo_memos
+        """SELECT id, content, pinned, checked, done, created_at, priority FROM ceo_memos
            WHERE done = FALSE
-           ORDER BY pinned DESC, created_at DESC"""
+           ORDER BY pinned DESC,
+                    CASE priority
+                        WHEN '1순위' THEN 0 WHEN '2순위' THEN 1
+                        WHEN '추후' THEN 2 WHEN '보류' THEN 3 ELSE 4
+                    END,
+                    created_at DESC"""
     )
     rows = cur.fetchall()
     cur.close()
     conn.close()
     return [
-        {"id": r[0], "content": r[1], "pinned": r[2], "checked": r[3], "done": r[4], "created_at": r[5].isoformat()}
+        {"id": r[0], "content": r[1], "pinned": r[2], "checked": r[3], "done": r[4],
+         "created_at": r[5].isoformat(), "priority": r[6]}
         for r in rows
     ]
 
 
-def update_memo(memo_id: int, content: str = None, pinned: bool = None, checked: bool = None, done: bool = None) -> bool:
+def update_memo(memo_id: int, content: str = None, pinned: bool = None, checked: bool = None, done: bool = None, priority: str = None) -> bool:
     fields, values = [], []
     if content is not None:
         fields.append("content=%s"); values.append(content)
@@ -626,6 +638,8 @@ def update_memo(memo_id: int, content: str = None, pinned: bool = None, checked:
         fields.append("checked=%s"); values.append(checked)
     if done is not None:
         fields.append("done=%s"); values.append(done)
+    if priority is not None:
+        fields.append("priority=%s"); values.append(None if priority == "" else priority)
     if not fields:
         return False
     conn = get_conn()
