@@ -1,8 +1,8 @@
 {
   "name": "jake-squad",
   "displayName": "Jake Squad",
-  "description": "Alpha Squad 13인 팀원 채팅 패널",
-  "version": "0.7.0",
+  "description": "Alpha Squad 18인 팀원 채팅 패널",
+  "version": "0.8.0",
   "publisher": "longrise",
   "engines": {
     "vscode": "^1.80.0"

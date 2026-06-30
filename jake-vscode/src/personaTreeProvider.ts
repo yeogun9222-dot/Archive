@@ -17,15 +17,34 @@ const PERSONA_ROLES: Record<string, string> = {
   '노바': 'DevOps 팀장',
 };
 
+// 결재 승인으로 충원되는 신규 페르소나(테오/노아/엠마/조이 등)는 jake-agent DB에 계속 추가되므로,
+// 하드코딩 목록만으로는 누락됨 — 매 새로고침마다 /personas/custom을 조회해 합침
+async function fetchCustomRoles(): Promise<Record<string, string>> {
+  try {
+    const base = vscode.workspace.getConfiguration('jakeSquad').get<string>('apiBaseUrl', 'http://localhost:8000');
+    const res = await fetch(`${base}/personas/custom`, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return {};
+    const data: any = await res.json();
+    const roles: Record<string, string> = {};
+    for (const p of data.personas || []) {
+      if (p?.name) roles[p.name] = p.role || '';
+    }
+    return roles;
+  } catch {
+    return {};
+  }
+}
+
 export class PersonaItem extends vscode.TreeItem {
   constructor(
     public readonly personaName: string,
     public readonly role: string,
     public readonly isGroup = false,
+    public readonly totalCount = 0,
   ) {
     super(personaName, vscode.TreeItemCollapsibleState.None);
     this.tooltip = isGroup ? 'Alpha Squad 전체 회의방' : `${personaName} — ${role}`;
-    this.description = isGroup ? '전체 14인' : role;
+    this.description = isGroup ? `전체 ${totalCount}인` : role;
     this.contextValue = isGroup ? 'group' : 'persona';
     this.iconPath = new vscode.ThemeIcon(isGroup ? 'organization' : 'person');
     this.command = {
@@ -48,9 +67,11 @@ export class PersonaTreeProvider implements vscode.TreeDataProvider<PersonaItem>
     return element;
   }
 
-  getChildren(): vscode.ProviderResult<PersonaItem[]> {
-    const groupItem = new PersonaItem('🏢 Alpha Squad', '전체 회의', true);
-    const personas = Object.entries(PERSONA_ROLES).map(
+  async getChildren(): Promise<PersonaItem[]> {
+    const customRoles = await fetchCustomRoles();
+    const allRoles = { ...PERSONA_ROLES, ...customRoles };
+    const groupItem = new PersonaItem('🏢 Alpha Squad', '전체 회의', true, Object.keys(allRoles).length);
+    const personas = Object.entries(allRoles).map(
       ([name, role]) => new PersonaItem(name, role, false)
     );
     return [groupItem, ...personas];
