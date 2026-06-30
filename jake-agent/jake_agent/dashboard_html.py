@@ -1096,7 +1096,17 @@ function drawStaticLines() {
   });
 }
 window.addEventListener('resize', drawStaticLines);
+window.addEventListener('load', drawStaticLines);
 setTimeout(drawStaticLines, 50);
+// 카드 텍스트/이모지 폰트 로딩이 초기 50ms 타임아웃 이후에 끝나면 카드 실제 크기가 살짝
+// 바뀌는데 그 변화를 못 잡아 선이 카드 중앙을 벗어나는 문제가 반복됐음(모바일에서 카드
+// 간격이 좁아 특히 눈에 띔) — members 컨테이너 크기 변화를 항상 감시해 자동으로 재계산
+// (subteam은 drawStaticLines 안에서 positionSubteam()이 그 자신의 높이를 바꾸므로
+// 거기에 옵저버를 걸면 redraw가 redraw를 다시 부르는 루프 위험이 있어 제외)
+if (typeof ResizeObserver !== 'undefined') {
+  const lineRedrawObserver = new ResizeObserver(() => drawStaticLines());
+  lineRedrawObserver.observe(membersEl);
+}
 
 // ── 채용 승인으로 실제 합류한 신규 페르소나 — 본부장 산하(SUB_REPORTS)에 실제로 연결 ──────
 // DIRECT_REPORTS/MEMBERS/ROLES/ICONS/SUB_REPORTS는 const지만 배열·객체 자체는 변경 가능(재할당만
