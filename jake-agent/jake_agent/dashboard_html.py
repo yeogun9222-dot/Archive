@@ -150,31 +150,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   /* 모던 스크롤바 — 다크 테마에 어울리는 얇고 은은한 스타일 (웹킷 기반 브라우저) */
   #cardChatBody::-webkit-scrollbar, #cardChatLog::-webkit-scrollbar,
-  #projectPanel::-webkit-scrollbar, #auditPanel::-webkit-scrollbar, #permPanel::-webkit-scrollbar,
+  #projectPanel::-webkit-scrollbar, #auditPanel::-webkit-scrollbar::-webkit-scrollbar,
   #perfPanel::-webkit-scrollbar, #decPanel::-webkit-scrollbar, #bnPanel::-webkit-scrollbar,
   #legendPanel::-webkit-scrollbar, #log::-webkit-scrollbar, #events::-webkit-scrollbar {
     width: 6px;
   }
   #cardChatBody::-webkit-scrollbar-track, #cardChatLog::-webkit-scrollbar-track,
-  #projectPanel::-webkit-scrollbar-track, #auditPanel::-webkit-scrollbar-track, #permPanel::-webkit-scrollbar-track,
+  #projectPanel::-webkit-scrollbar-track, #auditPanel::-webkit-scrollbar-track::-webkit-scrollbar-track,
   #perfPanel::-webkit-scrollbar-track, #decPanel::-webkit-scrollbar-track, #bnPanel::-webkit-scrollbar-track,
   #legendPanel::-webkit-scrollbar-track, #log::-webkit-scrollbar-track, #events::-webkit-scrollbar-track {
     background: transparent;
   }
   #cardChatBody::-webkit-scrollbar-thumb, #cardChatLog::-webkit-scrollbar-thumb,
-  #projectPanel::-webkit-scrollbar-thumb, #auditPanel::-webkit-scrollbar-thumb, #permPanel::-webkit-scrollbar-thumb,
+  #projectPanel::-webkit-scrollbar-thumb, #auditPanel::-webkit-scrollbar-thumb::-webkit-scrollbar-thumb,
   #perfPanel::-webkit-scrollbar-thumb, #decPanel::-webkit-scrollbar-thumb, #bnPanel::-webkit-scrollbar-thumb,
   #legendPanel::-webkit-scrollbar-thumb, #log::-webkit-scrollbar-thumb, #events::-webkit-scrollbar-thumb {
     background: rgba(95,240,255,0.25); border-radius: 4px;
   }
   #cardChatBody::-webkit-scrollbar-thumb:hover, #cardChatLog::-webkit-scrollbar-thumb:hover,
-  #projectPanel::-webkit-scrollbar-thumb:hover, #auditPanel::-webkit-scrollbar-thumb:hover, #permPanel::-webkit-scrollbar-thumb:hover,
+  #projectPanel::-webkit-scrollbar-thumb:hover, #auditPanel::-webkit-scrollbar-thumb:hover::-webkit-scrollbar-thumb:hover,
   #perfPanel::-webkit-scrollbar-thumb:hover, #decPanel::-webkit-scrollbar-thumb:hover, #bnPanel::-webkit-scrollbar-thumb:hover,
   #legendPanel::-webkit-scrollbar-thumb:hover, #log::-webkit-scrollbar-thumb:hover, #events::-webkit-scrollbar-thumb:hover {
     background: rgba(95,240,255,0.5);
   }
   /* 파이어폭스용 */
-  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel, #log, #events {
+  #cardChatBody, #cardChatLog, #projectPanel, #auditPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel, #log, #events {
     scrollbar-width: thin; scrollbar-color: rgba(95,240,255,0.3) transparent;
   }
   .cchat-msg { padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
@@ -182,19 +182,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .cchat-msg.assistant { background: rgba(255,255,255,0.04); color: #c5cdd6; }
   .cchat-msg .who { font-size: 10px; color: #5a7184; margin-bottom: 3px; }
 
-  #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
+  #projectPanel, #auditPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
     position: fixed; top: 60px; right: 20px; width: 360px; max-height: 62vh; overflow-y: auto;
     background: rgba(12,16,24,0.97); border: 1px solid rgba(95,240,255,0.3); border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
-  #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
+  #projectPanel.show, #auditPanel.show.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
   .panel-close-btn {
     position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; border-radius: 50%;
     border: none; cursor: pointer; background: rgba(255,255,255,0.06); color: #9fb4c4; font-size: 15px;
     display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 2;
   }
   .panel-close-btn:hover { background: rgba(248,113,113,0.2); color: #f87171; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; padding-right: 26px; }
+  #projectPanel h3, #auditPanel h3 h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; padding-right: 26px; }
   #memoPanel h3, #rosterPanel h3 { padding-right: 26px; }
 
   .legend-group { margin-bottom: 14px; }
@@ -274,12 +274,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .audit-row .route { color: #6b7d8f; font-weight: 700; font-size: 11.5px; margin-bottom: 3px; }
   .audit-row .time { color: #44546a; font-size: 10px; }
 
-  #permTable, #perfTable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
-  #permTable th, #perfTable th { text-align: left; color: #5a7184; font-size: 9.5px; letter-spacing: 0.5px; padding: 5px 4px; border-bottom: 1px solid rgba(95,240,255,0.15); }
-  #permTable td, #perfTable td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cdd6; }
-  #permTable .pname { font-weight: 700; }
-  #permTable .pname.inactive { color: #f87171; text-decoration: line-through; }
-  #permNote { font-size: 10px; color: #5a7184; margin-top: 10px; line-height: 1.5; }
+  #perfTable { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  #perfTable th { text-align: left; color: #5a7184; font-size: 9.5px; letter-spacing: 0.5px; padding: 5px 4px; border-bottom: 1px solid rgba(95,240,255,0.15); }
+  #perfTable td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #c5cdd6; }
   #perfTable .perf-bad { color: #f87171; }
   #perfTable .perf-warn { color: #fbbf24; }
   #perfTable .perf-good { color: #4ade80; }
@@ -598,13 +595,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     .level-members { gap: 8px; }
     .card { padding: 9px 12px; }
 
-    #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
+    #costPanel, #projectPanel, #auditPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
       left: 50%; right: auto; transform: translateX(-50%);
       width: 92vw; max-width: 420px; top: 64px; max-height: 78vh;
     }
     /* PC용 panelPopIn 애니메이션은 transform을 scale/translateY로 덮어써서 위 translateX(-50%) 중앙
        정렬을 깨뜨림 — 모바일에서는 translateX(-50%)가 포함된 별도 keyframe으로 교체해 중앙 유지 */
-    #costPanel.show, #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show,
+    #costPanel.show, #projectPanel.show, #auditPanel.show.show, #perfPanel.show,
     #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show {
       animation: panelPopInMobile 0.26s cubic-bezier(0.34,1.56,0.64,1) both;
     }
@@ -644,7 +641,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="sm-sublist">
       <button class="sm-item" id="auditBtn">📜 감사로그</button>
       <button class="sm-item" id="perfBtn">📊 성과</button>
-      <button class="sm-item" id="permBtn">🔐 권한</button>
     </div>
   </div>
   <div class="sm-group">
@@ -719,15 +715,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <button id="purgeBtn" style="background:rgba(248,113,113,0.15); color:#f87171; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; font-weight:600;">백업 후 영구삭제</button>
   </div>
   <div id="auditBody"></div>
-</div>
-
-<div id="permPanel">
-  <h3>🔐 권한 매트릭스</h3>
-  <table id="permTable">
-    <thead><tr><th>페르소나</th><th>보고대상</th><th>위임 가능</th><th>상태</th></tr></thead>
-    <tbody id="permBody"></tbody>
-  </table>
-  <div id="permNote">현재 모든 활성 페르소나는 다른 모든 활성 페르소나에게 업무를 위임할 수 있습니다(부서간 제한 없음). 해임된 페르소나는 대화/위임 요청을 모두 거부합니다.</div>
 </div>
 
 <div id="perfPanel">
@@ -1287,7 +1274,7 @@ const logEl = document.getElementById('log');
 
 // 우측 상단 패널들(메모/비용/감사로그 등)은 모바일에서 화면 대부분을 가려 "바깥 클릭으로 닫기"가
 // 불편하다는 지적에 따라, 각 패널에 닫기(×) 버튼을 공통으로 주입
-['costPanel', 'projectPanel', 'auditPanel', 'permPanel', 'perfPanel', 'decPanel', 'bnPanel', 'legendPanel', 'memoPanel', 'rosterPanel'].forEach(id => {
+['costPanel', 'projectPanel', 'auditPanel', 'perfPanel', 'decPanel', 'bnPanel', 'legendPanel', 'memoPanel', 'rosterPanel'].forEach(id => {
   const panel = document.getElementById(id);
   if (!panel) return;
   const btn = document.createElement('button');
@@ -1556,7 +1543,7 @@ function updateCeoAlert() {
 ceoAlert.addEventListener('click', (e) => {
   e.stopPropagation();
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
-  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
+  perfPanel.classList.remove('show'); bnPanel.classList.remove('show');
   legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   attentionPanel.classList.remove('show'); decPanel.classList.remove('show'); memoPanel.classList.remove('show');
   if (lastDecisionCount > 0) {
@@ -1861,7 +1848,6 @@ async function pollActiveMap() {
       if (!el) return;
       el.classList.toggle('inactive-persona', activeMapCache[name] === false);
     });
-    if (permPanel.classList.contains('show')) renderPermTable();
   } catch (e) { /* ignore */ }
 }
 pollActiveMap();
@@ -1996,7 +1982,7 @@ projectAddBtn.addEventListener('click', async (e) => {
 
 projectBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  auditPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   projectPanel.classList.toggle('show');
   if (projectPanel.classList.contains('show')) pollProjects();
 });
@@ -2030,8 +2016,10 @@ function renderRoster() {
     bodyHtml += '<div class="roster-dept">' + dept + '</div>';
     names.forEach(name => {
       const parent = SUB_REPORTS[name] ? SUB_REPORTS[name] : (name === '제이크' ? '대표님' : '제이크');
+      const active = activeMapCache[name] !== false;
       bodyHtml += '<div class="roster-row"><div class="ic">' + (name === '제이크' ? '🧠' : (ICONS[name] || '')) + '</div><div>' +
-        '<div class="name">' + name + ' <span class="role">' + (name === '제이크' ? 'COO' : (ROLES[name] || '')) + '</span></div>' +
+        '<div class="name">' + name + ' <span class="role">' + (name === '제이크' ? 'COO' : (ROLES[name] || '')) + '</span>' +
+        (active ? '' : ' <span style="color:#f87171; font-size:10px;">🚫 해임</span>') + '</div>' +
         '<div class="parent">' + parent + ' 산하</div>' +
         '<div class="desc">' + (JOB_DESC[name] || '') + '</div></div></div>';
     });
@@ -2050,7 +2038,7 @@ function renderRoster() {
 rosterBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
-  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   memoPanel.classList.remove('show');
   rosterPanel.classList.toggle('show');
@@ -2122,7 +2110,7 @@ memoAddBtn.addEventListener('click', async (e) => {
 document.getElementById('card-대표님').addEventListener('click', (e) => {
   e.stopPropagation();
   if (dragMoved) { dragMoved = false; return; }
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); permPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show');
   costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   memoPanel.classList.toggle('show');
@@ -2209,7 +2197,7 @@ purgeBtn.addEventListener('click', async (e) => {
 
 auditBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); permPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   auditPanel.classList.toggle('show');
   if (auditPanel.classList.contains('show')) pollAudit();
 });
@@ -2217,37 +2205,11 @@ document.addEventListener('click', (e) => {
   if (!auditPanel.contains(e.target) && !auditBtn.contains(e.target)) auditPanel.classList.remove('show');
 });
 
-// ── 권한 매트릭스 패널 ───────────────────────────────────
-const permBtn = document.getElementById('permBtn');
-const permPanel = document.getElementById('permPanel');
-const permBody = document.getElementById('permBody');
-
 function reportsTo(name) {
   if (name === '제이크') return 'CEO';
   if (SUB_REPORTS[name]) return SUB_REPORTS[name];
   return '제이크';
 }
-
-function renderPermTable() {
-  const names = ['제이크', ...MEMBERS];
-  permBody.innerHTML = names.map(name => {
-    const active = activeMapCache[name] !== false;
-    return '<tr><td class="pname' + (active ? '' : ' inactive') + '">' + esc(name) + '</td>' +
-      '<td>' + esc(reportsTo(name)) + '</td>' +
-      '<td>' + (active ? '전체 활성 페르소나' : '—') + '</td>' +
-      '<td>' + (active ? '✅ 활성' : '🚫 해임') + '</td></tr>';
-  }).join('');
-}
-
-permBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
-  permPanel.classList.toggle('show');
-  if (permPanel.classList.contains('show')) renderPermTable();
-});
-document.addEventListener('click', (e) => {
-  if (!permPanel.contains(e.target) && !permBtn.contains(e.target)) permPanel.classList.remove('show');
-});
 
 // ── 성과 추적 패널 ───────────────────────────────────────
 const perfBtn = document.getElementById('perfBtn');
@@ -2298,7 +2260,7 @@ document.getElementById('perfTabAll').addEventListener('click', (e) => {
 
 perfBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   perfPanel.classList.toggle('show');
   if (perfPanel.classList.contains('show')) pollPerformance();
 });
@@ -2456,7 +2418,7 @@ document.getElementById('decAddBtn').addEventListener('click', async (e) => {
 
 decBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); bnPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   decPanel.classList.toggle('show');
   if (decPanel.classList.contains('show')) { pollDecisions(); pollPendingDecisions(); }
 });
@@ -2485,7 +2447,7 @@ async function pollBottlenecks() {
 
 bnBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); legendPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   bnPanel.classList.toggle('show');
   if (bnPanel.classList.contains('show')) pollBottlenecks();
 });
@@ -2500,7 +2462,7 @@ const legendArrow = document.getElementById('legendArrow');
 
 legendBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
+  projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show'); bnPanel.classList.remove('show'); cardChatPanel.classList.remove('show');
   legendPanel.classList.toggle('show');
   legendArrow.textContent = legendPanel.classList.contains('show') ? '▴' : '▾';
 });
@@ -2547,7 +2509,7 @@ async function openCardChat(name) {
   cardChatLog.innerHTML = '<div style="color:#34465a;font-size:11px;">불러오는 중...</div>';
 
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
-  permPanel.classList.remove('show'); perfPanel.classList.remove('show'); decPanel.classList.remove('show');
+  perfPanel.classList.remove('show'); decPanel.classList.remove('show');
   bnPanel.classList.remove('show'); legendPanel.classList.remove('show');
   cardChatPanel.classList.remove('minimized');
   cardChatPanel.classList.add('show');
