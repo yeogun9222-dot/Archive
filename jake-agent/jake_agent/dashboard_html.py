@@ -1961,7 +1961,12 @@ async function pollUnreadBadges() {
     ['제이크', ...MEMBERS].forEach(name => {
       const badge = document.getElementById('msgbadge-' + name);
       if (!badge) return;
-      const hasUnreadMessage = lastMessage[name] && lastMessage[name] > getSeenTime(name);
+      // 문자열(>) 비교는 서버가 한국시간(오프셋 없는 naive 문자열)으로, 클라이언트는
+      // UTC('Z' 포함) ISO 문자열로 시각을 만들어서 자릿수만 비교하면 9시간 오차로 오판정됨
+      // (예: 시간대 수정 이후 항상 "안읽음"으로 고정되어버리는 버그) — Date 객체로 변환해
+      // 실제 절대시각끼리 비교하도록 수정. naive 문자열은 브라우저 로컬시간(=한국시간)으로
+      // 해석되므로 별도 타임존 보정 없이 정확히 맞음
+      const hasUnreadMessage = lastMessage[name] && new Date(lastMessage[name]) > new Date(getSeenTime(name));
       const hasPendingRequest = pendingRequesters.has(name);
       const hasStuckTask = stuckPersonas.has(name);
       const act = activityMapCache[name];
@@ -2797,6 +2802,12 @@ logMobileHandle.addEventListener('click', () => {
   document.getElementById('log').classList.toggle('expanded');
 });
 
+// sinceId가 0인 첫 폴링(=페이지를 새로고침할 때마다)에는 서버가 최근 활동 이력 전체를
+// "새 이벤트"로 돌려줌 — 그걸 그대로 flashLine/activateCard로 재생하면 새로고침할 때마다
+// 과거 활동이 전부 방금 일어난 일처럼 다시 번쩍여서, 여러 선이 겹쳐 보이고 카드 강조가
+// 안 꺼지는 것처럼 보이는 원인이었음. 첫 폴링은 목록 채우기(renderEvent)만 하고
+// 애니메이션은 그 이후 진짜 새로 들어오는 이벤트부터만 재생
+let isFirstPoll = true;
 async function poll() {
   try {
     const res = await fetch('/activity/recent?since_id=' + sinceId);
@@ -2806,13 +2817,14 @@ async function poll() {
       emptyEl.style.display = 'none';
       for (const ev of newEvents) {
         sinceId = Math.max(sinceId, ev.id);
-        if (ALL_NAMES.includes(ev.from) && ALL_NAMES.includes(ev.to)) {
+        if (!isFirstPoll && ALL_NAMES.includes(ev.from) && ALL_NAMES.includes(ev.to)) {
           flashLine(ev.from, ev.to);
           activateCard(ev.from); activateCard(ev.to);
         }
         renderEvent(ev);
       }
     }
+    isFirstPoll = false;
     statusEl.innerHTML = '<span class="dot"></span>LIVE · ' + new Date().toLocaleTimeString('ko-KR');
   } catch (e) {
     statusEl.textContent = '연결 오류: ' + e.message;
