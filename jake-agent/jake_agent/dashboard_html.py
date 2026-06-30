@@ -457,6 +457,37 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   #streamTabs .tab.active { background: rgba(95,240,255,0.18); border-color: rgba(95,240,255,0.5); color: #5ff0ff; }
   #streamTabs .tab:hover { color: #c5cdd6; }
+
+  /* ── Activity Stream 채팅형 보기 — 카드형(#events)과 동일한 streamEvents 데이터를
+     그대로 사용하는 순수 보기 전환. 백엔드/API/데이터 구조 변경 없음 ── */
+  #streamViewToggle {
+    font-size: 9.5px; color: #6b7d8f; background: rgba(95,240,255,0.06); border: 1px solid rgba(95,240,255,0.2);
+    border-radius: 10px; padding: 3px 9px; cursor: pointer; margin-right: 6px;
+  }
+  #streamViewToggle:hover { background: rgba(95,240,255,0.16); color: #c5cdd6; }
+  #chatEvents { display: none; flex-direction: column; gap: 2px; }
+  #chatEvents.show { display: flex; }
+  #events.hidden-view { display: none; }
+  @keyframes bubblePopIn { from { opacity: 0; transform: scale(0.85) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .chat-group { margin-bottom: 14px; }
+  .chat-row { display: flex; align-items: flex-end; gap: 7px; margin-bottom: 4px; animation: bubblePopIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .chat-row.out { flex-direction: row-reverse; }
+  .chat-avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; background: linear-gradient(160deg, #3a4654, #232b35); border: 1px solid rgba(95,240,255,0.2);
+  }
+  .chat-bubble-col { display: flex; flex-direction: column; max-width: 76%; }
+  .chat-row.out .chat-bubble-col { align-items: flex-end; }
+  .chat-name { font-size: 10px; color: #6b7d8f; margin: 0 0 2px 3px; }
+  .chat-bubble {
+    background: rgba(255,255,255,0.06); color: #e6e6e6; border-radius: 14px; padding: 7px 12px;
+    font-size: 12px; line-height: 1.5; word-break: break-word; border: 1px solid rgba(255,255,255,0.06);
+  }
+  .chat-row.out .chat-bubble { background: rgba(95,240,255,0.18); border-color: rgba(95,240,255,0.3); }
+  .chat-group.unread .chat-bubble { box-shadow: 0 0 0 1px rgba(95,240,255,0.45) inset; }
+  .chat-meta { font-size: 9.5px; color: #4a6577; margin: 3px 3px 0; }
+  .chat-group .att-actions { justify-content: flex-end; margin-top: 4px; opacity: 0.55; transition: opacity 0.15s; }
+  .chat-group:hover .att-actions { opacity: 1; }
   #events { max-height: 460px; overflow-y: auto; padding-right: 2px; }
   .event { background: rgba(20,28,40,0.7); border: 1px solid rgba(95,240,255,0.12); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; font-size: 12px; animation: slideIn 0.5s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
   .event.fresh { box-shadow: 0 0 18px rgba(74,222,128,0.35); border-color: rgba(74,222,128,0.4); }
@@ -829,7 +860,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button id="logMobileHandle">▲ Activity Stream</button>
   <div id="logHeadRow">
     <h2>Activity Stream</h2>
-    <button id="streamClearAllBtn" title="전체 삭제">🗑 전체삭제</button>
+    <div style="display:flex; align-items:center;">
+      <button id="streamViewToggle" title="카드형/채팅형 전환">💬 채팅형</button>
+      <button id="streamClearAllBtn" title="전체 삭제">🗑 전체삭제</button>
+    </div>
   </div>
   <div id="streamTabs">
     <button class="tab active" data-status="all">전체</button>
@@ -840,6 +874,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
   <div id="empty">신호 대기 중...<br>팀원 간 위임이 발생하면<br>여기에 표시됩니다.</div>
   <div id="events"></div>
+  <div id="chatEvents"></div>
 </div>
 
 <div id="attentionPanel">
@@ -1235,13 +1270,18 @@ let sinceId = 0;
 const statusEl = document.getElementById('status');
 const eventsEl = document.getElementById('events');
 const emptyEl = document.getElementById('empty');
+const chatEventsEl = document.getElementById('chatEvents');
+const logEl = document.getElementById('log');
 
 function esc(s) { return (s || '').replace(/</g,'&lt;'); }
 
 // ── Activity Stream: 상태별 탭 필터 + 누적 저장 ──────────────
 let streamEvents = [];
 let activeTabStatus = 'all';
+let streamViewMode = 'card';
 const freshIds = new Set();
+const CHAT_ICON_FALLBACK = { '대표님': '👑', '제이크': '👔' };
+function personaIcon(name) { return CHAT_ICON_FALLBACK[name] || ICONS[name] || '🧩'; }
 
 // 개별 메시지에 대해 답장(해당 페르소나 카드챗 열기) / 보류 / 철회(삭제) 등을
 // 상태별로 다르게 제시 — 일괄 승인/삭제만 있던 기존 구조의 불편함을 해소
@@ -1269,6 +1309,33 @@ function streamActionButtons(ev) {
   return '<div class="att-actions">' + btns + '</div>';
 }
 
+// 카드형/채팅형 양쪽에서 공유하는 액션 버튼 동작(읽음/승인/보류/삭제/재시도/답장) —
+// 두 보기 모두 같은 streamEvents 항목(ev.id)을 조작하므로 분기 없이 동일 로직 재사용
+function wireEventActions(container, ev) {
+  container.querySelectorAll('.act-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const act = btn.dataset.act;
+      if (act === 'reply') { openCardChat(btn.dataset.target); return; }
+      if (act === 'delete') {
+        const label = btn.dataset.label || '삭제';
+        if (!confirm('이 기록을 영구적으로 ' + label + '합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
+      } else if (act === 'retry' && !confirm('같은 내용으로 실제로 다시 실행합니다 (API 비용 재발생). 계속할까요?')) {
+        return;
+      }
+      btn.disabled = true;
+      const method = act === 'delete' ? 'DELETE' : 'POST';
+      const result = await taskAction(ev.id, act === 'delete' ? '' : act, method);
+      if (!result) { btn.disabled = false; return; }
+      if (act === 'delete') { streamEvents = streamEvents.filter(x => x.id !== ev.id); }
+      else if (act === 'read') { ev.read = true; }
+      else if (result.status) { ev.status = result.status; }
+      renderStream();
+      pollAttention(); pollStatusMap();
+    });
+  });
+}
+
 function buildEventCard(ev, isFresh) {
   const div = document.createElement('div');
   div.className = 'event' + (isFresh ? ' fresh' : '') + (!ev.read ? ' unread' : '');
@@ -1294,36 +1361,61 @@ function buildEventCard(ev, isFresh) {
       else { taskEl.classList.add('collapsed'); if (moreEl) moreEl.textContent = '자세히 보기 ▾'; }
     });
   }
-  div.querySelectorAll('.act-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const act = btn.dataset.act;
-      if (act === 'reply') { openCardChat(btn.dataset.target); return; }
-      if (act === 'delete') {
-        const label = btn.dataset.label || '삭제';
-        if (!confirm('이 기록을 영구적으로 ' + label + '합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
-      } else if (act === 'retry' && !confirm('같은 내용으로 실제로 다시 실행합니다 (API 비용 재발생). 계속할까요?')) {
-        return;
-      }
-      btn.disabled = true;
-      const method = act === 'delete' ? 'DELETE' : 'POST';
-      const result = await taskAction(ev.id, act === 'delete' ? '' : act, method);
-      if (!result) { btn.disabled = false; return; }
-      if (act === 'delete') { streamEvents = streamEvents.filter(x => x.id !== ev.id); }
-      else if (act === 'read') { ev.read = true; }
-      else if (result.status) { ev.status = result.status; }
-      renderStream();
-      pollAttention(); pollStatusMap();
-    });
-  });
+  wireEventActions(div, ev);
   return div;
 }
 
-function renderStream() {
+// ev 1건(요청 from→to, 결과 result)을 단체 채팅방의 말풍선 1~2개로 변환 —
+// streamEvents 데이터 자체는 그대로, 보여주는 방식만 바꾸는 순수 뷰 레이어
+function chatBubbleRow(name, text, isOut) {
+  const row = document.createElement('div');
+  row.className = 'chat-row' + (isOut ? ' out' : '');
+  row.innerHTML =
+    '<div class="chat-avatar">' + personaIcon(name) + '</div>' +
+    '<div class="chat-bubble-col">' +
+      (isOut ? '' : '<div class="chat-name">' + esc(name) + '</div>') +
+      '<div class="chat-bubble">' + esc(text) + '</div>' +
+    '</div>';
+  return row;
+}
+
+function buildChatBubbleGroup(ev, isFresh) {
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-group' + (isFresh ? ' fresh' : '') + (!ev.read ? ' unread' : '');
+  const reqText = ev.instruction || ev.title;
+  if (reqText) wrap.appendChild(chatBubbleRow(ev.from, reqText, ev.from === '대표님'));
+  if (ev.result) wrap.appendChild(chatBubbleRow(ev.to, ev.result, ev.to === '대표님'));
+  const meta = document.createElement('div');
+  meta.className = 'chat-meta';
+  meta.style.textAlign = ev.from === '대표님' ? 'right' : 'left';
+  meta.textContent = new Date(ev.timestamp).toLocaleTimeString('ko-KR') + ' · ' + ev.status;
+  wrap.appendChild(meta);
+  const actionsTmp = document.createElement('div');
+  actionsTmp.innerHTML = streamActionButtons(ev);
+  wrap.appendChild(actionsTmp.firstChild);
+  wireEventActions(wrap, ev);
+  return wrap;
+}
+
+function renderCardStream() {
   const filtered = activeTabStatus === 'all' ? streamEvents : streamEvents.filter(e => e.status === activeTabStatus);
   eventsEl.innerHTML = '';
   emptyEl.style.display = filtered.length === 0 ? 'block' : 'none';
   filtered.forEach(ev => eventsEl.appendChild(buildEventCard(ev, freshIds.has(ev.id))));
+}
+
+// 채팅형은 카드형과 정렬 방향이 반대 — 카드형은 최신이 위, 채팅형은 실제 단체 채팅방처럼
+// 오래된 메시지가 위 · 최신 메시지가 아래(스크롤 하단)에 오도록 표시
+function renderChatStream() {
+  const filtered = activeTabStatus === 'all' ? streamEvents : streamEvents.filter(e => e.status === activeTabStatus);
+  chatEventsEl.innerHTML = '';
+  filtered.slice().reverse().forEach(ev => chatEventsEl.appendChild(buildChatBubbleGroup(ev, freshIds.has(ev.id))));
+  if (streamViewMode === 'chat') logEl.scrollTop = logEl.scrollHeight;
+}
+
+function renderStream() {
+  renderCardStream();
+  renderChatStream();
 }
 
 document.getElementById('streamClearAllBtn').addEventListener('click', async () => {
@@ -1365,8 +1457,22 @@ function renderEvent(ev) {
     emptyEl.style.display = 'none';
     eventsEl.insertBefore(buildEventCard(ev, true), eventsEl.firstChild);
     while (eventsEl.children.length > 100) eventsEl.removeChild(eventsEl.lastChild);
+
+    chatEventsEl.appendChild(buildChatBubbleGroup(ev, true));
+    while (chatEventsEl.children.length > 100) chatEventsEl.removeChild(chatEventsEl.firstChild);
+    if (streamViewMode === 'chat') logEl.scrollTop = logEl.scrollHeight;
   }
 }
+
+document.getElementById('streamViewToggle').addEventListener('click', (e) => {
+  streamViewMode = streamViewMode === 'card' ? 'chat' : 'card';
+  eventsEl.classList.toggle('hidden-view', streamViewMode === 'chat');
+  chatEventsEl.classList.toggle('show', streamViewMode === 'chat');
+  e.currentTarget.textContent = streamViewMode === 'chat' ? '📋 카드형' : '💬 채팅형';
+  if (streamViewMode === 'chat') {
+    requestAnimationFrame(() => { logEl.scrollTop = logEl.scrollHeight; });
+  }
+});
 
 // ── 카드 백라이트: 이슈(pending/failed/held)일 때만 계속 펄스, 그 외엔 정적 ──
 const GLOW_CLASSES = ['glow-pending', 'glow-failed', 'glow-held'];
