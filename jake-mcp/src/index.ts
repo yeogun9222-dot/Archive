@@ -5,10 +5,24 @@ import { z } from 'zod';
 const API_BASE = process.env.JAKE_API_BASE || 'http://34.47.74.42:8000';
 const TIMEOUT_MS = 120000;
 
-const PERSONAS = [
+const BASE_PERSONAS = [
   '제이크', '다인', '렉스', '루나', '제로', '바쿠', '피오',
   '리리', '에바', '사라', '미나', '카이', '설리', '노바',
 ];
+
+// 결재 승인으로 충원되는 신규 페르소나(테오/노아/엠마/조이 등)는 jake-agent DB에 계속 추가되므로,
+// 매번 하드코딩을 고치지 않도록 서버 시작 시 /personas/custom을 조회해 목록에 동적으로 합침
+async function fetchPersonaList(): Promise<string[]> {
+  try {
+    const res = await fetch(`${API_BASE}/personas/custom`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return BASE_PERSONAS;
+    const data = await res.json();
+    const customNames = (data.personas || []).map((p: any) => p.name).filter(Boolean);
+    return [...BASE_PERSONAS, ...customNames];
+  } catch {
+    return BASE_PERSONAS;
+  }
+}
 
 async function postWithTimeout(path: string, body: object): Promise<any> {
   const controller = new AbortController();
@@ -54,28 +68,55 @@ const server = new McpServer({
   version: '1.0.0',
 });
 
-server.registerTool(
-  'ask_persona',
-  {
-    title: '팀원에게 메시지 전달',
-    description:
-      'Alpha Squad 팀원(제이크, 다인, 렉스, 루나, 제로, 바쿠, 피오, 리리, 에바, 사라, 미나, 카이, 설리, 노바) 중 한 명에게 직접 메시지를 보내고 응답을 받습니다. ' +
-      '각 팀원은 jake-agent 서버에 저장된 고유 페르소나와 전용 도구(렉스의 Docker 관리 등)를 사용합니다.',
-    inputSchema: {
-      persona: z.enum(PERSONAS as [string, ...string[]]).describe('대화할 팀원 이름'),
-      message: z.string().describe('전달할 메시지 내용'),
+function registerPersonaTools(personas: string[]) {
+  const personaEnum = personas as [string, ...string[]];
+
+  server.registerTool(
+    'ask_persona',
+    {
+      title: '팀원에게 메시지 전달',
+      description:
+        `Alpha Squad 팀원(${personas.join(', ')}) 중 한 명에게 직접 메시지를 보내고 응답을 받습니다. ` +
+        '각 팀원은 jake-agent 서버에 저장된 고유 페르소나와 전용 도구(렉스의 Docker 관리 등)를 사용합니다.',
+      inputSchema: {
+        persona: z.enum(personaEnum).describe('대화할 팀원 이름'),
+        message: z.string().describe('전달할 메시지 내용'),
+      },
     },
-  },
-  async ({ persona, message }) => {
-    const data = await postWithTimeout(`/chat/persona/${encodeURIComponent(persona)}`, {
-      message,
-      persona,
-      source: 'mcp',
-    });
-    const text = data.error ? data.error : (data.response || '응답 없음');
-    return { content: [{ type: 'text', text: `[${persona}] ${text}` }] };
-  }
-);
+    async ({ persona, message }) => {
+      const data = await postWithTimeout(`/chat/persona/${encodeURIComponent(persona)}`, {
+        message,
+        persona,
+        source: 'mcp',
+      });
+      const text = data.error ? data.error : (data.response || '응답 없음');
+      return { content: [{ type: 'text', text: `[${persona}] ${text}` }] };
+    }
+  );
+
+  server.registerTool(
+    'delegate_task',
+    {
+      title: '팀원에게 실제 업무 위임',
+      description:
+        '팀원에게 실제 업무를 위임합니다. 위임받은 팀원은 본인 전용 도구(Docker, GitHub, Notion 등)를 사용해 작업을 직접 수행하고 결과를 보고합니다. ' +
+        '단순 질문이 아니라 실제 작업(예: "렉스에게 Docker 재시작시켜")일 때 사용하세요.',
+      inputSchema: {
+        member: z.enum(personaEnum).describe('업무를 수행할 팀원'),
+        task: z.string().describe('위임할 구체적인 업무 내용'),
+      },
+    },
+    async ({ member, task }) => {
+      const data = await postWithTimeout(`/chat/persona/${encodeURIComponent(member)}`, {
+        message: task,
+        persona: member,
+        source: 'mcp-delegate',
+      });
+      const text = data.error ? data.error : (data.response || '응답 없음');
+      return { content: [{ type: 'text', text: `[${member} 완료 보고]\n${text}` }] };
+    }
+  );
+}
 
 server.registerTool(
   'ask_alpha_squad',
@@ -91,29 +132,6 @@ server.registerTool(
     const data = await postWithTimeout('/chat/group', { message, source: 'mcp' });
     const text = data.error ? data.error : (data.response || '응답 없음');
     return { content: [{ type: 'text', text }] };
-  }
-);
-
-server.registerTool(
-  'delegate_task',
-  {
-    title: '팀원에게 실제 업무 위임',
-    description:
-      '팀원에게 실제 업무를 위임합니다. 위임받은 팀원은 본인 전용 도구(Docker, GitHub, Notion 등)를 사용해 작업을 직접 수행하고 결과를 보고합니다. ' +
-      '단순 질문이 아니라 실제 작업(예: "렉스에게 Docker 재시작시켜")일 때 사용하세요.',
-    inputSchema: {
-      member: z.enum(PERSONAS as [string, ...string[]]).describe('업무를 수행할 팀원'),
-      task: z.string().describe('위임할 구체적인 업무 내용'),
-    },
-  },
-  async ({ member, task }) => {
-    const data = await postWithTimeout(`/chat/persona/${encodeURIComponent(member)}`, {
-      message: task,
-      persona: member,
-      source: 'mcp-delegate',
-    });
-    const text = data.error ? data.error : (data.response || '응답 없음');
-    return { content: [{ type: 'text', text: `[${member} 완료 보고]\n${text}` }] };
   }
 );
 
@@ -167,6 +185,9 @@ server.registerTool(
 );
 
 async function main() {
+  const personas = await fetchPersonaList();
+  registerPersonaTools(personas);
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
