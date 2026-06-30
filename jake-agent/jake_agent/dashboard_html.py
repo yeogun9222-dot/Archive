@@ -207,6 +207,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .lg-inactive { background: #5a6473; opacity: 0.5; }
   @keyframes legendGlow { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
   @keyframes panelPopIn { from { opacity: 0; transform: scale(0.96) translateY(-6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes panelPopInMobile { from { opacity: 0; transform: translateX(-50%) scale(0.96) translateY(-6px); } to { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); } }
   @keyframes chatPopIn { from { opacity: 0; transform: translateX(-50%) translateY(18px) scale(0.97); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 
   .bn-row { background: rgba(20,28,40,0.7); border: 1px solid rgba(251,191,36,0.2); border-radius: 9px; padding: 9px 11px; margin-bottom: 9px; font-size: 11.5px; }
@@ -600,6 +601,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     #costPanel, #projectPanel, #auditPanel, #permPanel, #perfPanel, #decPanel, #bnPanel, #legendPanel, #memoPanel, #rosterPanel {
       left: 50%; right: auto; transform: translateX(-50%);
       width: 92vw; max-width: 420px; top: 64px; max-height: 78vh;
+    }
+    /* PC용 panelPopIn 애니메이션은 transform을 scale/translateY로 덮어써서 위 translateX(-50%) 중앙
+       정렬을 깨뜨림 — 모바일에서는 translateX(-50%)가 포함된 별도 keyframe으로 교체해 중앙 유지 */
+    #costPanel.show, #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show,
+    #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show {
+      animation: panelPopInMobile 0.26s cubic-bezier(0.34,1.56,0.64,1) both;
     }
     #attentionPanel, #cardChatPanel { width: 92vw; max-width: 420px; }
     #cardChatPanel.maximized { width: 96vw; max-height: 90vh; }
