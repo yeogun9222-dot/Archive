@@ -556,13 +556,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
   #attentionPanel.show { display: block; opacity: 1; transform: translateX(-50%) translateY(0); }
   #attentionPanel h3 { font-size: 12px; color: #ffd76a; letter-spacing: 1px; margin-bottom: 10px; }
-  #bulkActions { display: flex; gap: 7px; margin-bottom: 14px; }
-  .bulk-btn { flex: 1; border: none; border-radius: 8px; padding: 8px 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
-  .bulk-btn.approve { background: rgba(74,222,128,0.18); color: #4ade80; }
-  .bulk-btn.hold { background: rgba(148,163,184,0.18); color: #c5cdd6; }
-  .bulk-btn.delete { background: rgba(248,113,113,0.18); color: #f87171; }
-  .bulk-btn:hover { filter: brightness(1.25); }
-  .bulk-btn:disabled { opacity: 0.35; cursor: default; }
   #attentionPanel .sec-label { font-size: 10.5px; color: #5a7184; margin: 12px 0 6px; letter-spacing: 1px; }
   .att-item { border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; font-size: 12px; }
   .att-item.failed { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); }
@@ -893,11 +886,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <div id="attentionPanel">
   <h3>🔔 확인이 필요한 작업</h3>
-  <div id="bulkActions">
-    <button class="bulk-btn approve" id="bulkApprove">전체 승인</button>
-    <button class="bulk-btn hold" id="bulkHold">전체 보류</button>
-    <button class="bulk-btn delete" id="bulkDelete">전체 삭제</button>
-  </div>
   <div id="attentionEmpty">현재 미완료 작업이 없습니다</div>
   <div id="attentionBody"></div>
 </div>
@@ -1588,9 +1576,6 @@ const bellBadge = document.getElementById('bellBadge');
 const attentionPanel = document.getElementById('attentionPanel');
 const attentionBody = document.getElementById('attentionBody');
 const attentionEmpty = document.getElementById('attentionEmpty');
-const bulkApproveBtn = document.getElementById('bulkApprove');
-const bulkHoldBtn = document.getElementById('bulkHold');
-const bulkDeleteBtn = document.getElementById('bulkDelete');
 let attentionCache = { failed: [], pending: [], held: [] };
 
 async function taskAction(id, action, method) {
@@ -1604,31 +1589,6 @@ async function taskAction(id, action, method) {
     return await res.json().catch(() => true);
   } catch (e) { alert('처리 실패: ' + e.message); return false; }
 }
-
-async function bulkAction(items, action, method) {
-  if (items.length === 0) return;
-  await Promise.all(items.map(t => taskAction(t.id, action, method)));
-  pollAttention(); pollStatusMap();
-}
-
-bulkApproveBtn.addEventListener('click', () => {
-  const items = [...attentionCache.failed, ...attentionCache.pending];
-  if (items.length === 0) return;
-  if (!confirm(items.length + '건을 모두 승인할까요?')) return;
-  bulkAction(items, 'approve', 'POST');
-});
-bulkHoldBtn.addEventListener('click', () => {
-  const items = [...attentionCache.failed, ...attentionCache.pending];
-  if (items.length === 0) return;
-  if (!confirm(items.length + '건을 모두 보류할까요?')) return;
-  bulkAction(items, 'hold', 'POST');
-});
-bulkDeleteBtn.addEventListener('click', () => {
-  const items = [...attentionCache.failed, ...attentionCache.pending, ...attentionCache.held];
-  if (items.length === 0) return;
-  if (!confirm(items.length + '건을 모두 영구 삭제합니다. 되돌릴 수 없습니다. 계속할까요?')) return;
-  bulkAction(items, '', 'DELETE');
-});
 
 function actionButtons(t, status) {
   let btns = '';
@@ -1667,9 +1627,6 @@ async function pollAttention() {
     bellBadge.classList.toggle('show', count > 0);
     lastAttentionCount = count;
     updateCeoAlert();
-    bulkApproveBtn.disabled = (failed.length + pending.length) === 0;
-    bulkHoldBtn.disabled = (failed.length + pending.length) === 0;
-    bulkDeleteBtn.disabled = (failed.length + pending.length + held.length) === 0;
 
     attentionBody.innerHTML = '';
     attentionEmpty.style.display = count === 0 ? 'block' : 'none';
