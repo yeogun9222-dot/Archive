@@ -26,7 +26,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
   #costPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
-  #costPanel h3 { font-size: 12px; color: #ffd76a; margin-bottom: 10px; }
+  #costPanel h3 { font-size: 12px; color: #ffd76a; margin-bottom: 10px; padding-right: 26px; }
   .cost-row { display: flex; justify-content: space-between; font-size: 12px; color: #c5cdd6; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .cost-row .name { color: #9fb4c4; flex: 1; }
   .cost-row .val { color: #ffd76a; font-weight: 600; }
@@ -188,7 +188,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 14px; display: none; z-index: 50;
   }
   #projectPanel.show, #auditPanel.show, #permPanel.show, #perfPanel.show, #decPanel.show, #bnPanel.show, #legendPanel.show, #memoPanel.show, #rosterPanel.show { display: block; animation: panelPopIn 0.26s cubic-bezier(0.34,1.56,0.64,1) both; }
-  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; }
+  .panel-close-btn {
+    position: absolute; top: 10px; right: 12px; width: 22px; height: 22px; border-radius: 50%;
+    border: none; cursor: pointer; background: rgba(255,255,255,0.06); color: #9fb4c4; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 2;
+  }
+  .panel-close-btn:hover { background: rgba(248,113,113,0.2); color: #f87171; }
+  #projectPanel h3, #auditPanel h3, #permPanel h3, #perfPanel h3, #decPanel h3, #bnPanel h3, #legendPanel h3 { font-size: 12px; color: #5ff0ff; letter-spacing: 1px; margin-bottom: 10px; padding-right: 26px; }
+  #memoPanel h3, #rosterPanel h3 { padding-right: 26px; }
 
   .legend-group { margin-bottom: 14px; }
   .legend-label { font-size: 10.5px; color: #9fb4c4; font-weight: 700; margin-bottom: 7px; }
@@ -1279,6 +1286,19 @@ const eventsEl = document.getElementById('events');
 const emptyEl = document.getElementById('empty');
 const chatEventsEl = document.getElementById('chatEvents');
 const logEl = document.getElementById('log');
+
+// 우측 상단 패널들(메모/비용/감사로그 등)은 모바일에서 화면 대부분을 가려 "바깥 클릭으로 닫기"가
+// 불편하다는 지적에 따라, 각 패널에 닫기(×) 버튼을 공통으로 주입
+['costPanel', 'projectPanel', 'auditPanel', 'permPanel', 'perfPanel', 'decPanel', 'bnPanel', 'legendPanel', 'memoPanel', 'rosterPanel'].forEach(id => {
+  const panel = document.getElementById(id);
+  if (!panel) return;
+  const btn = document.createElement('button');
+  btn.className = 'panel-close-btn';
+  btn.title = '닫기';
+  btn.textContent = '×';
+  btn.addEventListener('click', (e) => { e.stopPropagation(); panel.classList.remove('show'); });
+  panel.insertBefore(btn, panel.firstChild);
+});
 
 function esc(s) { return (s || '').replace(/</g,'&lt;'); }
 
