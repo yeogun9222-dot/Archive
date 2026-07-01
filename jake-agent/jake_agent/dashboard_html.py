@@ -673,7 +673,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="costBreakdown" style="font-size:11.5px; color:#9fb4c4; margin-bottom:10px;"></div>
   <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:8px 0 6px;">자동 집계 — Anthropic API 토큰</div>
   <div id="costBody"></div>
-  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:12px 0 6px;">수동 입력 — Claude 콘솔 실청구 / Gemini / GCP VM 등</div>
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:12px 0 6px;">🪙 Anthropic 크레딧 잔액 추적</div>
+  <div id="creditStatusBox" style="background:rgba(255,215,106,0.07); border:1px solid rgba(255,215,106,0.2); border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:11.5px; color:#c5cdd6;">잔액 조회 중...</div>
+  <div id="topupForm" style="display:flex; gap:5px; margin-bottom:4px; flex-wrap:wrap;">
+    <input type="number" id="topupAmountInput" placeholder="충전액 (USD)" step="0.01" style="width:100px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <input type="date" id="topupDateInput" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
+    <button id="topupAddBtn" style="background:rgba(255,215,106,0.18); color:#ffd76a; border:none; border-radius:6px; padding:5px 11px; font-size:11px; cursor:pointer; font-weight:600;">충전 등록</button>
+  </div>
+  <div style="font-size:10px; color:#5a7184; margin-bottom:10px;">※ 콘솔에서 크레딧 충전 후 위에 금액+날짜 입력하면 잔액 자동 추적</div>
+  <div class="sec-label" style="font-size:10.5px; color:#5a7184; margin:8px 0 6px;">수동 입력 — ChatGPT / GCP VM 등</div>
   <div id="manualCostForm" style="display:flex; gap:5px; margin-bottom:6px; flex-wrap:wrap;">
     <input type="text" id="manualLabelInput" placeholder="항목명 (예: GCP VM 서울)" style="flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
     <input type="number" id="manualAmountInput" placeholder="금액" step="1" style="width:65px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,106,0.25); border-radius:6px; color:#e6e6e6; font-size:11px; padding:5px 7px;">
@@ -1828,9 +1836,41 @@ manualAddBtn.addEventListener('click', async (e) => {
   pollCost();
 });
 
+async function pollCredit() {
+  try {
+    const res = await fetch('/cost/anthropic/credit');
+    const d = await res.json();
+    const box = document.getElementById('creditStatusBox');
+    if (!box) return;
+    if (!d.available) {
+      box.innerHTML = '<span style="color:#5a7184;">' + esc(d.reason || '충전 내역 없음') + '</span>';
+      return;
+    }
+    const warn = d.warning ? ' <span style="color:#f87171; font-weight:600;">⚠️ 충전 필요!</span>' : '';
+    const days = d.days_remaining != null ? ' · 약 <b style="color:#ffd76a;">' + d.days_remaining + '일</b> 후 소진 예상' : '';
+    box.innerHTML =
+      '잔액: <b style="color:#4ade80; font-size:13px;">$' + d.remaining.toFixed(2) + '</b>' + warn +
+      '<br><span style="font-size:10.5px; color:#5a7184;">충전 $' + d.topup_amount.toFixed(2) + ' (' + d.topup_date + ') · 사용 $' + d.used.toFixed(4) + days + '</span>';
+  } catch(e) { /* ignore */ }
+}
+
+document.getElementById('topupAddBtn').addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const amount = parseFloat(document.getElementById('topupAmountInput').value);
+  const date = document.getElementById('topupDateInput').value;
+  if (!amount || !date) { alert('충전액과 날짜를 입력하세요.'); return; }
+  await fetch('/cost/anthropic/topup', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, topup_date: date })
+  });
+  document.getElementById('topupAmountInput').value = '';
+  pollCredit();
+});
+
 costWidget.addEventListener('click', (e) => {
   e.stopPropagation();
   costPanel.classList.toggle('show');
+  if (costPanel.classList.contains('show')) pollCredit();
 });
 document.addEventListener('click', (e) => {
   if (!costPanel.contains(e.target) && !costWidget.contains(e.target)) costPanel.classList.remove('show');
