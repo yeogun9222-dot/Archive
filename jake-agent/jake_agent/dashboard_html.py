@@ -851,7 +851,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="level level-ceo">
       <div class="card ceo" id="card-대표님">
         <div class="status-badge" id="badge-대표님"></div>
-        <div class="ceo-alert" id="ceoAlert" title="확인필요/결재 대기 — 클릭해서 바로 확인">🔔 <span id="ceoAlertCount">0</span></div>
+        <div class="ceo-alert" id="ceoAlert" title="확인필요/결재 대기 — 클릭해서 바로 확인">🔔 <span id="ceoAlertCount">0</span><span id="ceoAlertClose" title="알림 닫기" style="margin-left:5px; font-size:10px; opacity:0.7; cursor:pointer;">✕</span></div>
         <div class="avatar">🧑‍💼</div>
         <div class="info"><div class="name">Kade YEO</div><div class="role">CEO</div></div>
       </div>
@@ -899,7 +899,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <div id="attentionPanel">
-  <h3>🔔 확인이 필요한 작업</h3>
+  <h3 style="display:flex; align-items:center; justify-content:space-between;">🔔 확인이 필요한 작업<button id="attentionCloseBtn" style="background:none; border:none; color:#5a7184; font-size:15px; cursor:pointer; padding:0 2px;" title="닫기">✕</button></h3>
   <div id="attentionEmpty">현재 미완료 작업이 없습니다</div>
   <div id="attentionBody"></div>
 </div>
@@ -1557,16 +1557,26 @@ setInterval(pollStatusMap, 4000);
 // ── Kade YEO 카드 알림 — 확인필요(종)/결재 합산, 좌측 드롭메뉴에 묻혀 놓치는 문제 해소 ──
 const ceoAlert = document.getElementById('ceoAlert');
 const ceoAlertCount = document.getElementById('ceoAlertCount');
+const ceoAlertClose = document.getElementById('ceoAlertClose');
 let lastAttentionCount = 0, lastDecisionCount = 0, lastMemoCount = 0;
+let ceoAlertSnoozed = false, ceoAlertSnoozedTotal = 0;
 function updateCeoAlert() {
   const total = lastAttentionCount + lastDecisionCount + lastMemoCount;
   ceoAlertCount.textContent = total;
-  ceoAlert.classList.toggle('show', total > 0);
+  // 새로운 항목이 추가되면 스누즈 해제
+  if (total > ceoAlertSnoozedTotal) { ceoAlertSnoozed = false; }
+  ceoAlert.classList.toggle('show', total > 0 && !ceoAlertSnoozed);
   ceoAlert.title = (lastDecisionCount > 0 ? '결재 대기 ' + lastDecisionCount + '건' : '') +
     (lastAttentionCount > 0 ? (lastDecisionCount > 0 ? ' · ' : '') + '확인필요 ' + lastAttentionCount + '건' : '') +
     (lastMemoCount > 0 ? ((lastDecisionCount + lastAttentionCount) > 0 ? ' · ' : '') + '메모 알림 ' + lastMemoCount + '건' : '') +
     ' — 클릭해서 바로 확인';
 }
+ceoAlertClose.addEventListener('click', (e) => {
+  e.stopPropagation();
+  ceoAlertSnoozed = true;
+  ceoAlertSnoozedTotal = lastAttentionCount + lastDecisionCount + lastMemoCount;
+  ceoAlert.classList.remove('show');
+});
 ceoAlert.addEventListener('click', (e) => {
   e.stopPropagation();
   projectPanel.classList.remove('show'); auditPanel.classList.remove('show'); costPanel.classList.remove('show');
@@ -1711,6 +1721,10 @@ async function pollAttention() {
 bellWrap.addEventListener('click', (e) => {
   e.stopPropagation();
   attentionPanel.classList.toggle('show');
+});
+document.getElementById('attentionCloseBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  attentionPanel.classList.remove('show');
 });
 document.addEventListener('click', (e) => {
   if (!attentionPanel.contains(e.target) && !bellWrap.contains(e.target)) attentionPanel.classList.remove('show');
