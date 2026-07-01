@@ -38,13 +38,28 @@ def _run_daily_report():
 
 
 def _check_credit_health():
+    from .db import get_anthropic_credit_remaining
     from .anthropic_billing import check_api_health
     from .telegram_bot import send_message
+
+    # 1. 예상 잔액 기반 경고
+    credit = get_anthropic_credit_remaining()
+    if credit.get("available") and credit.get("warning"):
+        remaining = credit.get("remaining", 0)
+        days = credit.get("days_remaining")
+        msg = f"⚠️ [크레딧 경고] Anthropic 예상 잔액: ${remaining}"
+        if days is not None:
+            msg += f" (약 {days}일 후 소진 예상)"
+        msg += "\n👉 console.anthropic.com에서 크레딧 충전 후 대시보드에 잔액 업데이트해주세요."
+        send_message(msg)
+        return
+
+    # 2. 잔액 정보 없으면 canary 호출로 실제 가용 여부 확인
     result = check_api_health()
     if not result.get("healthy"):
         status = result.get("status", "알 수 없음")
         action = result.get("action", "")
-        msg = f"⚠️ [크레딧 경고] Anthropic API 상태: {status}"
+        msg = f"🚨 [긴급] Anthropic API 이상: {status}"
         if action:
             msg += f"\n👉 {action}"
         send_message(msg)

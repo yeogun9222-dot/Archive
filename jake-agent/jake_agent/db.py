@@ -159,6 +159,15 @@ def init_db():
     cur.execute("ALTER TABLE manual_costs ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'USD'")
     cur.execute("ALTER TABLE manual_costs ADD COLUMN IF NOT EXISTS recurring BOOLEAN DEFAULT FALSE")
     cur.execute("DO $$ BEGIN ALTER TABLE manual_costs RENAME COLUMN amount_usd TO amount; EXCEPTION WHEN undefined_column THEN NULL; END $$;")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS anthropic_topups (
+            id SERIAL PRIMARY KEY,
+            amount NUMERIC NOT NULL,
+            topup_date DATE NOT NULL,
+            note TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
     conn.commit()
     cur.close()
     conn.close()
@@ -1133,6 +1142,73 @@ def get_chat_history(persona: str, limit: int = 50) -> list:
         {"role": r[0], "content": r[1], "timestamp": r[2].isoformat(), "attachment_name": r[3], "attachment_url": r[4]}
         for r in reversed(rows)
     ]
+
+
+def create_anthropic_topup(amount: float, topup_date: str, note: str = None) -> int:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO anthropic_topups (amount, topup_date, note) VALUES (%s, %s, %s) RETURNING id",
+        (amount, topup_date, note)
+    )
+    row = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return row
+
+
+def get_anthropic_credit_remaining() -> dict:
+    """최근 충전액 기준으로 현재까지 소모된 토큰 비용을 차감해 예상 잔액 반환."""
+    MODEL_RATES = {
+        "claude-sonnet-4-6": (3, 15),
+        "claude-haiku-4-5-20251001": (1, 5),
+    }
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT id, amount, topup_date, note FROM anthropic_topups ORDER BY topup_date DESC, id DESC LIMIT 1")
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return {"available": False, "reason": "충전 내역 없음 — 대시보드에서 현재 잔액을 입력해주세요"}
+
+    topup_id, topup_amount, topup_date, note = row
+    topup_amount = float(topup_amount)
+
+    cur.execute("""
+        SELECT model, COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0)
+        FROM token_usage
+        WHERE DATE(created_at) >= %s
+        GROUP BY model
+    """, (topup_date,))
+    usage_rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    used = 0.0
+    for model, inp, out in usage_rows:
+        rate_in, rate_out = MODEL_RATES.get(model, (3, 15))
+        used += (inp / 1_000_000 * rate_in) + (out / 1_000_000 * rate_out)
+    used = round(used, 4)
+    remaining = round(topup_amount - used, 4)
+
+    days_remaining = None
+    if used > 0:
+        from datetime import date
+        days_elapsed = max((date.today() - topup_date).days, 1)
+        daily_rate = used / days_elapsed
+        days_remaining = round(remaining / daily_rate, 1) if daily_rate > 0 else None
+
+    return {
+        "available": True,
+        "topup_amount": topup_amount,
+        "topup_date": topup_date.isoformat(),
+        "used": used,
+        "remaining": remaining,
+        "days_remaining": days_remaining,
+        "warning": remaining < 2.0,
+    }
 
 
 def get_recent_conversation_history(persona: str, limit: int = 20) -> list:

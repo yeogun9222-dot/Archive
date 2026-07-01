@@ -13,7 +13,7 @@ import time
 import uuid
 
 from jake_agent.graph import build_jake_graph
-from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision, get_last_message_map, create_memo, get_memos, update_memo, delete_memo, restore_task
+from jake_agent.db import get_pending_tasks, get_recent_conversation_history, init_db, save_chat_message, get_chat_history, clear_chat_history, get_recent_activity, log_ceo_instruction, get_attention_tasks, get_persona_statuses, update_task_status_guarded, delete_task_row, get_archived_tasks, get_task_health, get_cost_summary, is_persona_active, set_persona_active, get_persona_active_map, get_contention_personas, create_project, get_projects, update_project_status, get_archive_stats, export_and_purge_archived, create_manual_cost, get_manual_costs_this_month, delete_manual_cost, get_persona_activity_map, get_persona_performance, get_project_name, create_decision, get_decisions, get_bottleneck_detail, get_task_by_id, get_pending_decisions, resolve_decision, get_last_message_map, create_memo, get_memos, update_memo, delete_memo, restore_task, create_anthropic_topup, get_anthropic_credit_remaining
 from jake_agent.team_tools import run_delegation, draft_persona_from_decision
 from fastapi import HTTPException
 from jake_agent.dashboard_html import DASHBOARD_HTML
@@ -628,6 +628,21 @@ async def cost_manual_delete(cost_id: int):
     if not ok:
         raise HTTPException(status_code=404, detail="해당 항목을 찾을 수 없습니다.")
     return {"status": "deleted"}
+
+
+class TopupRequest(BaseModel):
+    amount: float
+    topup_date: str  # YYYY-MM-DD
+    note: Optional[str] = None
+
+@app.post("/cost/anthropic/topup")
+async def anthropic_topup(req: TopupRequest):
+    topup_id = create_anthropic_topup(req.amount, req.topup_date, req.note)
+    return {"id": topup_id, "status": "created"}
+
+@app.get("/cost/anthropic/credit")
+async def anthropic_credit():
+    return get_anthropic_credit_remaining()
 
 
 @app.get("/dashboard", response_class=HTMLResponse)

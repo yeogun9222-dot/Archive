@@ -105,6 +105,26 @@ def get_cost_by_persona() -> str:
 
 
 @tool
+def get_credit_remaining() -> str:
+    """Anthropic 크레딧 예상 잔액과 소진 예상일을 조회합니다."""
+    from .db import get_anthropic_credit_remaining
+    r = get_anthropic_credit_remaining()
+    if not r.get("available"):
+        return f"⚠️ {r.get('reason', '잔액 정보 없음')} — 대시보드 비용관리에서 충전 금액을 입력해주세요."
+    lines = [
+        f"[Anthropic 크레딧 현황]",
+        f"  충전액: ${r['topup_amount']} (기준일: {r['topup_date']})",
+        f"  사용액: ${r['used']}",
+        f"  예상 잔액: ${r['remaining']}",
+    ]
+    if r.get("days_remaining") is not None:
+        lines.append(f"  소진 예상: 약 {r['days_remaining']}일 후")
+    if r.get("warning"):
+        lines.append("  ⚠️ 잔액 $2 이하 — 충전 필요!")
+    return "\n".join(lines)
+
+
+@tool
 def check_credit_status() -> str:
     """Anthropic API 크레딧 상태를 확인합니다. API 호출이 가능한지 즉시 점검합니다."""
     from .anthropic_billing import check_api_health
@@ -120,4 +140,4 @@ def check_credit_status() -> str:
 
 
 def get_all_luna_tools():
-    return [get_api_cost_today, get_api_cost_report, get_cost_by_persona, check_credit_status]
+    return [get_api_cost_today, get_api_cost_report, get_cost_by_persona, check_credit_status, get_credit_remaining]
