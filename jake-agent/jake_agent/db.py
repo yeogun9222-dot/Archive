@@ -991,6 +991,9 @@ def get_cost_summary() -> dict:
     from .personas import PERSONAS
     for name in PERSONAS.keys():
         persona_agg.setdefault(name, {"persona": name, "input_tokens": 0, "output_tokens": 0, "cost": 0.0})
+    # custom_personas(결재 채용: 테오·노아·엠마·조이 등)도 포함
+    for cp in get_custom_personas():
+        persona_agg.setdefault(cp["name"], {"persona": cp["name"], "input_tokens": 0, "output_tokens": 0, "cost": 0.0})
 
     by_persona = sorted(
         [{**v, "active": active_map.get(v["persona"], True)} for v in persona_agg.values()],
