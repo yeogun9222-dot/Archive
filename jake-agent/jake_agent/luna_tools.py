@@ -104,5 +104,20 @@ def get_cost_by_persona() -> str:
         return f"조회 오류: {e}"
 
 
+@tool
+def check_credit_status() -> str:
+    """Anthropic API 크레딧 상태를 확인합니다. API 호출이 가능한지 즉시 점검합니다."""
+    from .anthropic_billing import check_api_health
+    result = check_api_health()
+    if result.get("healthy"):
+        return "✅ Anthropic API 정상 — 크레딧 사용 가능"
+    status = result.get("status", "알 수 없음")
+    action = result.get("action", "")
+    msg = f"⚠️ Anthropic API 이상: {status}"
+    if action:
+        msg += f"\n👉 {action}"
+    return msg
+
+
 def get_all_luna_tools():
-    return [get_api_cost_today, get_api_cost_report, get_cost_by_persona]
+    return [get_api_cost_today, get_api_cost_report, get_cost_by_persona, check_credit_status]

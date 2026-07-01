@@ -37,6 +37,28 @@ def _run_daily_report():
         send_message(f"[일간 리포트 오류] {e}")
 
 
+def _check_credit_health():
+    from .anthropic_billing import check_api_health
+    from .telegram_bot import send_message
+    result = check_api_health()
+    if not result.get("healthy"):
+        status = result.get("status", "알 수 없음")
+        action = result.get("action", "")
+        msg = f"⚠️ [크레딧 경고] Anthropic API 상태: {status}"
+        if action:
+            msg += f"\n👉 {action}"
+        send_message(msg)
+        print(f"[Scheduler] 크레딧 경고 발송: {status}")
+
+
+def _credit_check_loop():
+    # 시작 후 10분 뒤 첫 점검, 이후 2시간 간격
+    time.sleep(600)
+    while True:
+        _check_credit_health()
+        time.sleep(2 * 3600)
+
+
 def _scheduler_loop():
     while True:
         wait = _seconds_until_9am_kst()
@@ -48,4 +70,6 @@ def _scheduler_loop():
 def start_scheduler_thread():
     t = threading.Thread(target=_scheduler_loop, daemon=True)
     t.start()
+    t2 = threading.Thread(target=_credit_check_loop, daemon=True)
+    t2.start()
     return t

@@ -171,7 +171,17 @@ def agent_node(state: JakeState) -> JakeState:
             msgs.append(HumanMessage(content=user_input))
         loop_msgs = msgs
 
-    response = llm.invoke(loop_msgs)
+    try:
+        response = llm.invoke(loop_msgs)
+    except Exception as e:
+        err_str = str(e)
+        if "credit balance is too low" in err_str:
+            try:
+                from .telegram_bot import send_message
+                send_message("🚨 [긴급] Anthropic 크레딧 소진 — jake-agent API 호출 불가\n👉 console.anthropic.com → Plans & Billing에서 즉시 크레딧 충전 필요")
+            except Exception:
+                pass
+        raise
     loop_msgs = loop_msgs + [response]
 
     # 토큰 사용량 기록
